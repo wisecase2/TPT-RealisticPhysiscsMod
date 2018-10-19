@@ -101,7 +101,7 @@ int Element_TUNG::update(UPDATE_FUNC_ARGS)
 	parts[i].pavg[0] = parts[i].pavg[1];
 	parts[i].pavg[1] = sim->pv[y/CELL][x/CELL];
 	float diff = parts[i].pavg[1] - parts[i].pavg[0];
-	if (diff > 0.50f || diff < -0.50f)
+	if (diff > 5.00f || diff < -5.0f)
 	{
 		sim->part_change_type(i,x,y,PT_BRMT);
 		parts[i].ctype = PT_TUNG;

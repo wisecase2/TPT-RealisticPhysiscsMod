@@ -3456,7 +3456,7 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 		parts[i].life = RNG::Ref().between(250, 449);
 		parts[i].vx = 2.0f*cosf(a);
 		parts[i].vy = 2.0f*sinf(a);
-		parts[i].tmp = 7;
+		//parts[i].tmp = 7;
 		break;
 	}
 	case PT_TRON:
@@ -3790,12 +3790,12 @@ void Simulation::UpdateParticles(int start, int end)
 	int i, j, x, y, t, nx, ny, r, surround_space, s, rt, nt, partpos, vary, ctypep, tmpp, tmp2p;
 	float mv, dx, dy, nrx, nry, dp, ctemph, ctempl, gravtot, starttemp, dtemp, invmaxtemp = 1.f/MAX_TEMP;
 	int fin_x, fin_y, clear_x, clear_y, stagnant, pt_beforetransition, sorroundtype;
-	float fin_xf, fin_yf, clear_xf, clear_yf;
+	float fin_xf, fin_yf, clear_xf, clear_yf, diffy, diffx, diff;
 	float nn, ct1, ct2, swappage;
 	float pt = R_TEMP;
 	float c_heat = 0.0f, deltap;
 	int h_count = 0;
-	int surround[8];
+	int surround[8], blockcount, type2;
 	int surround_hconduct[8];
 	float pGravX, pGravY, pGravD;
 	bool transitionOccurred, transitionchange;
@@ -3929,9 +3929,24 @@ void Simulation::UpdateParticles(int start, int end)
 				parts[i].vy *= elements[t].Loss;
 			}
 			//particle gets velocity from the vx and vy maps
-			parts[i].vx += elements[t].Advection*vx[y/CELL][x/CELL] + pGravX;
-			parts[i].vy += elements[t].Advection*vy[y/CELL][x/CELL] + pGravY;
-
+			/*
+			if((elements[t].Properties&TYPE_SOLID && !air->bmap_blockair[y][x])){
+				blockcount = 0;
+				for(int yy = -1; yy <= 1; yy++){
+					for(int xx = -1; xx <= 1; xx++){
+						type2 = TYP(pmap[y+yy][x+xx]);
+						if(elements[type2].Properties&TYPE_SOLID){
+							blockcount++;
+						}
+					}
+				}
+				if(blockcount > 2){
+					air->bmap_blockair[y][x] = true;
+				}*/
+			//} else{
+				parts[i].vx += elements[t].Advection*vx[y / CELL][x / CELL] + pGravX;
+				parts[i].vy += elements[t].Advection*vy[y / CELL][x / CELL] + pGravY;
+			//}
 
 			if (elements[t].Diffusion)//the random diffusion that gasses have
 			{
@@ -4202,7 +4217,11 @@ void Simulation::UpdateParticles(int start, int end)
 									s = 0;
 								else
 									t = PT_LAVA;
-							} else
+							} else if(t == PT_BROKEN){
+								if(ctemph >= elements[parts[i].ctype].HighTemperature){
+									t = PT_LAVA;
+								}
+							}
 								s = 0;
 						}
 					}else if (elements[t].LowTemperatureTransition > -1 && ctempl<elements[t].LowTemperature){
@@ -4586,23 +4605,35 @@ void Simulation::UpdateParticles(int start, int end)
 				transitionOccurred = true;
 			}
 
-			////// store deep particles, id pointer
+			////// store deep particles, with id pointer
 			
 			if (pmap2[y][x][0] != currentTick){
 				pmap2[y][x][0] = currentTick;
-				pmap2[y][x][1] = i; //primeira particula de x,y
-				pmap2[y][x][2] = i; //ultima particula de x,y
-				pmap2[y][x][3] = 0; // profundidade
-				idpointer[i][2] = 0; //reseta a profundidade do id
+				pmap2[y][x][1] = i; //first particle  x,y
+				pmap2[y][x][2] = i; //last particle  x,y
+				pmap2[y][x][3] = 0; // reset deep x,y
+				idpointer[i][2] = 0; // reset deep for id
 			}else{
 				idpointer[pmap2[y][x][2]][0] = currentTick;
-				idpointer[pmap2[y][x][2]][1] = i; // proximo id
-				idpointer[pmap2[y][x][2]][2] = pmap2[y][x][3]; //profundidade do id
-				pmap2[y][x][2] = i; // ultima particula
-				pmap2[y][x][3]++; // aumenta a profundidade
+				idpointer[pmap2[y][x][2]][1] = i; // next id
+				idpointer[pmap2[y][x][2]][2] = pmap2[y][x][3]; //deep id
+				pmap2[y][x][2] = i; // last particle
+				pmap2[y][x][3]++; //increase deep
 			}
-			
+			/* 
+			if(elements[t].pressureresistance > 0 && elements[t].Properties&TYPE_SOLID){
 
+				diffy = pv[y + 1][x] - pv[y - 1][x];
+				diffx = pv[y][x + 1] - pv[y][x - 1];
+				diff = sqrt(diffy*diffy+diffx*diffx + 0.001f);
+
+				if(diff > elements[t].pressureresistance){
+					diff = parts[i].type;
+					parts[i].type = PT_BROKEN;
+					parts[i].ctype = diff;
+				}
+			}
+			*/
 			if(parts[i].type == PT_PLSM){
 				nuclear_fusion(i);
 			}
@@ -5524,21 +5555,6 @@ void Simulation::BeforeSim()
 
 		if(aheat_enable)
 			air->update_airh();
-		/*
-		try{
-				//if(parts_lastActiveIndex > 3000){
-				if(RNG::Ref().chance(1, 30)){
-					for(int k = 0; k < 1000; k++){
-						pv[k][k] = 100;
-					}
-				}
-			//}
-
-			} catch(std::exception& e){
-
-				pv[40][0] = 256;
-			}
-		}*/
 
 		if(grav->ngrav_enable)
 		{

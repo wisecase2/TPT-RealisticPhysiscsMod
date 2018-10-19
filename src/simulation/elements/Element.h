@@ -58,6 +58,7 @@ public:
 	float GasPlsmlatent = 5000.f; // default
 	float Heatcapacity = 1.f;
 	float InvHeatcapacity = 1.f;
+	float pressureresistance = 0.f;
 
 
 

@@ -30,7 +30,7 @@ Element_PROT::Element_PROT()
 	HeatConduct = 61;
 	Description = "Protons. Positively charged, remove sparks.";
 
-	Properties = TYPE_ENERGY;
+	Properties = TYPE_ENERGY | PROP_LIFE_DEC | PROP_LIFE_KILL_DEC;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -104,14 +104,6 @@ int Element_PROT::update(UPDATE_FUNC_ARGS)
 					else change = 0.0f;
 					parts[uID].temp = restrict_flt(parts[uID].temp + change, MIN_TEMP, MAX_TEMP);
 					break;
-				case PT_NONE:
-					//slowly kill if it's not inside an element
-					if (parts[i].life)
-					{
-						if (!--parts[i].life)
-							sim->kill_part(i);
-					}
-					break;
 				default:
 					//set off explosives (only when hot because it wasn't as fun when it made an entire save explode)
 					if (parts[i].temp > 273.15f + 500.0f && (sim->elements[utype].Flammable || sim->elements[utype].Explosive || utype == PT_BANG))
@@ -133,7 +125,6 @@ int Element_PROT::update(UPDATE_FUNC_ARGS)
 	//make temp of other things closer to it's own temperature. This will change temp of things that don't conduct, and won't change the PROT's temperature
 	if (utype && utype != PT_WIFI)
 		parts[uID].temp = restrict_flt(parts[uID].temp-(parts[uID].temp-parts[i].temp)/4.0f, MIN_TEMP, MAX_TEMP);
-
 
 	//if this proton has collided with another last frame, change it into a heavier element
 	if (parts[i].tmp)

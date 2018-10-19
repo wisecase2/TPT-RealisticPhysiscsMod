@@ -2,12 +2,12 @@
 //#TPT-Directive ElementClass Element_BROKEN PT_BROKEN 190
 Element_BROKEN::Element_BROKEN()
 {
-	Identifier = "DEFAULT_PT_BRMT";
-	Name = "BRMT";
+	Identifier = "DEFAULT_PT_BROKEN";
+	Name = "Broken";
 	Colour = PIXPACK(0x705060);
 	MenuVisible = 1;
 	MenuSection = SC_POWDERS;
-	Enabled = 1;
+	Enabled = 0;
 
 	Advection = 0.4f;
 	AirDrag = 0.04f * CFDS;
@@ -28,9 +28,9 @@ Element_BROKEN::Element_BROKEN()
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 211;
-	Description = "Broken metal. Created when iron rusts or when metals break from pressure.";
+	Description = "Broken solids.";
 
-	Properties = TYPE_PART|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW | PROP_NEUTPASS;
+	Properties = TYPE_PART|PROP_CONDUCTS|PROP_HOT_GLOW | PROP_NEUTPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -38,44 +38,17 @@ Element_BROKEN::Element_BROKEN()
 	HighPressureTransition = NT;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
-	HighTemperature = 1273.0f;
+	HighTemperature = ITH;
 	HighTemperatureTransition = ST;
-	GasTemperaturetransition = 2743.15f;
-	GasTransition = PT_GASEOUS;
-	PlsmTemperaturetransition = 9999.f;
+	GasTemperaturetransition = ITH;
+	GasTransition = NT;
+	PlsmTemperaturetransition = -1;
 
-	Update = &Element_BRMT::update;
+	Update = NULL;//&Element_BROKEN::update;
 }
 
-//#TPT-Directive ElementHeader Element_BRMT static int update(UPDATE_FUNC_ARGS)
-int Element_BRMT::update(UPDATE_FUNC_ARGS)
-{
-	int r, rx, ry, tempFactor;
-	if (parts[i].temp > 523.15f)//250.0f+273.15f
-	{
-		tempFactor = 1000 - ((523.15f-parts[i].temp)*2);
-		if(tempFactor < 2)
-			tempFactor = 2;
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
-				{
-					r = pmap[y+ry][x+rx];
-					if (!r)
-						continue;
-					if (TYP(r)==PT_BREC && RNG::Ref().chance(1, tempFactor))
-					{
-						if (RNG::Ref().chance(1, 2))
-						{
-							sim->create_part(ID(r), x+rx, y+ry, PT_THRM);
-						}
-						else
-							sim->create_part(i, x, y, PT_THRM);
-					}
-				}
-	}
-	return 0;
-}
+//#TPT-Directive ElementHeader Element_BROKEN static int update(UPDATE_FUNC_ARGS)
 
 
-Element_BRMT::~Element_BRMT() {}
+
+Element_BROKEN::~Element_BROKEN() {}

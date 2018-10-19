@@ -30,7 +30,7 @@ Element_NEUT::Element_NEUT()
 	HeatConduct = 60;
 	Description = "Neutrons. Interact with matter in odd ways.";
 
-	Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
+	Properties = TYPE_ENERGY;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -81,6 +81,11 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 	
 	idr = ID(r);
 	typr = TYP(r);
+
+	if(parts[i].life && typr == PT_NONE){
+		if(!--parts[i].life)
+			sim->kill_part(i);
+	}
 	
 	//// nuclear fission uranium and plutonium:
 	if (typr == PT_PLUT || typr == PT_GASEOUS && parts[idr].ctype == PT_PLUT || typr == PT_PLSM && parts[idr].ctype == PT_PLUT || typr == PT_LAVA && parts[idr].ctype == PT_PLUT){
@@ -117,116 +122,111 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 		}
 	}
 	
-	for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK)
-			{
-				r = pmap[y+ry][x+rx];
+	for(rx = -1; rx < 2; rx++){
+		for(ry = -1; ry < 2; ry++){
+			if(BOUNDS_CHECK){
+				r = pmap[y + ry][x + rx];
 				idr = ID(r);
 				typr = TYP(r);
-				switch (typr)
-				{
-				case PT_WATR:
-					if (RNG::Ref().chance(3, 20))
-						sim->part_change_type(idr,x+rx,y+ry,PT_DSTW);
-				case PT_ICEI:
-				case PT_SNOW:
-					parts[i].vx *= 0.995;
-					parts[i].vy *= 0.995;
-					break;
+				switch(typr){
+					case PT_WATR:
+						if(RNG::Ref().chance(3, 20))
+							sim->part_change_type(idr, x + rx, y + ry, PT_DSTW);
+					case PT_ICEI:
+					case PT_SNOW:
+						parts[i].vx *= 0.995;
+						parts[i].vy *= 0.995;
+						break;
 #ifdef SDEUT
-				case PT_DEUT:
-					if (RNG::Ref().chance(1+(parts[idr].life/100), 1000))
-					{
-						DeutExplosion(sim, parts[idr].life, x+rx, y+ry, restrict_flt(parts[idr].temp + parts[idr].life*500.0f, MIN_TEMP, MAX_TEMP), PT_NEUT);
-						sim->kill_part(idr);
-					}
-					break;
+					case PT_DEUT:
+						if(RNG::Ref().chance(1 + (parts[idr].life / 100), 1000)){
+							DeutExplosion(sim, parts[idr].life, x + rx, y + ry, restrict_flt(parts[idr].temp + parts[idr].life*500.0f, MIN_TEMP, MAX_TEMP), PT_NEUT);
+							sim->kill_part(idr);
+						}
+						break;
 #else
-				case PT_DEUT:
-					if (RNG::Ref().chance(pressureFactor+1, 1000))
-					{
-						create_part(idr, x+rx, y+ry, PT_NEUT);
-						parts[idr].vx = 0.25f*parts[idr].vx + parts[i].vx;
-						parts[idr].vy = 0.25f*parts[idr].vy + parts[i].vy;
-						parts[idr].life --;
-						parts[idr].temp = restrict_flt(parts[idr].temp + parts[idr].life*17.0f, MIN_TEMP, MAX_TEMP);
-						pv[y/CELL][x/CELL] += 6.0f * CFDS;
+					case PT_DEUT:
+						if(RNG::Ref().chance(pressureFactor + 1, 1000)){
+							create_part(idr, x + rx, y + ry, PT_NEUT);
+							parts[idr].vx = 0.25f*parts[idr].vx + parts[i].vx;
+							parts[idr].vy = 0.25f*parts[idr].vy + parts[i].vy;
+							parts[idr].life--;
+							parts[idr].temp = restrict_flt(parts[idr].temp + parts[idr].life*17.0f, MIN_TEMP, MAX_TEMP);
+							pv[y / CELL][x / CELL] += 6.0f * CFDS;
 
-					}
-					break;
+						}
+						break;
 #endif
-				case PT_GUNP:
-					if (RNG::Ref().chance(3, 200))
-						sim->part_change_type(idr,x+rx,y+ry,PT_DUST);
-					break;
-				case PT_DYST:
-					if (RNG::Ref().chance(3, 200))
-						sim->part_change_type(idr,x+rx,y+ry,PT_YEST);
-					break;
-				case PT_YEST:
-					sim->part_change_type(idr,x+rx,y+ry,PT_DYST);
-					break;
-				case PT_PLEX:
-					if (RNG::Ref().chance(3, 200))
-						sim->part_change_type(idr,x+rx,y+ry,PT_GOO);
-					break;
-				case PT_NITR:
-					if (RNG::Ref().chance(3, 200))
-						sim->part_change_type(idr,x+rx,y+ry,PT_DESL);
-					break;
-				case PT_PLNT:
-					if (RNG::Ref().chance(1, 20))
-						sim->create_part(idr, x+rx, y+ry, PT_WOOD);
-					break;
-				case PT_DESL:
-				case PT_OIL:
-					if (RNG::Ref().chance(3, 200))
-						sim->part_change_type(idr,x+rx,y+ry,PT_GAS);
-					break;
-				case PT_COAL:
-					if (RNG::Ref().chance(1, 20))
-						sim->create_part(idr, x+rx, y+ry, PT_WOOD);
-					break;
-				case PT_BCOL:
-					if (RNG::Ref().chance(1, 20))
-						sim->create_part(idr, x+rx, y+ry, PT_SAWD);
-					break;
-				case PT_DUST:
-					if (RNG::Ref().chance(1, 20))
-						sim->part_change_type(idr, x+rx, y+ry, PT_FWRK);
-					break;
-				case PT_FWRK:
-					if (RNG::Ref().chance(1, 20))
-						parts[idr].ctype = PT_DUST;
-					break;
-				case PT_ACID:
-					if (RNG::Ref().chance(1, 20))
-						sim->create_part(idr, x+rx, y+ry, PT_ISOZ);
-					break;
-				case PT_TTAN:
-					if (RNG::Ref().chance(1, 20))
-					{
-						sim->kill_part(i);
-						return 1;
-					}
-					break;
-				case PT_EXOT:
-					if (RNG::Ref().chance(1, 20))
-						parts[idr].life = 1500;
-					break;
-				case PT_RFRG:
-					if (RNG::Ref().chance(1, 2))
-						sim->create_part(idr, x+rx, y+ry, PT_GAS);
-					else
-						sim->create_part(idr, x+rx, y+ry, PT_CAUS);
-					break;
-				default:
-					break;
+					case PT_GUNP:
+						if(RNG::Ref().chance(3, 200))
+							sim->part_change_type(idr, x + rx, y + ry, PT_DUST);
+						break;
+					case PT_DYST:
+						if(RNG::Ref().chance(3, 200))
+							sim->part_change_type(idr, x + rx, y + ry, PT_YEST);
+						break;
+					case PT_YEST:
+						sim->part_change_type(idr, x + rx, y + ry, PT_DYST);
+						break;
+					case PT_PLEX:
+						if(RNG::Ref().chance(3, 200))
+							sim->part_change_type(idr, x + rx, y + ry, PT_GOO);
+						break;
+					case PT_NITR:
+						if(RNG::Ref().chance(3, 200))
+							sim->part_change_type(idr, x + rx, y + ry, PT_DESL);
+						break;
+					case PT_PLNT:
+						if(RNG::Ref().chance(1, 20))
+							sim->create_part(idr, x + rx, y + ry, PT_WOOD);
+						break;
+					case PT_DESL:
+					case PT_OIL:
+						if(RNG::Ref().chance(3, 200))
+							sim->part_change_type(idr, x + rx, y + ry, PT_GAS);
+						break;
+					case PT_COAL:
+						if(RNG::Ref().chance(1, 20))
+							sim->create_part(idr, x + rx, y + ry, PT_WOOD);
+						break;
+					case PT_BCOL:
+						if(RNG::Ref().chance(1, 20))
+							sim->create_part(idr, x + rx, y + ry, PT_SAWD);
+						break;
+					case PT_DUST:
+						if(RNG::Ref().chance(1, 20))
+							sim->part_change_type(idr, x + rx, y + ry, PT_FWRK);
+						break;
+					case PT_FWRK:
+						if(RNG::Ref().chance(1, 20))
+							parts[idr].ctype = PT_DUST;
+						break;
+					case PT_ACID:
+						if(RNG::Ref().chance(1, 20))
+							sim->create_part(idr, x + rx, y + ry, PT_ISOZ);
+						break;
+					case PT_TTAN:
+						if(RNG::Ref().chance(1, 20)){
+							sim->kill_part(i);
+							return 1;
+						}
+						break;
+					case PT_EXOT:
+						if(RNG::Ref().chance(1, 20))
+							parts[idr].life = 1500;
+						break;
+					case PT_RFRG:
+						if(RNG::Ref().chance(1, 2))
+							sim->create_part(idr, x + rx, y + ry, PT_GAS);
+						else
+							sim->create_part(idr, x + rx, y + ry, PT_CAUS);
+						break;
+					default:
+						break;
 				}
 			}
-
-
+		}
+	}
 	return 0;
 }
 

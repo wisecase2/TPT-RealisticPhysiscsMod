@@ -47,6 +47,7 @@ Element_TTAN::Element_TTAN()
 	SolidLiquidlatent = 15.f;
 	LiquidGaslatent = 421.f;
 	GasPlsmlatent = 5000.f;
+	pressureresistance = 50.f;
 
 	Update = &Element_TTAN::update;
 }

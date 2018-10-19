@@ -99,13 +99,13 @@ public:
 	float fvx[YRES/CELL][XRES/CELL];
 	float fvy[YRES/CELL][XRES/CELL];
 	//Particles
-	Particle parts[NPART];
-	int idpointer[NPART][3];
-	int pmap[YRES][XRES];
-	int pmap2[YRES][XRES][4];
-	int photons[YRES][XRES];
-	float flttransitiontemp[NPART];
-	unsigned int pmap_count[YRES][XRES];
+	Particle parts[NPART]; // ~ 1 megabytes 
+	int idpointer[NPART][3]; // ~ 3 megabytes 
+	int pmap[YRES][XRES]; // ~ 1 megabytes 
+	int pmap2[YRES][XRES][4]; // ~ 4 megabytes 
+	int photons[YRES][XRES]; // ~ 1 megabytes 
+	float flttransitiontemp[NPART]; // ~ 1 megabytes 
+	unsigned int pmap_count[YRES][XRES]; // ~ 1 megabytes , total  ~ 12 megabytes
 	//Simulation Settings
 	int edgeMode;
 	int gravityMode;

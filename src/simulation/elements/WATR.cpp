@@ -9,12 +9,12 @@ Element_WATR::Element_WATR()
 	MenuSection = SC_LIQUID;
 	Enabled = 1;
 
-	Advection = 0.6f;
+	Advection = 0.1f;
 	AirDrag = 0.01f * CFDS;
 	AirLoss = 0.98f;
 	Loss = 0.95f;
 	Collision = 0.0f;
-	Gravity = 0.1f;
+	Gravity = 0.5f;
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 2;
