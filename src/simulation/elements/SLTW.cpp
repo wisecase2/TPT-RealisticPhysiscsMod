@@ -63,10 +63,10 @@ int Element_SLTW::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				switch TYP(r)
 				{
-				case PT_SALT:
-					if (RNG::Ref().chance(1, 2000))
-						sim->part_change_type(ID(r),x+rx,y+ry,PT_SLTW);
-					break;
+				//case PT_SALT:
+				//	if (RNG::Ref().chance(1, 2000))
+				//		sim->part_change_type(ID(r),x+rx,y+ry,PT_SLTW);
+				//	break;
 				case PT_PLNT:
 					if (RNG::Ref().chance(1, 40))
 						sim->kill_part(ID(r));

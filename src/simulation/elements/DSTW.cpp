@@ -72,18 +72,18 @@ int Element_DSTW::update(UPDATE_FUNC_ARGS)
 							sim->part_change_type(ID(r),x+rx,y+ry,PT_SLTW);
 					}
 					break;
-				case PT_SLTW:
-					if (RNG::Ref().chance(1, 2000))
-					{
-						sim->part_change_type(i,x,y,PT_SLTW);
-						break;
-					}
-				case PT_WATR:
-					if (RNG::Ref().chance(1, 100))
-					{
-						sim->part_change_type(i,x,y,PT_WATR);
-					}
-					break;
+				//case PT_SLTW:
+				//	if (RNG::Ref().chance(1, 2000))
+				//	{
+				//		sim->part_change_type(i,x,y,PT_SLTW);
+				//		break;
+				//	}
+				//case PT_WATR:
+				//	if (RNG::Ref().chance(1, 100))
+				//	{
+				//		sim->part_change_type(i,x,y,PT_WATR);
+				//	}
+				//	break;
 				case PT_RBDM:
 				case PT_LRBD:
 					if ((sim->legacy_enable||parts[i].temp>12.0f) && RNG::Ref().chance(1, 100))

@@ -4198,6 +4198,8 @@ void Simulation::UpdateParticles(int start, int end)
 									t = PT_SALT;
 								else
 									t = PT_WTRV;
+
+								s = 1;
 #endif
 							} else if(t==PT_BRMT){
 								if(parts[i].ctype==PT_TUNG){
@@ -4221,8 +4223,9 @@ void Simulation::UpdateParticles(int start, int end)
 								if(ctemph >= elements[parts[i].ctype].HighTemperature){
 									t = PT_LAVA;
 								}
-							}
+							} else{
 								s = 0;
+							}
 						}
 					}else if (elements[t].LowTemperatureTransition > -1 && ctempl<elements[t].LowTemperature){
 						// particle type change due to low temperature
@@ -4333,9 +4336,9 @@ void Simulation::UpdateParticles(int start, int end)
 								parts[i].temp -= elements[pt_beforetransition].LiquidGaslatent;
 							} else if((elements[t].Properties&TYPE_LIQUID)&&(elements[pt_beforetransition].Properties&TYPE_GAS)){
 								parts[i].temp += elements[pt_beforetransition].LiquidGaslatent;
-							} else if((elements[t].Properties&TYPE_SOLID)&&(elements[pt_beforetransition].Properties&TYPE_LIQUID)){
+							} else if(((elements[t].Properties&TYPE_PART) || (elements[t].Properties&TYPE_SOLID))&&(elements[pt_beforetransition].Properties&TYPE_LIQUID)){
 								parts[i].temp += elements[pt_beforetransition].SolidLiquidlatent;
-							} else if((elements[t].Properties&TYPE_LIQUID)&&(elements[pt_beforetransition].Properties&TYPE_SOLID)){
+							} else if((elements[t].Properties&TYPE_LIQUID)&&((elements[pt_beforetransition].Properties&TYPE_SOLID) || (elements[pt_beforetransition].Properties&TYPE_PART))){
 								parts[i].temp -= elements[pt_beforetransition].SolidLiquidlatent;
 							}
 						} else{
