@@ -43,6 +43,7 @@ Element_BTRY::Element_BTRY()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 75;
 
 	Update = &Element_BTRY::update;
 }

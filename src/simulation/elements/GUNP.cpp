@@ -43,6 +43,7 @@ Element_GUNP::Element_GUNP()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = NULL;
 }

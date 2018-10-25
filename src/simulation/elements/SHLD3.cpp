@@ -43,6 +43,7 @@ Element_SHLD3::Element_SHLD3()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 75;
 
 	Update = &Element_SHLD3::update;
 }

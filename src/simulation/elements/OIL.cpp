@@ -43,6 +43,7 @@ Element_OIL::Element_OIL()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 15;
 
 	Update = NULL;
 }

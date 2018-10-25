@@ -43,6 +43,7 @@ Element_THRM::Element_THRM()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 100;
 
 	Update = NULL;
 }

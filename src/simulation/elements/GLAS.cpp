@@ -46,6 +46,7 @@ Element_GLAS::Element_GLAS()
 	SolidLiquidlatent = 15.6f;
 	LiquidGaslatent = 420.f;
 	GasPlsmlatent = 5000.f;
+	radabsorb = 30;
 
 	Update = &Element_GLAS::update;
 }

@@ -10,15 +10,15 @@ Element_GOLD::Element_GOLD()
 	MenuSection = SC_SOLIDS;
 	Enabled = 1;
 
-	Advection = 0.0f;
-	AirDrag = 0.00f * CFDS;
-	AirLoss = 0.90f;
-	Loss = 0.00f;
-	Collision = 0.0f;
-	Gravity = 0.0f;
+	Advection = 0.2f;
+	AirDrag = 0.04f * CFDS;
+	AirLoss = 0.94f;
+	Loss = 0.95f;
+	Collision = -0.1f;
+	Gravity = 0.5f;
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
-	Falldown = 0;
+	Falldown = 1;
 
 	Flammable = 0;
 	Explosive = 0;
@@ -26,13 +26,13 @@ Element_GOLD::Element_GOLD()
 	Hardness = 0;
 	PhotonReflectWavelengths = 0x3C038100;
 
-	Weight = 100;
+	Weight = 87;
 
 	Temperature = R_TEMP+0.0f +273.15f;
 	HeatConduct = 251;
 	Description = "Corrosion resistant metal, will reverse corrosion of iron.";
 
-	Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_HOT_GLOW|PROP_LIFE_DEC|PROP_NEUTPASS;
+	Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_HOT_GLOW|PROP_LIFE_DEC;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -48,6 +48,10 @@ Element_GOLD::Element_GOLD()
 	SolidLiquidlatent = 6.3f;
 	LiquidGaslatent = 172.f;
 	GasPlsmlatent = 5000.f;
+	pressureresistance = 5.f;
+	pressureblock = true;
+	defaultbreak = true;
+	radabsorb = 200;
 
 	Update = &Element_GOLD::update;
 	Graphics = &Element_GOLD::graphics;

@@ -44,6 +44,7 @@ Element_SPRK::Element_SPRK()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 50;
 
 	Update = &Element_SPRK::update;
 	Graphics = &Element_SPRK::graphics;

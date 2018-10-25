@@ -43,6 +43,7 @@ Element_BRMT::Element_BRMT()
 	GasTemperaturetransition = 2743.15f;
 	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 75;
 
 	Update = &Element_BRMT::update;
 }

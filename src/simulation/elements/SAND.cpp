@@ -43,6 +43,7 @@ Element_SAND::Element_SAND()
 	GasTemperaturetransition = 3300.f;
 	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 40;
 
 	Update = NULL;
 }

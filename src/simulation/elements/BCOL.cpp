@@ -44,6 +44,7 @@ Element_BCOL::Element_BCOL()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 30;
 
 	Update = &Element_COAL::update;
 	Graphics = &Element_COAL::graphics;

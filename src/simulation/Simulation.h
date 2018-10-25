@@ -51,6 +51,8 @@ public:
 	int currentTick;
 	int replaceModeSelected;
 	int replaceModeFlags;
+	int blockcount[YRES / CELL][XRES / CELL];
+	float diffdt;
 
 	char can_move[PT_NUM][PT_NUM];
 	int debug_currentParticle;
@@ -87,6 +89,7 @@ public:
 	float (*vy)[XRES/CELL];
 	float (*pv)[XRES/CELL];
 	float (*hv)[XRES/CELL];
+	float dthv[YRES/CELL][XRES/CELL];
 	//float dpv[YRES/CELL][XRES/CELL];
 	//Gravity sim
 	float *gravx;//gravx[(YRES/CELL) * (XRES/CELL)];
@@ -100,11 +103,12 @@ public:
 	float fvy[YRES/CELL][XRES/CELL];
 	//Particles
 	Particle parts[NPART]; // ~ 1 megabytes 
-	int idpointer[NPART][3]; // ~ 3 megabytes 
+	int idpointer[NPART][3]; // ~ 3 megabytes
 	int pmap[YRES][XRES]; // ~ 1 megabytes 
 	int pmap2[YRES][XRES][4]; // ~ 4 megabytes 
 	int photons[YRES][XRES]; // ~ 1 megabytes 
-	float flttransitiontemp[NPART]; // ~ 1 megabytes 
+	float storepressure[NPART]; // ~ 1 megabytes
+
 	unsigned int pmap_count[YRES][XRES]; // ~ 1 megabytes , total  ~ 12 megabytes
 	//Simulation Settings
 	int edgeMode;
@@ -128,20 +132,21 @@ public:
 	Snapshot * CreateSnapshot();
 	void Restore(const Snapshot & snap);
 
-	int is_blocking(int t, int x, int y);
-	int is_boundary(int pt, int x, int y);
-	int find_next_boundary(int pt, int *x, int *y, int dm, int *em);
+	int is_blocking(int t, int x, int y, int id);
+	int is_boundary(int pt, int x, int y, int id);
+	int find_next_boundary(int pt, int *x, int *y, int dm, int *em, int id);
 	void photoelectric_effect(int nx, int ny);
 	unsigned direction_to_map(float dx, float dy, int t);
 	int do_move(int i, int x, int y, float nxf, float nyf);
 	int try_move(int i, int x, int y, int nx, int ny);
-	int eval_move(int pt, int nx, int ny, unsigned *rr);
+	int eval_move(int pt, int nx, int ny, unsigned *rr, int id);
 	void init_can_move();
 	bool IsWallBlocking(int x, int y, int type);
 	bool IsValidElement(int type) {
 		return (type >= 0 && type < PT_NUM && elements[type].Enabled);
 	}
 	void nuclear_fusion(int id);
+	void addpressure(float k,int i ,int y, int x);
 	void create_cherenkov_photon(int pp);
 	void create_gain_photon(int pp);
 	void kill_part(int i);
@@ -209,8 +214,8 @@ public:
 	void orbitalparts_get(int block1, int block2, int resblock1[], int resblock2[]);
 	void orbitalparts_set(int *block1, int *block2, int resblock1[], int resblock2[]);
 	int get_wavelength_bin(int *wm);
-	int get_normal(int pt, int x, int y, float dx, float dy, float *nx, float *ny);
-	int get_normal_interp(int pt, float x0, float y0, float dx, float dy, float *nx, float *ny);
+	int get_normal(int pt, int x, int y, float dx, float dy, float *nx, float *ny, int id);
+	int get_normal_interp(int pt, float x0, float y0, float dx, float dy, float *nx, float *ny, int id);
 	void clear_sim();
 	Simulation();
 	~Simulation();

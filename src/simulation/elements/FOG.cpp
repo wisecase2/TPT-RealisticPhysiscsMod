@@ -43,6 +43,7 @@ Element_FOG::Element_FOG()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 10;
 
 	Update = &Element_FOG::update;
 }

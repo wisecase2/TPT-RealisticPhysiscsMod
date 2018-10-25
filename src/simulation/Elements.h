@@ -32,6 +32,7 @@
 #define PROP_NOAMBHEAT		0x40000  //2^18 Don't transfer or receive heat from ambient heat.
 #define PROP_DRAWONCTYPE	0x80000  //2^19 Set its ctype to another element if the element is drawn upon it (like what CLNE does)
 #define PROP_NOCTYPEDRAW	0x100000 // 2^20 When this element is drawn upon with, do not set ctype (like BCLN for CLNE)
+#define PROP_GAMMAPASS	    0x200000 // 2^21
 
 // filt tmp operations
 #define SET 0

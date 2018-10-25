@@ -44,6 +44,7 @@ Element_POLO::Element_POLO()
 	GasTemperaturetransition = 1200.f;
 	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 120;
 
 	Update = &Element_POLO::update;
 	Graphics = &Element_POLO::graphics;

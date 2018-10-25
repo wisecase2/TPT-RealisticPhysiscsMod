@@ -43,6 +43,7 @@ Element_SALT::Element_SALT()
 	GasTemperaturetransition = 1600.f;
 	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 20;
 
 	Update = NULL;
 }

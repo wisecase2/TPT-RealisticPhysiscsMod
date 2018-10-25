@@ -46,6 +46,7 @@ Element_QRTZ::Element_QRTZ()
 	SolidLiquidlatent = 15.6f;
 	LiquidGaslatent = 420.f;
 	GasPlsmlatent = 5000.f;
+	radabsorb = 40;
 
 	Update = &Element_QRTZ::update;
 	Graphics = &Element_QRTZ::graphics;
@@ -59,7 +60,7 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 	{
 		parts[i].pavg[0] = parts[i].pavg[1];
 		parts[i].pavg[1] = sim->pv[y/CELL][x/CELL];
-		if (parts[i].pavg[1]-parts[i].pavg[0] > 0.05*(parts[i].temp/3) || parts[i].pavg[1]-parts[i].pavg[0] < -0.05*(parts[i].temp/3))
+		if (parts[i].pavg[1]-parts[i].pavg[0] > 0.05*(parts[i].temp) || parts[i].pavg[1]-parts[i].pavg[0] < -0.05*(parts[i].temp))
 		{
 			sim->part_change_type(i,x,y,PT_PQRT);
 			parts[i].life = 5; //timer before it can grow or diffuse again

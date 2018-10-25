@@ -32,7 +32,7 @@ Element_WOOD::Element_WOOD()
 	HeatConduct = 164;
 	Description = "Wood, flammable.";
 
-	Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
+	Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -45,6 +45,7 @@ Element_WOOD::Element_WOOD()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = &Element_WOOD::update;
 	Graphics = &Element_WOOD::graphics;

@@ -46,6 +46,7 @@ Element_CO2::Element_CO2()
 	//SolidLiquidlatent = 52.f;
 	LiquidGaslatent = 135.f;
 	GasPlsmlatent = 5000.f;
+	radabsorb = 10;
 
 	Update = &Element_CO2::update;
 }

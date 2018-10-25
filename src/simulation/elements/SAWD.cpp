@@ -43,6 +43,7 @@ Element_SAWD::Element_SAWD()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = NULL;
 	Graphics = NULL;

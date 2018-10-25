@@ -43,6 +43,7 @@ Element_NICE::Element_NICE()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 10;
 
 	Update = NULL;
 }

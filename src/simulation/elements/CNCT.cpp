@@ -46,6 +46,7 @@ Element_CNCT::Element_CNCT()
 	SolidLiquidlatent = 15.6f;
 	LiquidGaslatent = 420.f;
 	GasPlsmlatent = 5000.f;
+	radabsorb = 30;
 
 	Update = NULL;
 }

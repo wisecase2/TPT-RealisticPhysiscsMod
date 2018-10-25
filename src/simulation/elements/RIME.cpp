@@ -48,6 +48,7 @@ Element_RIME::Element_RIME()
 	GasPlsmlatent = 5000.f;
 	Heatcapacity = 2.0f;
 	InvHeatcapacity = 0.5f;
+	radabsorb = 20;
 
 	Update = &Element_RIME::update;
 }

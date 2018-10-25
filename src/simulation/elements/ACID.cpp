@@ -44,6 +44,7 @@ Element_ACID::Element_ACID()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 15;
 
 	Update = &Element_ACID::update;
 	Graphics = &Element_ACID::graphics;

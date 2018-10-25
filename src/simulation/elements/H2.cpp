@@ -49,6 +49,7 @@ Element_H2::Element_H2()
 	GasPlsmlatent = 5000.f;
 	//Heatcapacity = 14.3f;
 	//InvHeatcapacity = 0.06993f;
+	radabsorb = 5;
 
 	Update = &Element_H2::update;
 }

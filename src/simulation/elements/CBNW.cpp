@@ -30,7 +30,7 @@ Element_CBNW::Element_CBNW()
 	HeatConduct = 29;
 	Description = "Carbonated water. Slowly releases CO2.";
 
-	Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_NEUTPENETRATE;
+	Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_NEUTPENETRATE | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -43,6 +43,7 @@ Element_CBNW::Element_CBNW()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 15;
 
 	Update = &Element_CBNW::update;
 	Graphics = &Element_CBNW::graphics;

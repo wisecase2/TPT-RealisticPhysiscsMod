@@ -50,6 +50,12 @@ void Air::Clear()
 void Air::ClearAirH()
 {
 	std::fill(&hv[0][0], &hv[0][0]+((XRES/CELL)*(YRES/CELL)), ambientAirTemp);
+	//std::fill(&dhv[0][0], &dhv[0][0] + ((XRES / CELL)*(YRES / CELL)), ambientAirTemp);
+	for(int y = 0; y < YRES / CELL; y++){
+		for(int x = 0; x < XRES / CELL; x++){
+			sim.dthv[y][x] = ambientAirTemp;
+		}
+	}
 }
 
 void Air::update_airh(void)
@@ -120,7 +126,7 @@ void Air::update_airh(void)
 			{ //Vertical gravity only for the time being
 				float airdiff = hv[y-1][x]-hv[y][x];
 				if(airdiff>0 && !(bmap_blockairh[y-1][x]&0x8))
-					vy[y][x] -= airdiff/5000.0f;
+					vy[y][x] -= airdiff/50000.0f;
 			}
 			ohv[y][x] = dh;
 		}
@@ -159,10 +165,8 @@ void Air::update_air(void)
 
 		for (j=0; j<YRES/CELL; j++) //clear some velocities near walls
 		{
-			for (i=0; i<XRES/CELL; i++)
-			{
-				if (bmap_blockair[j][i])
-				{
+			for(i = 0; i < XRES / CELL; i++){
+				if(bmap_blockair[j][i]){
 					//set 0 vx left and right
 					if(i > 0){
 						vx[j][i - 1] = 0.0f;
@@ -181,8 +185,7 @@ void Air::update_air(void)
 					}
 				}
 			}
-		}
-
+		} 
 		for(y = 0; y < (YRES / CELL); y++){ //pressure adjustments from velocity
 			for(x = 0; x < (XRES / CELL); x++){
 				dp = 0.0f;
@@ -200,14 +203,15 @@ void Air::update_air(void)
 				}
 
 				//opv[y][x] = pv[y][x];
-				pv[y][x] *= AIR_PLOSS;
+				//pv[y][x] *= AIR_PLOSS;
 				pv[y][x] += dp * AIR_TSTEPP;
+				sim.dthv[y][x] = hv[y][x];
 
 				if(bmap_blockair[y][x]){
 					pv[y][x] = 0;
 				}
 			}
-		}
+		} 
 		for (y=0; y<YRES/CELL; y++) //velocity adjustments from pressure
 			for (x=0; x<XRES/CELL; x++)
 			{
@@ -236,7 +240,6 @@ void Air::update_air(void)
 					vy[y][x] = 0;
 
 			}
-
 		for (y=0; y<YRES/CELL; y++) //update velocity and pressure
 			for (x=0; x<XRES/CELL; x++)
 			{

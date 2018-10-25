@@ -30,7 +30,7 @@ Element_IGNT::Element_IGNT()
 	HeatConduct = 88;
 	Description = "Ignition cord. Burns slowly with fire and sparks.";
 
-	Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_SPARKSETTLE | PROP_LIFE_KILL;
+	Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_SPARKSETTLE | PROP_LIFE_KILL | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;

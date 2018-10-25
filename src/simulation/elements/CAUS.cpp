@@ -43,6 +43,7 @@ Element_CAUS::Element_CAUS()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 10;
 
 	Update = &Element_CAUS::update;
 }

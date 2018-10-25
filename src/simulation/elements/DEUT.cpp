@@ -43,6 +43,7 @@ Element_DEUT::Element_DEUT()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 15;
 
 	Update = &Element_DEUT::update;
 	Graphics = &Element_DEUT::graphics;

@@ -44,6 +44,7 @@ Element_LAVA::Element_LAVA()
 	GasTemperaturetransition = 3000.f;
 	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 50;
 
 	Update = &Element_FIRE::update;
 	Graphics = &Element_LAVA::graphics;

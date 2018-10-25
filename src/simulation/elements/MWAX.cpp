@@ -43,6 +43,7 @@ Element_MWAX::Element_MWAX()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = NULL;
 }

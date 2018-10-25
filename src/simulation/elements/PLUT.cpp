@@ -9,15 +9,15 @@ Element_PLUT::Element_PLUT()
 	MenuSection = SC_NUCLEAR;
 	Enabled = 1;
 
-	Advection = 0.f;
-	AirDrag = 0.f * CFDS;
-	AirLoss = 0.99f;
-	Loss = 0.f;
-	Collision = 0.0f;
-	Gravity = 0.f;
+	Advection = 0.2f;
+	AirDrag = 0.04f * CFDS;
+	AirLoss = 0.94f;
+	Loss = 0.95f;
+	Collision = -0.1f;
+	Gravity = 0.5f;
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
-	Falldown = 0;
+	Falldown = 1;
 
 	Flammable = 0;
 	Explosive = 0;
@@ -31,7 +31,7 @@ Element_PLUT::Element_PLUT()
 	HeatConduct = 251;
 	Description = "Plutonium. Heavy, fissile particles.";
 
-	Properties = TYPE_PART|PROP_NEUTPASS|PROP_RADIOACTIVE;
+	Properties = TYPE_SOLID|PROP_NEUTPASS|PROP_RADIOACTIVE;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -47,6 +47,10 @@ Element_PLUT::Element_PLUT()
 	SolidLiquidlatent = 2.8f;
 	LiquidGaslatent = 344.f;
 	GasPlsmlatent = 5000.f;
+	pressureresistance = 10.f;
+	pressureblock = true;
+	defaultbreak = true;
+	radabsorb = 220;
 
 	//Update = &Element_PLUT::update;
 	Update = &Element_PLUT::update;

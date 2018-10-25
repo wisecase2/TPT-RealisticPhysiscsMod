@@ -30,7 +30,7 @@ Element_SOAP::Element_SOAP()
 	HeatConduct = 29;
 	Description = "Soap. Creates bubbles, washes off deco color, and cures virus.";
 
-	Properties = TYPE_LIQUID|PROP_NEUTPENETRATE|PROP_LIFE_DEC;
+	Properties = TYPE_LIQUID|PROP_NEUTPENETRATE|PROP_LIFE_DEC | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -43,6 +43,7 @@ Element_SOAP::Element_SOAP()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = &Element_SOAP::update;
 	Graphics = &Element_SOAP::graphics;

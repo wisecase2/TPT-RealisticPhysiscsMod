@@ -896,6 +896,11 @@ void GameController::ResetSpark()
 	memset(sim->wireless, 0, sizeof(sim->wireless));
 }
 
+int GameController::istypeproperties(int type, int type2){
+	Simulation * sim = gameModel->GetSimulation();
+	return sim->elements[type].Properties & type2;
+}
+
 void GameController::SwitchGravity()
 {
 	gameModel->GetSimulation()->gravityMode = (gameModel->GetSimulation()->gravityMode+1)%3;

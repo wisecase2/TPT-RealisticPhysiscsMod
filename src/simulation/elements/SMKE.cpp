@@ -43,6 +43,7 @@ Element_SMKE::Element_SMKE()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 5;
 
 	Update = NULL;
 	Graphics = &Element_SMKE::graphics;

@@ -1243,7 +1243,7 @@ void Renderer::render_parts()
 #endif
 	foundElements = 0;
 	for(i = 0; i<=sim->parts_lastActiveIndex; i++) {
-		if (sim->parts[i].type && sim->parts[i].type >= 0 && sim->parts[i].type < PT_NUM && sim->idpointer[i][2] <= 3) { // só desenha, se a particula tem profundidade menor que 3;
+		if (sim->parts[i].type && sim->parts[i].type >= 0 && sim->parts[i].type < PT_NUM && (!(sim->idpointer[i][2] > 3 && sim->currentTick == sim->idpointer[i][0]))) { // só desenha, se a particula tem profundidade menor que 3;
 			t = sim->parts[i].type;
 
 			nx = (int)(sim->parts[i].x+0.5f);
@@ -1267,9 +1267,9 @@ void Renderer::render_parts()
 
 			if((t == PT_BRMT || t == PT_PLSM || t == PT_GASEOUS || t == PT_LIQUID)
 				&& isvalid && parts[i].ctype != PT_NONE){
-					colr = PIXR(elements[parts[i].ctype].Colour);
-					colg = PIXG(elements[parts[i].ctype].Colour);
-					colb = PIXB(elements[parts[i].ctype].Colour);
+				colr = PIXR(elements[parts[i].ctype].Colour);
+				colg = PIXG(elements[parts[i].ctype].Colour);
+				colb = PIXB(elements[parts[i].ctype].Colour);
 			} else{
 				colr = PIXR(elements[t].Colour);
 				colg = PIXG(elements[t].Colour);
@@ -2047,7 +2047,7 @@ void Renderer::render_parts()
 							type = PT_PRTI;
 						for (int z = 0; z <= sim->parts_lastActiveIndex; z++)
 						{
-							if (parts[z].type == type && sim->idpointer[z][2] <= 3)
+							if (parts[z].type == type && (!(sim->idpointer[z][2] > 3 && sim->currentTick == sim->idpointer[z][0])))
 							{
 								othertmp = (int)((parts[z].temp-73.15f)/100+1);
 								if (tmp == othertmp)
@@ -2645,6 +2645,7 @@ Renderer::Renderer(Graphics * g, Simulation * sim):
 	renderModePresets[4].Name = "Fire Display";
 	renderModePresets[4].RenderModes.push_back(RENDER_FIRE);
 	renderModePresets[4].RenderModes.push_back(RENDER_SPRK);
+	//renderModePresets[4].RenderModes.push_back(RENDER_GLOW);
 	renderModePresets[4].RenderModes.push_back(RENDER_EFFE);
 	renderModePresets[4].RenderModes.push_back(RENDER_BASC);
 

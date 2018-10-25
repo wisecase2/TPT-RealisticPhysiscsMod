@@ -30,7 +30,7 @@ Element_GEL::Element_GEL()
 	HeatConduct = 29;
 	Description = "Gel. A liquid with variable viscosity and heat conductivity.";
 
-	Properties = TYPE_LIQUID|PROP_LIFE_DEC|PROP_NEUTPENETRATE;
+	Properties = TYPE_LIQUID|PROP_LIFE_DEC|PROP_NEUTPENETRATE | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -43,6 +43,7 @@ Element_GEL::Element_GEL()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = &Element_GEL::update;
 	Graphics = &Element_GEL::graphics;

@@ -151,6 +151,7 @@ public:
 	bool IsValidElement(int type);
 	String WallName(int type);
 	int Record(bool record);
+	int istypeproperties(int type, int type2);
 
 	void ResetAir();
 	void ResetSpark();

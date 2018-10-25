@@ -49,17 +49,29 @@ public:
 	int LowTemperatureTransition;
 	float HighTemperature;
 	int HighTemperatureTransition;
+	
+	// new transitions
 	float GasTemperaturetransition = MAX_TEMP+1.f;
 	int GasTransition = -1;
 	float PlsmTemperaturetransition = -1.f;
+	
+	// heat latent transition
 	float Liquidtransition = -1.f;
 	float SolidLiquidlatent = 0.f;
 	float LiquidGaslatent = 0.f;
 	float GasPlsmlatent = 5000.f; // default
+	
+    //heat capacity not used yet
 	float Heatcapacity = 1.f;
 	float InvHeatcapacity = 1.f;
+	
+	// broken state
 	float pressureresistance = 0.f;
+	bool pressureblock = false;
+	bool defaultbreak = false;
 
+	//radioactive
+	float radabsorb = 0;
 
 
 	int (*Update) (UPDATE_FUNC_ARGS);

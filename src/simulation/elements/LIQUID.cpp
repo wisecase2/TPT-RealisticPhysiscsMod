@@ -43,6 +43,7 @@ Element_LIQUID::Element_LIQUID()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 15;
 
 	Update = NULL;//&Element_LIQUID::update;
 	Graphics = NULL;// &Element_LIQUID::graphics;

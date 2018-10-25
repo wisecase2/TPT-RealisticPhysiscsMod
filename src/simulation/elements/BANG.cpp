@@ -30,7 +30,7 @@ Element_BANG::Element_BANG()
 	HeatConduct = 88;
 	Description = "TNT, explodes all at once.";
 
-	Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
+	Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;

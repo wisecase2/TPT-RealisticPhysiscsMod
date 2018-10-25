@@ -45,6 +45,7 @@ Element_FWRK::Element_FWRK()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 30;
 
 	Update = &Element_FWRK::update;
 }
@@ -64,7 +65,7 @@ int Element_FWRK::update(UPDATE_FUNC_ARGS)
 			gy += cosf(angle)*sim->elements[PT_FWRK].Gravity*0.5f;
 		}
 		gmax = std::max(fabsf(gx), fabsf(gy));
-		if (sim->eval_move(PT_FWRK, (int)(x-(gx/gmax)+0.5f), (int)(y-(gy/gmax)+0.5f), NULL))
+		if (sim->eval_move(PT_FWRK, (int)(x-(gx/gmax)+0.5f), (int)(y-(gy/gmax)+0.5f), NULL, i))
 		{
 			multiplier = 15.0f/sqrtf(gx*gx+gy*gy);
 

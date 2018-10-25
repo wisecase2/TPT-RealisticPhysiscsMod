@@ -33,7 +33,7 @@ Element_PLNT::Element_PLNT()
 	HeatConduct = 65;
 	Description = "Plant, drinks water and grows.";
 
-	Properties = TYPE_SOLID | PROP_NEUTPENETRATE |PROP_LIFE_DEC;
+	Properties = TYPE_SOLID | PROP_NEUTPENETRATE |PROP_LIFE_DEC | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -46,6 +46,7 @@ Element_PLNT::Element_PLNT()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 10;
 
 	Update = &Element_PLNT::update;
 	Graphics = &Element_PLNT::graphics;

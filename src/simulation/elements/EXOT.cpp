@@ -43,6 +43,7 @@ Element_EXOT::Element_EXOT()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 100;
 
 	Update = &Element_EXOT::update;
 	Graphics = &Element_EXOT::graphics;

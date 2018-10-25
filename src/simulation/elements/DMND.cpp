@@ -43,6 +43,8 @@ Element_DMND::Element_DMND()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	pressureblock = true;
+	radabsorb = 1000;
 
 	Update = NULL;
 }

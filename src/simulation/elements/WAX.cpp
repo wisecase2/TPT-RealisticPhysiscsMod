@@ -43,6 +43,7 @@ Element_WAX::Element_WAX()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 15;
 
 	Update = NULL;
 }

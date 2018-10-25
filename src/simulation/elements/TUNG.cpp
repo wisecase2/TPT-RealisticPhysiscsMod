@@ -47,6 +47,7 @@ Element_TUNG::Element_TUNG()
 	SolidLiquidlatent = 18.4f;
 	LiquidGaslatent = 480.0f;
 	GasPlsmlatent = 5000.f;
+	radabsorb = 200;
 
 	Update = &Element_TUNG::update;
 	Graphics = &Element_TUNG::graphics;

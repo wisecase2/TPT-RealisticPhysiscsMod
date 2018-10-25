@@ -44,6 +44,7 @@ Element_DUST::Element_DUST()
 	GasTemperaturetransition = 3300.f;
 	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 30;
 
 	Update = NULL;
 	Graphics = NULL;

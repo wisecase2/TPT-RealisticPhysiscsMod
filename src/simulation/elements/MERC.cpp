@@ -24,13 +24,13 @@ Element_MERC::Element_MERC()
 	Meltable = 0;
 	Hardness = 20;
 
-	Weight = 91;
+	Weight = 60;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 251;
 	Description = "Mercury. Volume changes with temperature, Conductive.";
 
-	Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_NEUTABSORB|PROP_LIFE_DEC;
+	Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_NEUTABSORB|PROP_LIFE_DEC | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -43,6 +43,7 @@ Element_MERC::Element_MERC()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 120;
 
 	Update = &Element_MERC::update;
 }

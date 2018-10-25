@@ -21,7 +21,6 @@
 #include "gui/interface/Window.h"
 #include "gui/search/Thumbnail.h"
 #include "simulation/SaveRenderer.h"
-#include "simulation/SimulationData.h"
 
 
 class SplitButton;
@@ -2296,7 +2295,12 @@ void GameView::OnDraw()
 			{
 				if (type == PT_LAVA && c->IsValidElement(ctype))
 					sampleInfo << "Molten " << c->ElementResolve(ctype, -1).FromAscii();
-				else if ((type == PT_PIPE || type == PT_PPIP) && c->IsValidElement(ctype))
+				else if(c->istypeproperties(type, TYPE_SOLID) && sample.particle.tmp2 == 1000){
+					sampleInfo << "Broken " << c->ElementResolve(type, ctype).FromAscii();
+					if(c->IsValidElement(ctype)){
+						sampleInfo << " (" << c->ElementResolve(ctype, -1).FromAscii() << ")";
+				    }
+				}else if((type == PT_PIPE || type == PT_PPIP) && c->IsValidElement(ctype))
 					sampleInfo << c->ElementResolve(type, -1).FromAscii() << " with " << c->ElementResolve(ctype, (int)sample.particle.pavg[1]).FromAscii();
 				else if (type == PT_LIFE)
 					sampleInfo << c->ElementResolve(type, ctype).FromAscii();
@@ -2350,6 +2354,9 @@ void GameView::OnDraw()
 			{
 				if (type == PT_LAVA && c->IsValidElement(ctype))
 					sampleInfo << "Molten " << c->ElementResolve(ctype, -1).FromAscii();
+				else if(c->istypeproperties(type, TYPE_SOLID) && sample.particle.tmp2 == 1000){
+					sampleInfo << "Broken " << c->ElementResolve(type, ctype).FromAscii();
+				}
 				else if ((type == PT_PIPE || type == PT_PPIP) && c->IsValidElement(ctype))
 					sampleInfo << c->ElementResolve(type, -1).FromAscii() << " with " << c->ElementResolve(ctype, (int)sample.particle.pavg[1]).FromAscii();
 				else if (type == PT_LIFE)

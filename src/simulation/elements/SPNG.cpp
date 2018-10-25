@@ -43,6 +43,7 @@ Element_SPNG::Element_SPNG()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = &Element_SPNG::update;
 	Graphics = &Element_SPNG::graphics;

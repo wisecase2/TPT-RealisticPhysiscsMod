@@ -43,6 +43,7 @@ Element_FILT::Element_FILT()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 30;
 
 	Update = NULL;
 	Graphics = &Element_FILT::graphics;

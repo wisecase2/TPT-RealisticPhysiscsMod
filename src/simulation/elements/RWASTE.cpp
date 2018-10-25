@@ -44,6 +44,7 @@ Element_RWASTE::Element_RWASTE()
 	GasTemperaturetransition = 4404.15f;
 	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 200;
 
 	Update = NULL; // &Element_RWASTE::update;
 }

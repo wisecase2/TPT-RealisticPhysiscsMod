@@ -9,7 +9,7 @@ Element_WATR::Element_WATR()
 	MenuSection = SC_LIQUID;
 	Enabled = 1;
 
-	Advection = 0.1f;
+	Advection = 0.6f;
 	AirDrag = 0.01f * CFDS;
 	AirLoss = 0.98f;
 	Loss = 0.95f;
@@ -48,6 +48,7 @@ Element_WATR::Element_WATR()
 	GasPlsmlatent = 5000.f;
 	Heatcapacity = 4.2f;
 	InvHeatcapacity = 0.238095f;
+	radabsorb = 15;
 
 	Update = &Element_WATR::update;
 }

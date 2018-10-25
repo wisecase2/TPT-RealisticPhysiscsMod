@@ -31,7 +31,7 @@ Element_PLEX::Element_PLEX()
 	HeatConduct = 88;
 	Description = "Solid pressure sensitive explosive.";
 
-	Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
+	Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -44,6 +44,7 @@ Element_PLEX::Element_PLEX()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = NULL;
 }

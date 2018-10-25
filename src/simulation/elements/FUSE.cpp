@@ -43,6 +43,7 @@ Element_FUSE::Element_FUSE()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 30;
 
 	Update = &Element_FUSE::update;
 }

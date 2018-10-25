@@ -30,7 +30,7 @@ Element_LNTG::Element_LNTG()
 	HeatConduct = 70;
 	Description = "Liquid Nitrogen. Very cold, disappears whenever it touches anything warmer.";
 
-	Properties = TYPE_LIQUID;
+	Properties = TYPE_LIQUID|PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -43,6 +43,7 @@ Element_LNTG::Element_LNTG()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 5;
 
 	Update = NULL;
 }

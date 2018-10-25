@@ -43,6 +43,7 @@ Element_VIBR::Element_VIBR()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 500;
 
 	Update = &Element_VIBR::update;
 	Graphics = &Element_VIBR::graphics;

@@ -43,6 +43,7 @@ Element_DESL::Element_DESL()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = NULL;
 }

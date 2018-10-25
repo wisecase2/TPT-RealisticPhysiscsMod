@@ -36,7 +36,7 @@ Element_WTRV::Element_WTRV()
 	LowPressureTransition = NT;
 	HighPressure = IPH;
 	HighPressureTransition = NT;
-	LowTemperature = 371.0f;
+	LowTemperature = 374.0f;
 	LowTemperatureTransition = ST;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
@@ -48,6 +48,7 @@ Element_WTRV::Element_WTRV()
 	GasPlsmlatent = 5000.f;
 	Heatcapacity = 2.0f;
 	InvHeatcapacity = 1.0f;
+	radabsorb = 15;
 
 	Update = &Element_WTRV::update;
 }

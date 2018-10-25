@@ -43,6 +43,7 @@ Element_DYST::Element_DYST()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 100;
 
 	Update = NULL;
 }

@@ -49,6 +49,7 @@ Element_SNOW::Element_SNOW()
 	GasPlsmlatent = 5000.f;
 	Heatcapacity = 2.0f;
 	InvHeatcapacity = 0.5f;
+	radabsorb = 15;
 
 	Update = &Element_SNOW::update;
 }

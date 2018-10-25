@@ -43,6 +43,7 @@ Element_RBDM::Element_RBDM()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = NULL;
 }

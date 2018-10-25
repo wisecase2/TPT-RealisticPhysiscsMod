@@ -45,6 +45,7 @@ Element_FIRE::Element_FIRE()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 10;
 
 	Update = &Element_FIRE::update;
 	Graphics = &Element_FIRE::graphics;

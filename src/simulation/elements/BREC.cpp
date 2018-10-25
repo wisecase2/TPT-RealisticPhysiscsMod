@@ -43,6 +43,7 @@ Element_BREC::Element_BREC()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 75;
 
 	Update = &Element_BREC::update;
 }

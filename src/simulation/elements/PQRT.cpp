@@ -46,6 +46,7 @@ Element_PQRT::Element_PQRT()
 	SolidLiquidlatent = 15.6f;
 	LiquidGaslatent = 420.f;
 	GasPlsmlatent = 5000.f;
+	radabsorb = 40;
 
 	Update = &Element_QRTZ::update;
 	Graphics = &Element_QRTZ::graphics;

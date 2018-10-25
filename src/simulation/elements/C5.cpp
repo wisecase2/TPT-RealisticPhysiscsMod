@@ -30,7 +30,7 @@ Element_C5::Element_C5()
 	HeatConduct = 88;
 	Description = "Cold explosive, set off by anything cold.";
 
-	Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_LIFE_DEC;
+	Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_LIFE_DEC | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -43,6 +43,7 @@ Element_C5::Element_C5()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 30;
 
 	Update = &Element_C5::update;
 	Graphics = &Element_C5::graphics;

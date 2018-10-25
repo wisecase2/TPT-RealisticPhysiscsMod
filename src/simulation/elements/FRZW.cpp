@@ -43,6 +43,7 @@ Element_FRZW::Element_FRZW()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = &Element_FRZW::update;
 }

@@ -47,6 +47,7 @@ Element_LO2::Element_LO2()
 	LiquidGaslatent = 21.3f;
 	GasPlsmlatent = 5000.f;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 10;
 
 	Update = NULL;
 }

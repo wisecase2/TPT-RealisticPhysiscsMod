@@ -9,7 +9,7 @@ Element_SLTW::Element_SLTW()
 	MenuSection = SC_LIQUID;
 	Enabled = 1;
 
-	Advection = 0.1f;
+	Advection = 0.6f;
 	AirDrag = 0.01f * CFDS;
 	AirLoss = 0.98f;
 	Loss = 0.95f;
@@ -30,7 +30,7 @@ Element_SLTW::Element_SLTW()
 	HeatConduct = 75;
 	Description = "Saltwater, conducts electricity, difficult to freeze.";
 
-	Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_NEUTPENETRATE;
+	Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_NEUTPENETRATE | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -48,6 +48,7 @@ Element_SLTW::Element_SLTW()
 	GasPlsmlatent = 5000.f;
 	Heatcapacity = 4.2f;
 	InvHeatcapacity = 0.238095f;
+	radabsorb = 15;
 
 	Update = &Element_SLTW::update;
 }

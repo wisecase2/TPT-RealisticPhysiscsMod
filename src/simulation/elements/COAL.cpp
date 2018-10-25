@@ -44,6 +44,7 @@ Element_COAL::Element_COAL()
 	GasTemperaturetransition = 4600.f;
 	GasTransition = PT_LAVA;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 30;
 
 	Update = &Element_COAL::update;
 	Graphics = &Element_COAL::graphics;

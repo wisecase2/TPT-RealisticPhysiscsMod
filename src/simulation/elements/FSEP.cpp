@@ -43,6 +43,7 @@ Element_FSEP::Element_FSEP()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 30;
 
 	Update = &Element_FSEP::update;
 }

@@ -43,6 +43,7 @@ Element_GLOW::Element_GLOW()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 30;
 
 	Update = &Element_GLOW::update;
 	Graphics = &Element_GLOW::graphics;

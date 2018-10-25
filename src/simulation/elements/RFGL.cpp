@@ -43,6 +43,7 @@ Element_RFGL::Element_RFGL()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 20;
 
 	Update = &Element_RFRG::update;
 }

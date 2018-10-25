@@ -48,6 +48,7 @@ Element_ICEI::Element_ICEI()
 	GasPlsmlatent = 5000.f;
 	Heatcapacity = 2.0f;
 	InvHeatcapacity = 0.5f;
+	radabsorb = 20;
 
 	Update = &Element_ICEI::update;
 }

@@ -46,6 +46,7 @@ Element_CRMC::Element_CRMC()
 	SolidLiquidlatent = 15.6f;
 	LiquidGaslatent = 420.f;
 	GasPlsmlatent = 5000.f;
+	radabsorb = 40;
 
 	Update = &Element_CRMC::update;
 	Graphics = &Element_CRMC::graphics;

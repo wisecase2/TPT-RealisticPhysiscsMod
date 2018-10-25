@@ -9,7 +9,7 @@ Element_DSTW::Element_DSTW()
 	MenuSection = SC_LIQUID;
 	Enabled = 1;
 
-	Advection = 0.1f;
+	Advection = 0.6f;
 	AirDrag = 0.01f * CFDS;
 	AirLoss = 0.98f;
 	Loss = 0.95f;
@@ -48,6 +48,7 @@ Element_DSTW::Element_DSTW()
 	GasPlsmlatent = 5000.f;
 	Heatcapacity = 4.2f;
 	InvHeatcapacity = 1.0f;
+	radabsorb = 15;
 
 	Update = &Element_DSTW::update;
 }

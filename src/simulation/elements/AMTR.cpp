@@ -14,7 +14,7 @@ Element_AMTR::Element_AMTR()
 	AirLoss = 0.96f;
 	Loss = 0.80f;
 	Collision = 0.00f;
-	Gravity = 0.10f;
+	Gravity = 0.50f;
 	Diffusion = 1.00f;
 	HotAir = 0.0000f * CFDS;
 	Falldown = 0;
@@ -43,6 +43,7 @@ Element_AMTR::Element_AMTR()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 50;
 
 	Update = &Element_AMTR::update;
 	Graphics = &Element_AMTR::graphics;
@@ -51,7 +52,7 @@ Element_AMTR::Element_AMTR()
 //#TPT-Directive ElementHeader Element_AMTR static int update(UPDATE_FUNC_ARGS)
 int Element_AMTR::update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, rt;
+	int r, rx, ry, rt, identy;
 	for (rx=-1; rx<2; rx++)
 		for (ry=-1; ry<2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
@@ -62,17 +63,12 @@ int Element_AMTR::update(UPDATE_FUNC_ARGS)
 				rt = TYP(r);
 				if (rt!=PT_AMTR && rt!=PT_DMND && rt!=PT_CLNE && rt!=PT_PCLN && rt!=PT_VOID && rt!=PT_BHOL && rt!=PT_NBHL && rt!=PT_PRTI && rt!=PT_PRTO)
 				{
-					parts[i].life++;
-					if (parts[i].life==4)
-					{
-						sim->kill_part(i);
-						return 1;
+					for(int i = 0; i < 16; i++){
+						identy = sim->create_part(-3, x + rx, y + ry, PT_GAMMA);
+						parts[identy].temp = MAX_TEMP;
 					}
-					if (RNG::Ref().chance(1, 10))
-						sim->create_part(ID(r), x+rx, y+ry, PT_PHOT);
-					else
-						sim->kill_part(ID(r));
-					sim->pv[y/CELL][x/CELL] -= 2.0f;
+					sim->kill_part(ID(r));
+					sim->kill_part(i);
 				}
 			}
 	return 0;

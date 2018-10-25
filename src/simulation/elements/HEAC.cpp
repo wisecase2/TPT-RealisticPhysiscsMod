@@ -47,6 +47,7 @@ Element_HEAC::Element_HEAC()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 50;
 
 	Update = &Element_HEAC::update;
 }

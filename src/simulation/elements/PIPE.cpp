@@ -46,6 +46,7 @@ Element_PIPE::Element_PIPE()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 50;
 
 	Update = &Element_PIPE::update;
 	Graphics = &Element_PIPE::graphics;

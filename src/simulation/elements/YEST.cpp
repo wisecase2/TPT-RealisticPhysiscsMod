@@ -43,6 +43,7 @@ Element_YEST::Element_YEST()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 150;
 
 	Update = &Element_YEST::update;
 }

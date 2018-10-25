@@ -48,6 +48,7 @@ Element_NBLE::Element_NBLE()
 	SolidLiquidlatent = 0.5f;
 	LiquidGaslatent = 2.1f;
 	GasPlsmlatent = 5000.f;
+	radabsorb = 5;
 
 	Update = &Element_NBLE::update;
 }

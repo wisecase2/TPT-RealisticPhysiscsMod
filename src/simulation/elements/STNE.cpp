@@ -43,6 +43,7 @@ Element_STNE::Element_STNE()
 	GasTemperaturetransition = 3000.f;
 	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 50;
 
 	Update = NULL;
 }

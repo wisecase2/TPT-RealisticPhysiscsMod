@@ -43,6 +43,7 @@ Element_GASEOUS::Element_GASEOUS()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 5;
 
 	Update = NULL;// &Element_GASEOUS::update;
 	Graphics = &Element_GASEOUS::graphics;

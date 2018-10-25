@@ -9,15 +9,15 @@ Element_NSCN::Element_NSCN()
 	MenuSection = SC_ELEC;
 	Enabled = 1;
 
-	Advection = 0.0f;
-	AirDrag = 0.00f * CFDS;
-	AirLoss = 0.90f;
-	Loss = 0.00f;
-	Collision = 0.0f;
-	Gravity = 0.0f;
+	Advection = 0.4f;
+	AirDrag = 0.04f * CFDS;
+	AirLoss = 0.94f;
+	Loss = 0.95f;
+	Collision = -0.1f;
+	Gravity = 0.3f;
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
-	Falldown = 0;
+	Falldown = 1;
 
 	Flammable = 0;
 	Explosive = 0;
@@ -25,7 +25,7 @@ Element_NSCN::Element_NSCN()
 	Hardness = 1;
 	PhotonReflectWavelengths = 0x00000000;
 
-	Weight = 100;
+	Weight = 40;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 251;
@@ -47,6 +47,10 @@ Element_NSCN::Element_NSCN()
 	SolidLiquidlatent = 28.9f;
 	LiquidGaslatent = 634.3f;
 	GasPlsmlatent = 5000.f;
+	pressureresistance = 10.f;
+	pressureblock = true;
+	defaultbreak = true;
+	radabsorb = 75;
 
 	Update = NULL;
 }

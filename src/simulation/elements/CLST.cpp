@@ -43,6 +43,7 @@ Element_CLST::Element_CLST()
 	GasTemperaturetransition = 3300.f;
 	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
+	radabsorb = 30;
 
 	Update = &Element_CLST::update;
 	Graphics = &Element_CLST::graphics;

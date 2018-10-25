@@ -43,6 +43,7 @@ Element_LRBD::Element_LRBD()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 15;
 
 	Update = NULL;
 }

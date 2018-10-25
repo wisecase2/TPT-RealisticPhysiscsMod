@@ -44,6 +44,7 @@ Element_FIRW::Element_FIRW()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 30;
 
 	Update = &Element_FIRW::update;
 	Graphics = &Element_FIRW::graphics;

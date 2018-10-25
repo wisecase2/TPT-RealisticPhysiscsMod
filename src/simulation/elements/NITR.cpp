@@ -44,6 +44,7 @@ Element_NITR::Element_NITR()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	radabsorb = 15;
 
 	Update = NULL;
 }
