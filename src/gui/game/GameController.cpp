@@ -948,6 +948,10 @@ void GameController::ToggleAHeat()
 	gameModel->SetAHeatEnable(!gameModel->GetAHeatEnable());
 }
 
+void GameController::togglebrokenstate(){
+	gameModel->setbrokenstate(!gameModel->Getbrokenstate());
+}
+
 bool GameController::GetAHeatEnable()
 {
 	return gameModel->GetAHeatEnable();

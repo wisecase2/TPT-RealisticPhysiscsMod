@@ -56,7 +56,7 @@ Element_SLTW::Element_SLTW()
 //#TPT-Directive ElementHeader Element_SLTW static int update(UPDATE_FUNC_ARGS)
 int Element_SLTW::update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
+	int r, rx, ry, oldtmp;
 	for (rx=-1; rx<2; rx++)
 		for (ry=-1; ry<2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
@@ -64,10 +64,24 @@ int Element_SLTW::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				switch TYP(r)
 				{
-				//case PT_SALT:
-				//	if (RNG::Ref().chance(1, 2000))
-				//		sim->part_change_type(ID(r),x+rx,y+ry,PT_SLTW);
-				//	break;
+				case PT_SALT:
+					if(RNG::Ref().chance(1, 1000)){
+						sim->part_change_type(ID(r), x, y, PT_WATR);
+						parts[i].tmp = parts[ID(r)].tmp = 0.5f*parts[i].tmp + 0.5f * 2147483646;
+					}
+					break;
+				case PT_DSTW:
+					if (RNG::Ref().chance(1, 50))
+					{
+						parts[i].tmp = parts[ID(r)].tmp = 0.5f*parts[i].tmp + 0.5f*parts[ID(r)].tmp;
+					}
+					break;
+				case PT_WATR:
+					if (RNG::Ref().chance(1, 100))
+					{
+						parts[i].tmp = parts[ID(r)].tmp = 0.5f*parts[i].tmp + 0.5f*parts[ID(r)].tmp;
+					}
+					break;
 				case PT_PLNT:
 					if (RNG::Ref().chance(1, 40))
 						sim->kill_part(ID(r));
@@ -98,6 +112,9 @@ int Element_SLTW::update(UPDATE_FUNC_ARGS)
 					continue;
 				}
 			}
+	if(parts[i].tmp <= 322122546){
+		parts[i].type = PT_WATR;
+	}
 	return 0;
 }
 

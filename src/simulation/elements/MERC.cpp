@@ -40,9 +40,12 @@ Element_MERC::Element_MERC()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	GasTemperaturetransition = ITH;
-	GasTransition = NT;
+	GasTemperaturetransition = 630.15f;
+	GasTransition = PT_GASEOUS;
+	LiquidGaslatent = 75.f;
 	PlsmTemperaturetransition = 9999.f;
+
+
 	radabsorb = 120;
 
 	Update = &Element_MERC::update;

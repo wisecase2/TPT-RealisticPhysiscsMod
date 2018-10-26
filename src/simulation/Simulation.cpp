@@ -2256,6 +2256,7 @@ void Simulation::init_can_move()
 		if((movingType != PT_NEUT)||(movingType != PT_GAMMA)){
 			can_move[movingType][PT_CNCT] = 0;
 		}
+
 		//VOID and PVOD behaviour varies with powered state and ctype
 		can_move[movingType][PT_PVOD] = 3;
 		can_move[movingType][PT_VOID] = 3;
@@ -2291,6 +2292,8 @@ void Simulation::init_can_move()
 
 	//other special cases that weren't covered above
 	can_move[PT_GAMMA][PT_GOLD] = 2;
+	can_move[PT_GAMMA][PT_CNCT] = 2;
+	can_move[PT_NEUT][PT_CNCT] = 2;
 	can_move[PT_DEST][PT_DMND] = 0;
 	can_move[PT_DEST][PT_CLNE] = 0;
 	can_move[PT_DEST][PT_PCLN] = 0;
@@ -2329,7 +2332,7 @@ void Simulation::init_can_move()
  */
 int Simulation::eval_move(int pt, int nx, int ny, unsigned *rr, int id)
 {
-	unsigned r;
+	unsigned r, typr, idr;
 	int result;
 
 	if (nx<0 || ny<0 || nx>=XRES || ny>=YRES)
@@ -2342,29 +2345,32 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned *rr, int id)
 		*rr = r;
 	if (pt>=PT_NUM || TYP(r)>=PT_NUM)
 		return 0;
-	result = can_move[pt][TYP(r)];
-	if(elements[pt].Properties&TYPE_SOLID && parts[id].tmp2 == 1000){
-		if(elements[pt].Weight > elements[TYP(r)].Weight && !(elements[TYP(r)].Properties&TYPE_SOLID && parts[ID(r)].tmp2 < 1000)){
+	typr = TYP(r);
+	idr = ID(r);
+	result = can_move[pt][typr];
+	if(!(elements[pt].Properties&TYPE_SOLID && parts[id].tmp2 < 1000) && pt != PT_CNCT){
+		if(elements[pt].Weight > elements[typr].Weight && !(elements[typr].Properties&TYPE_SOLID && parts[idr].tmp2 < 1000) && typr != PT_CNCT){
 			result = 1;
 		}
 	}
+
 	if (result == 3)
 	{
-		switch (TYP(r))
+		switch (typr)
 		{
 		case PT_LCRY:
 			if (pt==PT_PHOT)
-				result = (parts[ID(r)].life > 5)? 2 : 0;
+				result = (parts[idr].life > 5)? 2 : 0;
 			break;
 		case PT_GPMP:
 			if (pt == PT_PHOT)
-				result = (parts[ID(r)].life < 10) ? 2 : 0;
+				result = (parts[idr].life < 10) ? 2 : 0;
 			break;
 		case PT_INVIS:
 		{
 			float pressureResistance = 0.0f;
-			if (parts[ID(r)].tmp > 0)
-				pressureResistance = (float)parts[ID(r)].tmp;
+			if (parts[idr].tmp > 0)
+				pressureResistance = (float)parts[idr].tmp;
 			else
 				pressureResistance = 4.0f;
 
@@ -2375,9 +2381,9 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned *rr, int id)
 			break;
 		}
 		case PT_PVOD:
-			if (parts[ID(r)].life == 10)
+			if (parts[idr].life == 10)
 			{
-				if (!parts[ID(r)].ctype || (parts[ID(r)].ctype==pt)!=(parts[ID(r)].tmp&1))
+				if (!parts[idr].ctype || (parts[idr].ctype==pt)!=(parts[idr].tmp&1))
 					result = 1;
 				else
 					result = 0;
@@ -2385,7 +2391,7 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned *rr, int id)
 			else result = 0;
 			break;
 		case PT_VOID:
-			if (!parts[ID(r)].ctype || (parts[ID(r)].ctype==pt)!=(parts[ID(r)].tmp&1))
+			if (!parts[idr].ctype || (parts[idr].ctype==pt)!=(parts[idr].tmp&1))
 				result = 1;
 			else
 				result = 0;
@@ -2393,7 +2399,7 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned *rr, int id)
 		case PT_SWCH:
 			if (pt == PT_TRON)
 			{
-				if (parts[ID(r)].life >= 10)
+				if (parts[idr].life >= 10)
 					return 2;
 				else
 					return 0;
@@ -2409,7 +2415,7 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned *rr, int id)
 	{
 		if (IsWallBlocking(nx, ny, pt))
 			return 0;
-		if (bmap[ny/CELL][nx/CELL]==WL_EHOLE && !emap[ny/CELL][nx/CELL] && !(elements[pt].Properties&TYPE_SOLID) && !(elements[TYP(r)].Properties&TYPE_SOLID))
+		if (bmap[ny/CELL][nx/CELL]==WL_EHOLE && !emap[ny/CELL][nx/CELL] && !(elements[pt].Properties&TYPE_SOLID) && !(elements[typr].Properties&TYPE_SOLID))
 			return 2;
 	}
 	return result;
@@ -3226,6 +3232,9 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	parts[i].temp = elements[t].Temperature;
 	parts[i].tmp = 0;
 	parts[i].tmp2 = 0;
+	if(elements[t].Properties&TYPE_SOLID && elements[t].pressureresistance > 0 && brokenstate){
+		parts[i].tmp2 = 1000;
+	}
 	parts[i].dcolour = 0;
 	parts[i].flags = 0;
 	storepressure[i] = 0;
@@ -3245,6 +3254,15 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	case PT_SOAP:
 		parts[i].tmp = -1;
 		parts[i].tmp2 = -1;
+		break;
+	case PT_DSTW:
+		parts[i].tmp = 0;
+		break;
+	case PT_WATR:
+		parts[i].tmp = 107374182;
+		break;
+	case PT_SLTW:
+		parts[i].tmp = 536870911;
 		break;
 	case PT_ACID: case PT_CAUS:
 		parts[i].life = 75;
@@ -3834,7 +3852,7 @@ void Simulation::UpdateParticles(int start, int end)
 	float fin_xf, fin_yf, clear_xf, clear_yf, diffy, diffx;
 	float nn, ct1, ct2, swappage;
 	float pt = R_TEMP;
-	float c_heat = 0.0f, deltap;
+	float c_heat = 0.0f;
 	int h_count = 0;
 	int surround[8], type2;
 	int surround_hconduct[8];
@@ -4177,25 +4195,25 @@ void Simulation::UpdateParticles(int start, int end)
 							}
 					    	t = elements[t].HighTemperatureTransition;
 							s = 1;
-					    }else if(elements[t].HighTemperatureTransition==PT_NUM){
-							if(t==PT_ICEI||t==PT_SNOW){
-								if(parts[i].ctype>0&&parts[i].ctype<PT_NUM && parts[i].ctype!=t){
-									if(elements[parts[i].ctype].LowTemperatureTransition==PT_ICEI||elements[parts[i].ctype].LowTemperatureTransition==PT_SNOW){
-										if(pt<elements[parts[i].ctype].LowTemperature)
+						} else if(elements[t].HighTemperatureTransition == PT_NUM){
+							if(t == PT_ICEI || t == PT_SNOW){
+								if(parts[i].ctype > 0 && parts[i].ctype < PT_NUM && parts[i].ctype != t){
+									if(elements[parts[i].ctype].LowTemperatureTransition == PT_ICEI || elements[parts[i].ctype].LowTemperatureTransition == PT_SNOW){
+										if(pt < elements[parts[i].ctype].LowTemperature)
 											s = 0;
-									} else if(pt<273.15f)
+									} else if(pt < 273.15f)
 										s = 0;
 
 									if(s){
 #ifdef REALISTIC
 																		//One ice table value for all it's kinds
-										if(platent[t]<=(c_heat-(elements[parts[i].ctype].LowTemperature-dbt)*c_Cm)){
-											pt = (c_heat-platent[t])/c_Cm;
+										if(platent[t] <= (c_heat - (elements[parts[i].ctype].LowTemperature - dbt)*c_Cm)){
+											pt = (c_heat - platent[t]) / c_Cm;
 											t = parts[i].ctype;
 											parts[i].ctype = PT_NONE;
 											parts[i].life = 0;
 										} else{
-											parts[i].temp = restrict_flt(elements[parts[i].ctype].LowTemperature-dbt, MIN_TEMP, MAX_TEMP);
+											parts[i].temp = restrict_flt(elements[parts[i].ctype].LowTemperature - dbt, MIN_TEMP, MAX_TEMP);
 											s = 0;
 										}
 #else
@@ -4206,28 +4224,54 @@ void Simulation::UpdateParticles(int start, int end)
 									}
 								} else
 									s = 0;
-							} else if(t==PT_SLTW){
+							} else if(t == PT_SLTW){
 #ifdef REALISTIC
-								if(platent[t]<=(c_heat-(elements[t].HighTemperature-dbt)*c_Cm)){
-									pt = (c_heat-platent[t])/c_Cm;
+								if(platent[t] <= (c_heat - (elements[t].HighTemperature - dbt)*c_Cm)){
+									pt = (c_heat - platent[t]) / c_Cm;
 
 									if(RNG::Ref().chance(1, 4))
 										t = PT_SALT;
 									else
 										t = PT_WTRV;
 								} else{
-									parts[i].temp = restrict_flt(elements[t].HighTemperature-dbt, MIN_TEMP, MAX_TEMP);
+									parts[i].temp = restrict_flt(elements[t].HighTemperature - dbt, MIN_TEMP, MAX_TEMP);
 									s = 0;
 								}
 #else
-								if(RNG::Ref().chance(1, 4))
+								if(RNG::Ref().chance(parts[i].tmp, 2147483647)){
 									t = PT_SALT;
-								else
+									parts[i].tmp = 0;
+								}
+								else{
 									t = PT_WTRV;
-
+									parts[i].tmp = 0;
+								}
 								s = 1;
 #endif
-							} else if(t==PT_BRMT){
+							} else if(t == PT_WATR){
+								if(RNG::Ref().chance(parts[i].tmp, 2147483647)){
+									t = PT_SALT;
+									parts[i].tmp = 0;
+								}
+								else{
+									t = PT_WTRV;
+									parts[i].tmp = 0;
+								}
+
+								s = 1;
+
+							} else if(t == PT_DSTW){
+								if(RNG::Ref().chance(parts[i].tmp, 2147483647)){
+									t = PT_SALT;
+									parts[i].tmp = 0;
+								}
+								else{
+									t = PT_WTRV;
+									parts[i].tmp = 0;
+								}
+								s = 1;
+
+							} else if(t == PT_BRMT){
 								if(parts[i].ctype==PT_TUNG){
 									if(ctemph<elements[parts[i].ctype].HighTemperature)
 										s = 0;
@@ -4276,10 +4320,13 @@ void Simulation::UpdateParticles(int start, int end)
 #endif
 						else if (t == PT_WTRV)
 						{
-							//if (pt < 273.0f)
+							//if(pt < 273.0f){
 							//	t = PT_RIME;
-							//else
-						    t = PT_DSTW;
+							//	parts[i].temp += elements[pt_beforetransition].LiquidGaslatent;
+							//	parts[i].temp += elements[pt_beforetransition].SolidLiquidlatent;
+							//} else{
+								t = PT_DSTW;
+						    //}
 							    //parts[i].temp += 300.f;
 						}
 						else if (t == PT_LAVA)
@@ -4356,7 +4403,6 @@ void Simulation::UpdateParticles(int start, int end)
 						}
 						
 						// heat latent code
-						
 						if(pt_beforetransition != PT_LAVA){
 							if((elements[t].Properties&TYPE_GAS)&&(elements[pt_beforetransition].Properties&TYPE_LIQUID)){
 								parts[i].temp -= elements[pt_beforetransition].LiquidGaslatent;
@@ -4688,7 +4734,7 @@ void Simulation::UpdateParticles(int start, int end)
 					parts[i].tmp2 = 1000;
 				}
 			}
-			if(parts[i].tmp2 < 1000 && (elements[t].Properties&TYPE_SOLID) && !air->bmap_blockair[y][x] && elements[t].pressureresistance > 0.f && elements[t].pressureblock){
+			if(parts[i].tmp2 < 1000 && (elements[t].Properties&TYPE_SOLID) && !air->bmap_blockair[y][x] && elements[t].pressureblock){
 				blockcount[y / CELL][x / CELL] ++;
 				if(blockcount[y / CELL][x / CELL] >= 2){
 					air->bmap_blockair[y / CELL][x / CELL] = true;

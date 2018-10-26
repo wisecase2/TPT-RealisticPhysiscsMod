@@ -68,6 +68,7 @@ public:
 	bool etrd_count_valid;
 	int etrd_life0_count;
 	int lightningRecreate;
+	bool brokenstate = false;
 	//Stickman
 	playerst player;
 	playerst player2;

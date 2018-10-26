@@ -1028,9 +1028,16 @@ void GameSave::readOPS(char * data, int dataLength)
 					if(fieldDescriptor & 0x01)
 					{
 						//Full 16bit int
-						tempTemp = partsData[i++];
-						tempTemp |= (((unsigned)partsData[i++]) << 8);
-						particles[newIndex].temp = tempTemp;
+						//if(savedVersion != 2458){ 
+							tempTemp = partsData[i++];
+							tempTemp |= (((unsigned)partsData[i++]) << 8);
+							particles[newIndex].temp = tempTemp;
+						//} else{
+						//	tempTemp = partsData[i++];
+						//	tempTemp |= (((unsigned)partsData[i++]) << 8);
+						//	tempTemp |= (((unsigned)partsData[i++]) << 16);
+						//	particles[newIndex].temp = tempTemp;
+						//}
 					}
 					else
 					{
@@ -1151,6 +1158,21 @@ void GameSave::readOPS(char * data, int dataLength)
 					}
 
 					//Particle specific parsing:
+
+					if(savedVersion <= 93){
+						switch(particles[newIndex].type){
+							case PT_DSTW:
+								particles[newIndex].tmp = 0;
+								break;
+							case PT_WATR:
+								particles[newIndex].tmp = 107374182;
+								break;
+							case PT_SLTW:
+								particles[newIndex].tmp &= 536870911;
+								break;
+						}
+					}
+
 					switch(particles[newIndex].type)
 					{
 					case PT_SOAP:
@@ -2166,6 +2188,7 @@ char * GameSave::serialiseOPS(unsigned int & dataLength)
 					tempTemp = (int)(particles[i].temp+0.5f);
 					partsData[partsDataLen++] = tempTemp;
 					partsData[partsDataLen++] = tempTemp >> 8;
+					//partsData[partsDataLen++] = tempTemp >> 16;
 				}
 
 				//Life (optional), 1 to 2 bytes
@@ -2383,7 +2406,7 @@ char * GameSave::serialiseOPS(unsigned int & dataLength)
 	set_bson_err_handler([](const char* err) { throw BuildException("BSON error when parsing save: " + ByteString(err).FromUtf8()); });
 	bson_init(&b);
 	bson_append_start_object(&b, "origin");
-	bson_append_int(&b, "majorVersion", SAVE_VERSION);
+	bson_append_int(&b, "majorVersion", 97);
 	bson_append_int(&b, "minorVersion", MINOR_VERSION);
 	bson_append_int(&b, "buildNum", BUILD_NUM);
 	bson_append_int(&b, "snapshotId", SNAPSHOT_ID);

@@ -60,7 +60,7 @@ int Element_GAMMA::update(UPDATE_FUNC_ARGS)
 	ctype1 = parts[idr].ctype;
 	valid1 = (ctype1 >= 0 && ctype1 < PT_NUM && sim->elements[ctype1].Enabled);
 
-	if(valid1 && (typr == PT_LAVA || typr == PT_LIQUID || typr == PT_GASEOUS || typr == PT_PLSM)){
+	if(valid1 && (typr == PT_LAVA || typr == PT_LIQUID || typr == PT_GASEOUS || typr == PT_PLSM || typr == PT_BRMT || typr == PT_SOLID)){
 		absorb = 2*sim->elements[ctype1].radabsorb;
 		if(absorb > 0){
 			if(RNG::Ref().chance(absorb, 1000)){

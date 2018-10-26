@@ -31,7 +31,7 @@ Element_NBLE::Element_NBLE()
 	HeatConduct = 106;
 	Description = "Noble Gas. Diffuses and conductive. Ionizes into plasma when introduced to electricity.";
 
-	Properties = TYPE_GAS|PROP_CONDUCTS|PROP_LIFE_DEC;
+	Properties = TYPE_GAS | PROP_CONDUCTS | PROP_LIFE_DEC;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -43,16 +43,18 @@ Element_NBLE::Element_NBLE()
 	HighTemperatureTransition = NT;
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
-	PlsmTemperaturetransition = 9999.f;
+	PlsmTemperaturetransition = 20000.f;
 	Liquidtransition = 4.222f;
 	SolidLiquidlatent = 0.5f;
 	LiquidGaslatent = 2.1f;
 	GasPlsmlatent = 5000.f;
+	solidtransition = 0.95f;
 	radabsorb = 5;
 
-	Update = &Element_NBLE::update;
+	Update = NULL;// &Element_NBLE::update;
+	//Graphics = NULL;// &Element_NBLE::graphics;
 }
-
+/*
 //#TPT-Directive ElementHeader Element_NBLE static int update(UPDATE_FUNC_ARGS)
 int Element_NBLE::update(UPDATE_FUNC_ARGS)
 {
@@ -97,6 +99,24 @@ int Element_NBLE::update(UPDATE_FUNC_ARGS)
 	}
 	return 0;
 }
+*/
+/*
+int Element_NBLE::graphics(GRAPHICS_FUNC_ARGS){
+	int caddress = restrict_flt(restrict_flt((float)cpart->life, 0.0f, 200.0f) * 3, 0.0f, (200.0f * 3) - 3);
+	*colr = (unsigned char)ren->flm_data[caddress];
+	*colg = (unsigned char)ren->flm_data[caddress + 1];
+	*colb = (unsigned char)ren->flm_data[caddress + 2];
 
+	*firea = 255;
+	*firer = *colr;
+	*fireg = *colg;
+	*fireb = *colb;
+
+	*pixel_mode = PMODE_NONE; //Clear default, don't draw pixel
+	*pixel_mode |= FIRE_ADD;
+	//Returning 0 means dynamic, do not cache
+	return 0;
+}
+*/
 
 Element_NBLE::~Element_NBLE() {}

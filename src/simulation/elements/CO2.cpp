@@ -93,6 +93,7 @@ int Element_CO2::update(UPDATE_FUNC_ARGS)
 					}
 				}
 			}
+	/*
 	if (parts[i].temp > 75273.15 && sim->pv[y/CELL][x/CELL] > 200.0f)
 	{
 		if (RNG::Ref().chance(1, 5))
@@ -112,6 +113,7 @@ int Element_CO2::update(UPDATE_FUNC_ARGS)
 			sim->pv[y/CELL][x/CELL] += 100;
 		}
 	}
+	*/
 	return 0;
 }
 

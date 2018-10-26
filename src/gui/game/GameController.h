@@ -160,6 +160,7 @@ public:
 	void ToggleAHeat();
 	bool GetAHeatEnable();
 	void ToggleNewtonianGravity();
+	void togglebrokenstate();
 
 	bool LoadClipboard();
 	void LoadStamp(GameSave *stamp);

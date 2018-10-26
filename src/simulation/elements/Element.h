@@ -54,6 +54,7 @@ public:
 	float GasTemperaturetransition = MAX_TEMP+1.f;
 	int GasTransition = -1;
 	float PlsmTemperaturetransition = -1.f;
+	float solidtransition = 0;
 	
 	// heat latent transition
 	float Liquidtransition = -1.f;

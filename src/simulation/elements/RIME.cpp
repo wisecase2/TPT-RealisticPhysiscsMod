@@ -39,7 +39,7 @@ Element_RIME::Element_RIME()
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 273.15f;
-	HighTemperatureTransition = PT_WATR;
+	HighTemperatureTransition = PT_DSTW;
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;

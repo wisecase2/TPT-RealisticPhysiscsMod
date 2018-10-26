@@ -65,7 +65,27 @@ int Element_SPNG::update(UPDATE_FUNC_ARGS)
 					switch TYP(r)
 					{
 					case PT_WATR:
+						if(parts[i].life < limit && RNG::Ref().chance(50, absorbChanceDenom)){
+							if(RNG::Ref().chance(parts[ID(r)].tmp, 2147483647)){
+								sim->part_change_type(ID(r), x + rx, y + ry, PT_SALT);
+								parts[ID(r)].tmp = 0;
+							} else{
+								sim->kill_part(ID(r));
+								parts[i].life++;
+							}
+						}
+						break;
 					case PT_DSTW:
+						if(parts[i].life < limit && RNG::Ref().chance(50, absorbChanceDenom)){
+							if(RNG::Ref().chance(parts[ID(r)].tmp, 2147483647)){
+								sim->part_change_type(ID(r), x + rx, y + ry, PT_SALT);
+								parts[ID(r)].tmp = 0;
+							} else{
+								sim->kill_part(ID(r));
+								parts[i].life++;
+							}
+						}
+						break;
 					case PT_FRZW:
 						if (parts[i].life<limit && RNG::Ref().chance(500, absorbChanceDenom))
 						{
@@ -76,11 +96,14 @@ int Element_SPNG::update(UPDATE_FUNC_ARGS)
 					case PT_SLTW:
 						if (parts[i].life<limit && RNG::Ref().chance(50, absorbChanceDenom))
 						{
-							parts[i].life++;
-							if (RNG::Ref().chance(1, 4))
+							if(RNG::Ref().chance(parts[ID(r)].tmp, 2147483647)){
+								sim->part_change_type(ID(r), x + rx, y + ry, PT_SALT);
+								parts[ID(r)].tmp = 0;
+							}
+							else{
 								sim->kill_part(ID(r));
-							else
-								sim->part_change_type(ID(r), x+rx, y+ry, PT_SALT);
+								parts[i].life++;
+							}
 						}
 						break;
 					case PT_CBNW:
@@ -110,7 +133,7 @@ int Element_SPNG::update(UPDATE_FUNC_ARGS)
 					r = pmap[y+ry][x+rx];
 					if ((!r)&&parts[i].life>=1)//if nothing then create water
 					{
-						np = sim->create_part(-1,x+rx,y+ry,PT_WATR);
+						np = sim->create_part(-1,x+rx,y+ry,PT_DSTW);
 						if (np>-1) parts[i].life--;
 					}
 				}

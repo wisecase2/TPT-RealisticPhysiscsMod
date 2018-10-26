@@ -43,7 +43,7 @@ Element_HSWC::Element_HSWC()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
-	radabsorb = 50;
+	//radabsorb = 50;
 
 	Update = &Element_HSWC::update;
 	Graphics = &Element_HSWC::graphics;

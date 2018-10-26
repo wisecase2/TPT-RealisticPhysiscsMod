@@ -1574,6 +1574,9 @@ void GameView::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl,
 	case 'u':
 		c->ToggleAHeat();
 		break;
+	case 'm':
+		c->togglebrokenstate();
+		break;
 	case 'n':
 		c->ToggleNewtonianGravity();
 		break;

@@ -153,7 +153,12 @@ int SDLOpen()
 	sdl_renderer = SDL_CreateRenderer(sdl_window, -1, 0);
 	SDL_RenderSetLogicalSize(sdl_renderer, WINDOWW, WINDOWH);
 	//Uncomment this to force fullscreen to an integer resolution
-	//SDL_RenderSetIntegerScale(sdl_renderer, SDL_TRUE);
+	//SDL_RenderSetIntegerScale(sdl_renderer, SDL_TRUE); //thanks!
+	if(altFullscreen){
+		SDL_RenderSetIntegerScale(sdl_renderer, SDL_TRUE);
+	} else{
+		SDL_RenderSetIntegerScale(sdl_renderer, SDL_FALSE);
+	}
 	sdl_texture = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WINDOWW, WINDOWH);
 	if (fullscreen)
 		SDL_RaiseWindow(sdl_window);
@@ -209,6 +214,13 @@ void SDLSetScreen(int scale_, bool resizable_, bool fullscreen_, bool altFullscr
 	unsigned int flags = 0;
 	if (fullscreen)
 		flags = altFullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_FULLSCREEN_DESKTOP;
+	//// fix grids
+	if(altFullscreen){ 
+		SDL_RenderSetIntegerScale(sdl_renderer, SDL_TRUE);
+	} else{
+		SDL_RenderSetIntegerScale(sdl_renderer, SDL_FALSE);
+	}
+
 	SDL_SetWindowFullscreen(sdl_window, flags);
 	if (fullscreen)
 		SDL_RaiseWindow(sdl_window);

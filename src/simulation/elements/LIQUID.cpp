@@ -5,7 +5,7 @@ Element_LIQUID::Element_LIQUID()
 	Identifier = "DEFAULT_PT_LIQUID";
 	Name = "LIQUID";
 	Colour = PIXPACK(0x80A0CF);
-	MenuVisible = 1;
+	MenuVisible = 0;
 	MenuSection = SC_LIQUID;
 	Enabled = 1;
 
@@ -45,11 +45,20 @@ Element_LIQUID::Element_LIQUID()
 	PlsmTemperaturetransition = -1;
 	radabsorb = 15;
 
-	Update = NULL;//&Element_LIQUID::update;
-	Graphics = NULL;// &Element_LIQUID::graphics;
+	Update = &Element_LIQUID::update;
+	//Graphics = NULL;// &Element_LIQUID::graphics;
 }
 
 //#TPT-Directive ElementHeader Element_LIQUID static int update(UPDATE_FUNC_ARGS)
-//#TPT-Directive ElementHeader Element_LIQUID static int graphics(GRAPHICS_FUNC_ARGS)
+int Element_LIQUID::update(UPDATE_FUNC_ARGS)
+{
+	if(sim->IsValidElement(parts[i].ctype) && sim->elements[parts[i].ctype].solidtransition > 0){
+		if(parts[i].temp <= sim->elements[parts[i].ctype].solidtransition){
+			parts[i].type = PT_SOLID;
+			parts[i].temp += sim->elements[parts[i].ctype].SolidLiquidlatent;
+		}
+	}
+	return 0;
+}
 
 Element_LIQUID::~Element_LIQUID() {}

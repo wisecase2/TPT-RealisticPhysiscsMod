@@ -5,7 +5,7 @@ Element_GASEOUS::Element_GASEOUS()
 	Identifier = "DEFAULT_PT_GASEOUS";
 	Name = "GAS";
 	Colour = PIXPACK(0x5070FF);
-	MenuVisible = 1;
+	MenuVisible = 0;
 	MenuSection = SC_GAS;
 	Enabled = 1;
 

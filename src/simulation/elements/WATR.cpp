@@ -39,7 +39,7 @@ Element_WATR::Element_WATR()
 	LowTemperature = 273.15f;
 	LowTemperatureTransition = PT_ICEI;
 	HighTemperature = 373.0f;
-	HighTemperatureTransition = PT_WTRV;
+	HighTemperatureTransition = ST;
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
@@ -56,7 +56,7 @@ Element_WATR::Element_WATR()
 //#TPT-Directive ElementHeader Element_WATR static int update(UPDATE_FUNC_ARGS)
 int Element_WATR::update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
+	int r, rx, ry, oldtmp;
 	for (rx=-1; rx<2; rx++)
 		for (ry=-1; ry<2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
@@ -64,12 +64,10 @@ int Element_WATR::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if (TYP(r)==PT_SALT && RNG::Ref().chance(1, 50))
+				if (TYP(r)==PT_SALT && RNG::Ref().chance(1, 100))
 				{
-					sim->part_change_type(i,x,y,PT_SLTW);
-					// on average, convert 3 WATR to SLTW before SALT turns into SLTW
-					if (RNG::Ref().chance(1, 3))
-						sim->part_change_type(ID(r),x+rx,y+ry,PT_SLTW);
+					sim->part_change_type(ID(r), x, y, PT_WATR);
+					parts[i].tmp = parts[ID(r)].tmp = 0.5f*parts[i].tmp + 0.5f*2147483646;
 				}
 				else if ((TYP(r)==PT_RBDM||TYP(r)==PT_LRBD) && (sim->legacy_enable||parts[i].temp>(273.15f+12.0f)) && RNG::Ref().chance(1, 100))
 				{
@@ -86,11 +84,20 @@ int Element_WATR::update(UPDATE_FUNC_ARGS)
 						return 1;
 					}
 				}
-				else if (TYP(r)==PT_SLTW && RNG::Ref().chance(1, 2000))
+				else if (TYP(r)==PT_SLTW && RNG::Ref().chance(1, 100))
 				{
-					sim->part_change_type(i,x,y,PT_SLTW);
+					parts[i].tmp = parts[ID(r)].tmp = 0.5f*parts[i].tmp + 0.5f*parts[ID(r)].tmp;
+				}
+				else if(TYP(r) == PT_DSTW && RNG::Ref().chance(1, 100)){
+					parts[i].tmp = parts[ID(r)].tmp = 0.5f*parts[i].tmp + 0.5f*parts[ID(r)].tmp;
 				}
 			}
+	if(parts[i].tmp > 322122546){
+		parts[i].type = PT_SLTW;
+	} else if(parts[i].tmp <= 64424510){
+		parts[i].type = PT_DSTW;
+	}
+
 	return 0;
 }
 

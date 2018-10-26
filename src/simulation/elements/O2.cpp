@@ -77,6 +77,7 @@ int Element_O2::update(UPDATE_FUNC_ARGS)
 					parts[i].tmp |= 2;
 				}
 			}
+	/*
 	if (parts[i].temp > 90273.15 && sim->pv[y/CELL][x/CELL] > 250.0f)
 	{
 		int gravPos = ((y/CELL)*(XRES/CELL))+(x/CELL);
@@ -116,6 +117,7 @@ int Element_O2::update(UPDATE_FUNC_ARGS)
 			}
 		}
 	}
+	*/
 	return 0;
 }
 

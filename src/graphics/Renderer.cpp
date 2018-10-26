@@ -1194,7 +1194,7 @@ void Renderer::prepare_alpha(int size, float intensity)
 void Renderer::render_parts()
 {
 	int deca, decr, decg, decb, cola, colr, colg, colb, firea, firer, fireg, fireb, pixel_mode, q, i, t, nx, ny, x, y, caddress;
-	int orbd[4] = {0, 0, 0, 0}, orbl[4] = {0, 0, 0, 0};
+	int orbd[4] = {0, 0, 0, 0}, orbl[4] = {0, 0, 0, 0}, type2, type3;
 	float gradv, flicker;
 	float a = 1023, b = MAX_TEMP, invlnb = a * (1.f / log(b + 1.f));/// division and logarithm is expensive
 	int heatcolor[1024][3], isvalid;
@@ -1244,7 +1244,15 @@ void Renderer::render_parts()
 	foundElements = 0;
 	for(i = 0; i<=sim->parts_lastActiveIndex; i++) {
 		if (sim->parts[i].type && sim->parts[i].type >= 0 && sim->parts[i].type < PT_NUM && (!(sim->idpointer[i][2] > 3 && sim->currentTick == sim->idpointer[i][0]))) { // só desenha, se a particula tem profundidade menor que 3;
-			t = sim->parts[i].type;
+			
+			type3 = t = sim->parts[i].type;
+
+			isvalid = type2 = sim->parts[i].ctype;
+			isvalid = (isvalid >= 0 && isvalid < PT_NUM && sim->elements[isvalid].Enabled);
+			if((t == PT_BRMT || t == PT_PLSM || t == PT_GASEOUS || t == PT_LIQUID || t == PT_SOLID)
+				&& isvalid && type2 != PT_NONE){
+				type3 = type2;
+    		}
 
 			nx = (int)(sim->parts[i].x+0.5f);
 			ny = (int)(sim->parts[i].y+0.5f);
@@ -1262,19 +1270,9 @@ void Renderer::render_parts()
 			pixel_mode = 0 | PMODE_FLAT;
 			cola = 255;
 
-			isvalid = parts[i].ctype;
-			isvalid = (isvalid >= 0 && isvalid < PT_NUM && elements[isvalid].Enabled);
-
-			if((t == PT_BRMT || t == PT_PLSM || t == PT_GASEOUS || t == PT_LIQUID)
-				&& isvalid && parts[i].ctype != PT_NONE){
-				colr = PIXR(elements[parts[i].ctype].Colour);
-				colg = PIXG(elements[parts[i].ctype].Colour);
-				colb = PIXB(elements[parts[i].ctype].Colour);
-			} else{
-				colr = PIXR(elements[t].Colour);
-				colg = PIXG(elements[t].Colour);
-				colb = PIXB(elements[t].Colour);
-			}
+			colr = PIXR(elements[type3].Colour);
+			colg = PIXG(elements[type3].Colour);
+			colb = PIXB(elements[type3].Colour);
 
 			firer = fireg = fireb = firea = 0;
 
@@ -1299,9 +1297,9 @@ void Renderer::render_parts()
 				{
 					pixel_mode = graphicscache[t].pixel_mode;
 					cola = graphicscache[t].cola;
-					colr = graphicscache[t].colr;
-					colg = graphicscache[t].colg;
-					colb = graphicscache[t].colb;
+					colr = graphicscache[type3].colr;
+					colg = graphicscache[type3].colg;
+					colb = graphicscache[type3].colb;
 					firea = graphicscache[t].firea;
 					firer = graphicscache[t].firer;
 					fireg = graphicscache[t].fireg;
@@ -1319,9 +1317,9 @@ void Renderer::render_parts()
 								graphicscache[t].isready = 1;
 								graphicscache[t].pixel_mode = pixel_mode;
 								graphicscache[t].cola = cola;
-								graphicscache[t].colr = colr;
-								graphicscache[t].colg = colg;
-								graphicscache[t].colb = colb;
+								graphicscache[type3].colr = colr;
+								graphicscache[type3].colg = colg;
+								graphicscache[type3].colb = colb;
 								graphicscache[t].firea = firea;
 								graphicscache[t].firer = firer;
 								graphicscache[t].fireg = fireg;
@@ -1336,9 +1334,9 @@ void Renderer::render_parts()
 							graphicscache[t].isready = 1;
 							graphicscache[t].pixel_mode = pixel_mode;
 							graphicscache[t].cola = cola;
-							graphicscache[t].colr = colr;
-							graphicscache[t].colg = colg;
-							graphicscache[t].colb = colb;
+							graphicscache[type3].colr = colr;
+							graphicscache[type3].colg = colg;
+							graphicscache[type3].colb = colb;
 							graphicscache[t].firea = firea;
 							graphicscache[t].firer = firer;
 							graphicscache[t].fireg = fireg;
@@ -1350,15 +1348,16 @@ void Renderer::render_parts()
 						graphicscache[t].isready = 1;
 						graphicscache[t].pixel_mode = pixel_mode;
 						graphicscache[t].cola = cola;
-						graphicscache[t].colr = colr;
-						graphicscache[t].colg = colg;
-						graphicscache[t].colb = colb;
+						graphicscache[type3].colr = colr;
+						graphicscache[type3].colg = colg;
+						graphicscache[type3].colb = colb;
 						graphicscache[t].firea = firea;
 						graphicscache[t].firer = firer;
 						graphicscache[t].fireg = fireg;
 						graphicscache[t].fireb = fireb;
 					}
 				}
+
 				if((elements[t].Properties & PROP_HOT_GLOW) && sim->parts[i].temp>(elements[t].HighTemperature-800.0f))
 				{
 					gradv = 3.1415/(2*elements[t].HighTemperature-(elements[t].HighTemperature-800.0f));

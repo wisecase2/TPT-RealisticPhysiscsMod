@@ -242,14 +242,14 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
 						}
 					}
 					//try eating particle at entrance
-					else if (!TYP(parts[i].ctype) && (sim->elements[TYP(r)].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)))
+					else if (!TYP(parts[i].ctype) && ((sim->elements[TYP(r)].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)) || (sim->elements[TYP(r)].Properties&TYPE_SOLID && parts[ID(r)].tmp2 == 1000)))
 					{
 						if (TYP(r)==PT_SOAP)
 							Element_SOAP::detach(sim, ID(r));
 						transfer_part_to_pipe(parts+(ID(r)), parts+i);
 						sim->kill_part(ID(r));
 					}
-					else if (!TYP(parts[i].ctype) && TYP(r)==PT_STOR && parts[ID(r)].tmp>0 && sim->IsValidElement(parts[ID(r)].tmp) && (sim->elements[parts[ID(r)].tmp].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)))
+					else if (!TYP(parts[i].ctype) && TYP(r)==PT_STOR && parts[ID(r)].tmp>0 && sim->IsValidElement(parts[ID(r)].tmp) && ((sim->elements[parts[ID(r)].tmp].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)) || (sim->elements[parts[ID(r)].tmp].Properties&TYPE_SOLID)))
 					{
 						// STOR stores properties in the same places as PIPE does
 						transfer_pipe_to_pipe(parts+(ID(r)), parts+i, true);
@@ -410,7 +410,7 @@ void Element_PIPE::transfer_pipe_to_part(Simulation * sim, Particle *pipe, Parti
 	part->life = pipe->tmp2;
 	part->tmp = pipe->pavg[0];
 	part->ctype = pipe->pavg[1];
-
+		
 	if (!(sim->elements[part->type].Properties & TYPE_ENERGY))
 	{
 		part->vx = 0.0f;
@@ -421,6 +421,9 @@ void Element_PIPE::transfer_pipe_to_part(Simulation * sim, Particle *pipe, Parti
 	part->tmp2 = 0;
 	part->flags = 0;
 	part->dcolour = 0;
+	if(sim->elements[part->type].Properties&TYPE_SOLID){
+		part->tmp2 = 1000;
+	}
 }
 
 //#TPT-Directive ElementHeader Element_PIPE static void transfer_part_to_pipe(Particle *part, Particle *pipe)
