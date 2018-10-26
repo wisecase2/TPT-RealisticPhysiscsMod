@@ -4695,7 +4695,7 @@ void Simulation::UpdateParticles(int start, int end)
 						create_part(pmap2[y][x][1], x, y, PT_NBHL);// change first particle x,y to black hole
 					}
 				}
-			} else{
+			} else if(pmap2[x][y][1] != i){
 				kill_part(i); 
 				continue;
 			}
