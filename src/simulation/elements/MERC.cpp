@@ -4,7 +4,7 @@ Element_MERC::Element_MERC()
 {
 	Identifier = "DEFAULT_PT_MERC";
 	Name = "MERC";
-	Colour = PIXPACK(0x736B6D);
+	Colour = PIXPACK(0x8C8285);
 	MenuVisible = 1;
 	MenuSection = SC_LIQUID;
 	Enabled = 1;

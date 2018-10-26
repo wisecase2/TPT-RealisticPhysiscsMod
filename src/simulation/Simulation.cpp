@@ -3859,7 +3859,7 @@ void Simulation::UpdateParticles(int start, int end)
 	int h_count = 0;
 	int surround[8], type2;
 	int surround_hconduct[8];
-	float pGravX, pGravY, pGravD, beforelatent, dttemp2;
+	float pGravX, pGravY, pGravD, beforelatent;
 	bool transitionOccurred, transitionchange, ftransition;
 	//the main particle loop function, goes over all particles.
 	for (i = start; i <= end && i <= parts_lastActiveIndex; i++)
@@ -3871,23 +3871,6 @@ void Simulation::UpdateParticles(int start, int end)
 			
 			x = (int)(parts[i].x + 0.5f);
 			y = (int)(parts[i].y + 0.5f);
-
-			////// store deep particles, id pointer
-			/*
-			if (pmap2[y][x][0] != currentTick){ 
-				pmap2[y][x][0] = currentTick;
-				pmap2[y][x][1] = i; //primeira particula de x,y
-				pmap2[y][x][2] = i; //ultima particula de x,y
-				pmap2[y][x][3] = 0; // profundidade
-				idpointer[i][2] = 0; //reseta a profundidade do id
-			}else{
-				idpointer[pmap2[y][x][2]][0] = currentTick;
-				idpointer[pmap2[y][x][2]][1] = i; // proximo id
-				idpointer[pmap2[y][x][2]][2] = pmap2[y][x][3]; //profundidade do id
-				pmap2[y][x][2] = i; // ultima particula
-				pmap2[y][x][3]++; // aumenta a profundidade
-			}
-			*/
 
 			//this kills any particle out of the screen, or in a wall where it isn't supposed to go
 			if (x<CELL || y<CELL || x>=XRES-CELL || y>=YRES-CELL ||
@@ -3951,7 +3934,7 @@ void Simulation::UpdateParticles(int start, int end)
 				}
 			}
 			*/
-			if (elements[t].Gravity || !(elements[t].Properties & TYPE_SOLID))
+			if (elements[t].Gravity || !((elements[t].Properties & TYPE_SOLID)&& parts[i].tmp2 < 1000))
 			{
 				//Gravity mode by Moach
 				switch (gravityMode)
@@ -3977,7 +3960,7 @@ void Simulation::UpdateParticles(int start, int end)
 					pGravX -= gravx[(y/CELL)*(XRES/CELL)+(x/CELL)];
 					pGravY -= gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
 				}
-				else if(t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH && !(elements[t].Properties & TYPE_SOLID))
+				else if(t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH && !((elements[t].Properties & TYPE_SOLID) && parts[i].tmp2 < 1000))
 				{
 					pGravX += gravx[(y/CELL)*(XRES/CELL)+(x/CELL)];
 					pGravY += gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
@@ -4292,10 +4275,6 @@ void Simulation::UpdateParticles(int start, int end)
 									s = 0;
 								else
 									t = PT_LAVA;
-							} else if(t == PT_BROKEN){
-								if(ctemph >= elements[parts[i].ctype].HighTemperature){
-									t = PT_LAVA;
-								}
 							} else{
 								s = 0;
 							}
@@ -4697,27 +4676,31 @@ void Simulation::UpdateParticles(int start, int end)
 				transitionOccurred = true;
 			}
 
-			////// store deep particles, with id pointer
-			
-			if (pmap2[y][x][0] != currentTick){
-				pmap2[y][x][0] = currentTick;
-				pmap2[y][x][1] = i; //first particle  x,y
-				pmap2[y][x][2] = i; //last particle  x,y
-				pmap2[y][x][3] = 0; // reset deep x,y
-				idpointer[i][2] = 0; // reset deep for id
-			}else{
-				idpointer[pmap2[y][x][2]][0] = currentTick;
-				idpointer[pmap2[y][x][2]][1] = i; // next id
-				idpointer[pmap2[y][x][2]][2] = pmap2[y][x][3]; //deep id
-				pmap2[y][x][2] = i; // last particle
-				pmap2[y][x][3]++; //increase deep
-				//efficient form to check excessive stacking
-				if(pmap2[y][x][3] > 1500){
-					create_part(i, x, y, PT_NBHL);
+			////// store deep particles and check excessive stacking, with id pointer
+			if(pmap2[y][x][3] <= 1500){
+				if(pmap2[y][x][0] != currentTick){
+					pmap2[y][x][0] = currentTick;
+					pmap2[y][x][1] = i; //first particle  x,y
+					pmap2[y][x][2] = i; //last particle  x,y
+					pmap2[y][x][3] = 0; // reset deep x,y
+					idpointer[i][2] = 0; // reset deep for id
+				} else{
+					idpointer[pmap2[y][x][2]][0] = currentTick;
+					idpointer[pmap2[y][x][2]][1] = i; // next id
+					idpointer[pmap2[y][x][2]][2] = pmap2[y][x][3]; //deep id
+					pmap2[y][x][2] = i; // last particle
+					pmap2[y][x][3]++; //increase deep
+					//check excessive stacking
+					if(pmap2[y][x][3] > 1500){
+						create_part(pmap2[y][x][1], x, y, PT_NBHL);// change first particle x,y to black hole
+					}
 				}
+			} else{
+				kill_part(i); 
+				continue;
 			}
 		    
-			//if(){}
+            //update pressure resistance, and change to broken state, using tmp2 == 1000
 			if(parts[i].tmp2 < 1000 && elements[t].pressureresistance > 0 && elements[t].Properties&TYPE_SOLID){
 				parts[i].tmp2 = 0;
 				for(int yy = -1; yy <= 1; yy++){
@@ -4737,6 +4720,7 @@ void Simulation::UpdateParticles(int start, int end)
 					parts[i].tmp2 = 1000;
 				}
 			}
+			//update blockair
 			if(parts[i].tmp2 < 1000 && (elements[t].Properties&TYPE_SOLID) && !air->bmap_blockair[y][x] && elements[t].pressureblock){
 				blockcount[y / CELL][x / CELL] ++;
 				if(blockcount[y / CELL][x / CELL] >= 2){
@@ -4748,7 +4732,7 @@ void Simulation::UpdateParticles(int start, int end)
 				storepressure[i] = 0;
 			}
 
-			dttemp2 = parts[i].temp;
+			// nuclear fusion
 			if(parts[i].type == PT_PLSM){
 				nuclear_fusion(i);
 			}
@@ -4768,6 +4752,7 @@ void Simulation::UpdateParticles(int start, int end)
 			if (elements[t].Update)
 #endif
 			{
+				//use ctype to update for transitions states
 				type3 = t;
 				if(IsValidElement(parts[i].ctype)){
 					if(elements[parts[i].ctype].specialupdate == true){
@@ -4806,8 +4791,6 @@ killed:
 
 			if (transitionOccurred)
 				continue;
-
-			//beforelatent += dttemp2 - parts[i].temp;
 
 			if (!parts[i].vx&&!parts[i].vy)//if its not moving, skip to next particle, movement code it next
 				continue;

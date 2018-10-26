@@ -52,10 +52,10 @@ Element_TTAN::Element_TTAN()
 	defaultbreak = true;
 	radabsorb = 50;
 
-	Update = NULL;// &Element_TTAN::update;
+	//Update = NULL;// &Element_TTAN::update;
 }
 
-//#TPT-Directive ElementHeader Element_TTAN static int update(UPDATE_FUNC_ARGS)
+//88#TPT-Directive ElementHeader Element_TTAN static int update(UPDATE_FUNC_ARGS)
 /*
 int Element_TTAN::update(UPDATE_FUNC_ARGS)
 {

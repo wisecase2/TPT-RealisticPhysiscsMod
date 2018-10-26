@@ -4,7 +4,7 @@ Element_RWASTE::Element_RWASTE()
 {
 	Identifier = "DEFAULT_PT_RWASTE";
 	Name = "RWASTE";
-	Colour = PIXPACK(0x707020);
+	Colour = PIXPACK(0x606010);
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;
 	Enabled = 1;
@@ -31,7 +31,7 @@ Element_RWASTE::Element_RWASTE()
 	HeatConduct = 251;
 	Description = "Radioactive waste.";
 
-	Properties = TYPE_PART | PROP_RADIOACTIVE | PROP_NEUTPASS;
+	Properties = TYPE_SOLID | PROP_RADIOACTIVE | PROP_NEUTPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;

@@ -1,5 +1,5 @@
 #include "simulation/Elements.h"
-//#TPT-Directive ElementClass Element_GAMMA PT_GAMMA 191
+//#TPT-Directive ElementClass Element_GAMMA PT_GAMMA 190
 Element_GAMMA::Element_GAMMA()
 {
 	Identifier = "DEFAULT_PT_GAMMA";

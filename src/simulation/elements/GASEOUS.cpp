@@ -45,11 +45,11 @@ Element_GASEOUS::Element_GASEOUS()
 	PlsmTemperaturetransition = -1;
 	radabsorb = 5;
 
-	Update = NULL;// &Element_GASEOUS::update;
+	//Update = NULL;// &Element_GASEOUS::update;
 	Graphics = &Element_GASEOUS::graphics;
 }
 
-//#TPT-Directive ElementHeader Element_GASEOUS static int update(UPDATE_FUNC_ARGS)
+//88#TPT-Directive ElementHeader Element_GASEOUS static int update(UPDATE_FUNC_ARGS)
 /*
 int Element_GASEOUS::update(UPDATE_FUNC_ARGS)
 {

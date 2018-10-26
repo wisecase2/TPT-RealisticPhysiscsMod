@@ -1,5 +1,5 @@
 #include "simulation/Elements.h"
-//#TPT-Directive ElementClass Element_SOLID PT_SOLID 192
+//#TPT-Directive ElementClass Element_SOLID PT_SOLID 191
 Element_SOLID::Element_SOLID()
 {
 	Identifier = "DEFAULT_PT_SOLID";

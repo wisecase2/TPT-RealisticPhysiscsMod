@@ -51,11 +51,11 @@ Element_NBLE::Element_NBLE()
 	solidtransition = 0.95f;
 	radabsorb = 5;
 
-	Update = NULL;// &Element_NBLE::update;
+	//Update = NULL;// &Element_NBLE::update;
 	//Graphics = NULL;// &Element_NBLE::graphics;
 }
 /*
-//#TPT-Directive ElementHeader Element_NBLE static int update(UPDATE_FUNC_ARGS)
+//88#TPT-Directive ElementHeader Element_NBLE static int update(UPDATE_FUNC_ARGS)
 int Element_NBLE::update(UPDATE_FUNC_ARGS)
 {
 	if (parts[i].temp > 52730.15 && sim->pv[y/CELL][x/CELL] > 100.0f)
