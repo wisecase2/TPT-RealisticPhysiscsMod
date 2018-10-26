@@ -1168,7 +1168,7 @@ void GameSave::readOPS(char * data, int dataLength)
 								particles[newIndex].tmp = 107374182;
 								break;
 							case PT_SLTW:
-								particles[newIndex].tmp &= 536870911;
+								particles[newIndex].tmp = 536870911;
 								break;
 						}
 					}
