@@ -105,6 +105,7 @@ public:
 	//Particles
 	Particle parts[NPART]; // ~ 1 megabytes 
 	int idpointer[NPART][3]; // ~ 3 megabytes
+	bool blackhole[YRES][XRES];
 	int pmap[YRES][XRES]; // ~ 1 megabytes 
 	int pmap2[YRES][XRES][4]; // ~ 4 megabytes 
 	int photons[YRES][XRES]; // ~ 1 megabytes 

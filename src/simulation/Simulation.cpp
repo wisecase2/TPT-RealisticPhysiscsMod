@@ -2973,6 +2973,9 @@ void Simulation::kill_part(int i)//kills particle number i
 		if (parts[i].life == 0)
 			etrd_life0_count--;
 		break;
+	case PT_NBHL:
+		blackhole[y][x] = false;
+		break;
 	}
 
 	parts[i].type = PT_NONE;
@@ -3251,6 +3254,9 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 
 	switch (t)
 	{
+	case PT_NBHL:
+		blackhole[y][x] = true;
+		break;
 	case PT_SOAP:
 		parts[i].tmp = -1;
 		parts[i].tmp2 = -1;
@@ -4676,30 +4682,30 @@ void Simulation::UpdateParticles(int start, int end)
 				transitionOccurred = true;
 			}
 
-			////// store deep particles and check excessive stacking, with id pointer
-			if(pmap2[y][x][3] <= 1500){
-				if(pmap2[y][x][0] != currentTick){
-					pmap2[y][x][0] = currentTick;
-					pmap2[y][x][1] = i; //first particle  x,y
-					pmap2[y][x][2] = i; //last particle  x,y
-					pmap2[y][x][3] = 0; // reset deep x,y
-					idpointer[i][2] = 0; // reset deep for id
-				} else{
-					idpointer[pmap2[y][x][2]][0] = currentTick;
-					idpointer[pmap2[y][x][2]][1] = i; // next id
-					idpointer[pmap2[y][x][2]][2] = pmap2[y][x][3]; //deep id
-					pmap2[y][x][2] = i; // last particle
-					pmap2[y][x][3]++; //increase deep
-					//check excessive stacking
-					if(pmap2[y][x][3] > 1500){
-						create_part(pmap2[y][x][1], x, y, PT_NBHL);// change first particle x,y to black hole
-					}
-				}
-			} else if(pmap2[x][y][1] != i){
-				kill_part(i); 
+			if(blackhole[y][x] && parts[i].type != PT_NBHL){
+				kill_part(i);
 				continue;
 			}
-		    
+
+			////// store deep particles and check excessive stacking, with id pointer
+			if(pmap2[y][x][0] != currentTick){
+				pmap2[y][x][0] = currentTick;
+				pmap2[y][x][1] = i; //first particle  x,y
+				pmap2[y][x][2] = i; //last particle  x,y
+				pmap2[y][x][3] = 0; // reset deep x,y
+				idpointer[i][2] = 0; // reset deep for id
+			} else{
+				idpointer[pmap2[y][x][2]][0] = currentTick;
+				idpointer[pmap2[y][x][2]][1] = i; // next id
+				idpointer[pmap2[y][x][2]][2] = pmap2[y][x][3]; //deep id
+				pmap2[y][x][2] = i; // last particle
+				pmap2[y][x][3]++; //increase deep
+				//check excessive stacking
+				if(pmap2[y][x][3] > 1500){
+					create_part(pmap2[y][x][1], x, y, PT_NBHL);// change first particle x,y to black hole
+				}
+			}
+
             //update pressure resistance, and change to broken state, using tmp2 == 1000
 			if(parts[i].tmp2 < 1000 && elements[t].pressureresistance > 0 && elements[t].Properties&TYPE_SOLID){
 				parts[i].tmp2 = 0;
@@ -5933,6 +5939,7 @@ Simulation::Simulation():
 			pmap2[y][x][1] = 0;
 			pmap2[y][x][2] = 0;
 			pmap2[y][x][3] = 0;
+			blackhole[y][x] = false;
 		}
 	}
 	for(int y = 0; y < YRES / CELL; y++){
