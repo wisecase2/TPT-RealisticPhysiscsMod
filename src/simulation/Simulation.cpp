@@ -2415,7 +2415,7 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned *rr, int id)
 	{
 		if (IsWallBlocking(nx, ny, pt))
 			return 0;
-		if (bmap[ny/CELL][nx/CELL]==WL_EHOLE && !emap[ny/CELL][nx/CELL] && !(elements[pt].Properties&TYPE_SOLID) && !(elements[typr].Properties&TYPE_SOLID))
+		if (bmap[ny/CELL][nx/CELL]==WL_EHOLE && !emap[ny/CELL][nx/CELL] && !(elements[pt].Properties&TYPE_SOLID && parts[id].tmp2 < 1000) && !(elements[typr].Properties&TYPE_SOLID && parts[idr].tmp2 < 1000))
 			return 2;
 	}
 	return result;
