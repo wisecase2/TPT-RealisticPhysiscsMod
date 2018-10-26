@@ -51,6 +51,7 @@ Element_PLUT::Element_PLUT()
 	pressureblock = true;
 	defaultbreak = true;
 	radabsorb = 220;
+	specialupdate = true;
 
 	//Update = &Element_PLUT::update;
 	Update = &Element_PLUT::update;
@@ -59,11 +60,24 @@ Element_PLUT::Element_PLUT()
 
 //#TPT-Directive ElementHeader Element_PLUT static int update(UPDATE_FUNC_ARGS)
 int Element_PLUT::update(UPDATE_FUNC_ARGS){
-	int tempadd;
+	int tempadd, ident;
 	if (parts[i].tmp <= 0) {
 		tempadd = parts[i].temp;
-		sim->create_part(i, x, y, PT_RWASTE);
+		if(parts[i].type == PT_PLUT){
+			sim->create_part(i, x, y, PT_RWASTE);
+		} else{
+			parts[i].ctype = PT_RWASTE;
+		}
+		//radioactivity
+		//parts[i].ctype = PT_PLUT;
+		parts[i].tmp = 1048576;
 		parts[i].temp = tempadd;
+	}
+	//radioactivity
+	if(RNG::Ref().chance(20000+(1048576 - parts[i].tmp), 20000000) && (parts[i].tmp > 0)){
+		ident = sim->create_part(-3, x, y, PT_GAMMA);
+		parts[ident].temp = 10.f;
+		parts[i].tmp -= 1;
 	}
 	return 0;
 }

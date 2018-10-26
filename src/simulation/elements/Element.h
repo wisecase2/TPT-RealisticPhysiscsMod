@@ -74,6 +74,8 @@ public:
 	//radioactive
 	float radabsorb = 0;
 
+	bool specialupdate = false;
+
 
 	int (*Update) (UPDATE_FUNC_ARGS);
 	int (*Graphics) (GRAPHICS_FUNC_ARGS);

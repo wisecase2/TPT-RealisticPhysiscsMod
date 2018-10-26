@@ -1158,21 +1158,31 @@ void GameSave::readOPS(char * data, int dataLength)
 					}
 
 					//Particle specific parsing:
-
-					if(savedVersion <= 93){
-						switch(particles[newIndex].type){
-							case PT_DSTW:
-								particles[newIndex].tmp = 0;
-								break;
-							case PT_WATR:
+					//tmp should never be zero for these types
+					switch(particles[newIndex].type){
+						case PT_WATR:
+							if(particles[newIndex].tmp == 0){
 								particles[newIndex].tmp = 107374182;
-								break;
-							case PT_SLTW:
+							}
+							break;
+						case PT_SLTW:
+							if(particles[newIndex].tmp == 0){
 								particles[newIndex].tmp = 536870911;
-								break;
-						}
+							}
+							break;
+						case PT_PLUT:
+							if(particles[newIndex].tmp == 0){
+								particles[newIndex].tmp = 1048576;
+							}
+							break;
+						case PT_URAN:
+							if(particles[newIndex].tmp == 0){
+								particles[newIndex].tmp = 524288;
+							}
+							break;
 					}
-
+					
+					
 					switch(particles[newIndex].type)
 					{
 					case PT_SOAP:
@@ -1811,6 +1821,28 @@ void GameSave::readPSv(char * saveDataChar, int dataLength)
 		// no more particle properties to load, so we can change type here without messing up loading
 		if (i && i<=NPART)
 		{
+			switch(particles[i - 1].type){
+				case PT_WATR:
+					if(particles[i - 1].tmp == 0){
+						particles[i - 1].tmp = 107374182;
+					}
+					break;
+				case PT_SLTW:
+					if(particles[i - 1].tmp == 0){
+						particles[i - 1].tmp = 536870911;
+					}
+					break;
+				case PT_PLUT:
+					if(particles[i - 1].tmp == 0){
+						particles[i - 1].tmp = 1048576;
+					}
+					break;
+				case PT_URAN:
+					if(particles[i - 1].tmp == 0){
+						particles[i - 1].tmp = 524288;
+					}
+					break;
+			}
 			if (ver<90 && particles[i-1].type == PT_PHOT)
 			{
 				particles[i-1].flags |= FLAG_PHOTDECO;
@@ -2406,7 +2438,7 @@ char * GameSave::serialiseOPS(unsigned int & dataLength)
 	set_bson_err_handler([](const char* err) { throw BuildException("BSON error when parsing save: " + ByteString(err).FromUtf8()); });
 	bson_init(&b);
 	bson_append_start_object(&b, "origin");
-	bson_append_int(&b, "majorVersion", 97);
+	bson_append_int(&b, "majorVersion", SAVE_VERSION);
 	bson_append_int(&b, "minorVersion", MINOR_VERSION);
 	bson_append_int(&b, "buildNum", BUILD_NUM);
 	bson_append_int(&b, "snapshotId", SNAPSHOT_ID);

@@ -3290,6 +3290,9 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	case PT_URAN:
 		parts[i].tmp = 524288;
 		break;
+	case PT_RWASTE:
+		parts[i].tmp = 524288;
+		break;
   	case PT_MERC:
 		parts[i].tmp = 10;
 		break;
@@ -3848,7 +3851,7 @@ void Simulation::UpdateParticles(int start, int end)
 {
 	int i, j, x, y, t, t2, nx, ny, r, surround_space, s, rt, nt, partpos, vary, ctypep, tmpp, tmp2p;
 	float mv, dx, dy, nrx, nry, dp, ctemph, ctempl, gravtot, starttemp, dtemp, invmaxtemp = 1.f/MAX_TEMP;
-	int fin_x, fin_y, clear_x, clear_y, stagnant, pt_beforetransition, sorroundtype;
+	int fin_x, fin_y, clear_x, clear_y, stagnant, pt_beforetransition, sorroundtype, type3;
 	float fin_xf, fin_yf, clear_xf, clear_yf, diffy, diffx;
 	float nn, ct1, ct2, swappage;
 	float pt = R_TEMP;
@@ -4765,7 +4768,16 @@ void Simulation::UpdateParticles(int start, int end)
 			if (elements[t].Update)
 #endif
 			{
-				if ((*(elements[t].Update))(this, i, x, y, surround_space, nt, parts, pmap))
+				type3 = t;
+				if(IsValidElement(parts[i].ctype)){
+					if(elements[parts[i].ctype].specialupdate == true){
+						if(t == PT_PLSM || t == PT_GASEOUS || t == PT_LAVA || t == PT_LIQUID || t == PT_SOLID){
+							type3 = parts[i].ctype;
+						}
+					}
+				}
+				
+				if ((*(elements[type3].Update))(this, i, x, y, surround_space, nt, parts, pmap))
 					continue;
 				else if (t==PT_WARP)
 				{

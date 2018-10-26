@@ -51,18 +51,33 @@ Element_URAN::Element_URAN()
 	pressureblock = true;
 	defaultbreak = true;
 	radabsorb = 200;
+	specialupdate = true;
 
 	Update = Element_URAN::update; // &Element_URAN::update;
 }
 
 //#TPT-Directive ElementHeader Element_URAN static int update(UPDATE_FUNC_ARGS)
 int Element_URAN::update(UPDATE_FUNC_ARGS){
-	int tempadd;
+	int tempadd, ident;
 	if (parts[i].tmp <= 0) {
 		tempadd = parts[i].temp;
-		sim->create_part(i, x, y, PT_RWASTE);
+		if(parts[i].type == PT_URAN){
+			sim->create_part(i, x, y, PT_RWASTE);
+		} else{
+			parts[i].ctype = PT_RWASTE;
+		}
+		//radioactivity
+		//parts[i].ctype = PT_URAN;
+		parts[i].tmp = 524288;
 		parts[i].temp = tempadd;
 	}
+	//radioactivity
+	if(RNG::Ref().chance(5000+(524288-parts[i].tmp), 20000000) && (parts[i].tmp > 0)){
+		ident = sim->create_part(-3, x, y, PT_GAMMA);
+		parts[ident].temp = 5.f;
+		parts[i].tmp -= 1;
+	}
+
 	return 0;
 }
 
