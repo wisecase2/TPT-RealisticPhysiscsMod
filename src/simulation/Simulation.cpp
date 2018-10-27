@@ -4502,9 +4502,7 @@ void Simulation::UpdateParticles(int start, int end)
 						ctypep = parts[i].ctype;
 						create_part(i, parts[i].x, parts[i].y, PT_PLSM);
 						parts[i].ctype = ctypep;
-						if (ctypep == PT_PLUT || ctypep == PT_URAN) {
-							parts[i].tmp = tmpp;
-						}
+						parts[i].tmp = tmpp;
 						parts[i].temp = pt;
 						t = PT_PLSM;
 						parts[i].tmp2 = 1;
@@ -4526,9 +4524,7 @@ void Simulation::UpdateParticles(int start, int end)
 						ctypep = parts[i].type;
 						create_part(i, parts[i].x, parts[i].y, PT_PLSM);
 						parts[i].ctype = ctypep;
-						if(ctypep == PT_PLUT || ctypep == PT_URAN){
-							parts[i].tmp = tmpp;
-						}
+						parts[i].tmp = tmpp;
 						parts[i].temp = pt;
 						t = PT_PLSM;
 						parts[i].tmp2 = 1;
@@ -4753,20 +4749,21 @@ void Simulation::UpdateParticles(int start, int end)
 				y = (int)(parts[i].y+0.5f);
 			}
 
-			if (elements[t].Update && lua_el_mode[t] != 2)
+			type3 = t;
+			if(IsValidElement(parts[i].ctype)){
+				if(elements[parts[i].ctype].specialupdate == true){
+					if(t == PT_PLSM || t == PT_GASEOUS || t == PT_LAVA || t == PT_LIQUID || t == PT_SOLID){
+						type3 = parts[i].ctype;
+					}
+				}
+			}
+
+			if (elements[type3].Update && lua_el_mode[type3] != 2)
 #else
 			if (elements[t].Update)
 #endif
 			{
 				//use ctype to update for transitions states
-				type3 = t;
-				if(IsValidElement(parts[i].ctype)){
-					if(elements[parts[i].ctype].specialupdate == true){
-						if(t == PT_PLSM || t == PT_GASEOUS || t == PT_LAVA || t == PT_LIQUID || t == PT_SOLID){
-							type3 = parts[i].ctype;
-						}
-					}
-				}
 				
 				if ((*(elements[type3].Update))(this, i, x, y, surround_space, nt, parts, pmap))
 					continue;
