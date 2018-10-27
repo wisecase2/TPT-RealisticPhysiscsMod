@@ -30,7 +30,7 @@ Element_HSWC::Element_HSWC()
 	HeatConduct = 251;
 	Description = "Heat switch. Conducts heat only when activated.";
 
-	Properties = TYPE_SOLID;
+	Properties = TYPE_SOLID | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;

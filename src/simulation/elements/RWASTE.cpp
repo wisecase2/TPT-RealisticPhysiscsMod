@@ -44,6 +44,9 @@ Element_RWASTE::Element_RWASTE()
 	GasTemperaturetransition = 4404.15f;
 	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
+	SolidLiquidlatent = 2.8f;
+	LiquidGaslatent = 344.f;
+	GasPlsmlatent = 5000.f;
 	radabsorb = 200;
 	pressureresistance = 10.f;
 	pressureblock = true;

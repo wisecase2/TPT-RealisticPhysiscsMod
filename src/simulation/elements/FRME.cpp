@@ -30,7 +30,7 @@ Element_FRME::Element_FRME()
 	HeatConduct = 0;
 	Description = "Frame, can be used with pistons to push many particles.";
 
-	Properties = TYPE_SOLID;
+	Properties = TYPE_SOLID | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;

@@ -4757,7 +4757,7 @@ void Simulation::UpdateParticles(int start, int end)
 					}
 				}
 			}
-
+			
 			if (elements[type3].Update && lua_el_mode[type3] != 2)
 #else
 			if (elements[t].Update)

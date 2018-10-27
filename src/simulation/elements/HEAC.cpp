@@ -33,7 +33,7 @@ Element_HEAC::Element_HEAC()
 	HeatConduct = 251;
 	Description = "Rapid heat conductor.";
 
-	Properties = TYPE_SOLID;
+	Properties = TYPE_SOLID | PROP_GAMMAPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
