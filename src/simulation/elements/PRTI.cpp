@@ -76,7 +76,7 @@ int Element_PRTI::update(UPDATE_FUNC_ARGS)
 			int r = pmap[y+ry][x+rx];
 			if (!r || TYP(r) == PT_STOR)
 				fe = 1;
-			if (!r || (!(sim->elements[TYP(r)].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)) && TYP(r)!=PT_SPRK && TYP(r)!=PT_STOR))
+			if (!r || (!(sim->elements[TYP(r)].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY) || (sim->elements[TYP(r)].Properties&TYPE_SOLID && parts[ID(r)].tmp2 == 1000)) && TYP(r)!=PT_SPRK && TYP(r)!=PT_STOR))
 			{
 				r = sim->photons[y+ry][x+rx];
 				if (!r)
