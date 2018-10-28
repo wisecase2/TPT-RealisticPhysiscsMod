@@ -36,6 +36,7 @@
 #include "simulation/SaveRenderer.h"
 #include "client/Client.h"
 #include "Misc.h"
+#include "Platform.h"
 
 #include "gui/game/GameController.h"
 #include "gui/game/GameView.h"
@@ -532,7 +533,8 @@ void BlueScreen(String detailMessage)
 		while (SDL_PollEvent(&event))
 			if(event.type == SDL_QUIT)
 				exit(-1);
-		Sleep(16);
+		Platform::Millisleep(16);
+
 #ifdef OGLI
 		blit();
 #else
