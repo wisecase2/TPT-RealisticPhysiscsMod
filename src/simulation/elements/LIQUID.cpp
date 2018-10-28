@@ -3,7 +3,7 @@
 Element_LIQUID::Element_LIQUID()
 {
 	Identifier = "DEFAULT_PT_LIQUID";
-	Name = "LIQUID";
+	Name = "LQD";
 	Colour = PIXPACK(0x80A0CF);
 	MenuVisible = 0;
 	MenuSection = SC_LIQUID;

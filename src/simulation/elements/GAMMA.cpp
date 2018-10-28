@@ -3,7 +3,7 @@
 Element_GAMMA::Element_GAMMA()
 {
 	Identifier = "DEFAULT_PT_GAMMA";
-	Name = "GAMMA";
+	Name = "GAMA";
 	Colour = PIXPACK(0xFFFFFF);
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

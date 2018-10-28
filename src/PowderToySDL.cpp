@@ -530,10 +530,11 @@ void BlueScreen(String detailMessage)
 	SDL_Event event;
 	while(true)
 	{
-		while (SDL_PollEvent(&event))
+		while(SDL_PollEvent(&event))
 			if(event.type == SDL_QUIT)
 				exit(-1);
 		Platform::Millisleep(16);
+		
 
 #ifdef OGLI
 		blit();

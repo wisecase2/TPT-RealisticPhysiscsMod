@@ -138,6 +138,8 @@ int Element_H2::update(UPDATE_FUNC_ARGS)
 		}
 	}
 	*/
+
+	//sim->gravmap[(y / CELL)*(XRES / CELL) + (x / CELL)] = 0.5f;
 	return 0;
 }
 

@@ -3,7 +3,7 @@
 Element_RWASTE::Element_RWASTE()
 {
 	Identifier = "DEFAULT_PT_RWASTE";
-	Name = "RWASTE";
+	Name = "RWST";
 	Colour = PIXPACK(0x606010);
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

@@ -3,7 +3,7 @@
 Element_SOLID::Element_SOLID()
 {
 	Identifier = "DEFAULT_PT_SOLID";
-	Name = "SOLID";
+	Name = "SLD";
 	Colour = PIXPACK(0xA0C0FF);
 	MenuVisible = 0;
 	MenuSection = SC_SOLIDS;
