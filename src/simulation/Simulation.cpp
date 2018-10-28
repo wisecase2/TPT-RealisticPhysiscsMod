@@ -2345,15 +2345,17 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned *rr, int id)
 		*rr = r;
 	if (pt>=PT_NUM || TYP(r)>=PT_NUM)
 		return 0;
-	typr = TYP(r);
 	idr = ID(r);
+	typr = TYP(r);
 	result = can_move[pt][typr];
+	if(pt == PT_NEUT && parts[idr].ctype == PT_GOLD){
+		result = 0;
+	}
 	if(!(elements[pt].Properties&TYPE_SOLID && parts[id].tmp2 < 1000) && pt != PT_CNCT){
 		if(elements[pt].Weight > elements[typr].Weight && !(elements[typr].Properties&TYPE_SOLID && parts[idr].tmp2 < 1000) && typr != PT_CNCT){
 			result = 1;
 		}
 	}
-
 	if (result == 3)
 	{
 		switch (typr)
@@ -4736,6 +4738,7 @@ void Simulation::UpdateParticles(int start, int end)
 
 			// nuclear fusion
 			if(parts[i].type == PT_PLSM){
+				//gravmap[(y / CELL)*(XRES / CELL) + (x / CELL)] = 0.5f;
 				nuclear_fusion(i);
 			}
 			//call the particle update function, if there is one
@@ -4750,7 +4753,7 @@ void Simulation::UpdateParticles(int start, int end)
 			}
 
 			type3 = t;
-			if(IsValidElement(parts[i].ctype)){
+			if(IsValidElement(parts[i].ctype) && parts[i].ctype != PT_NONE){
 				if(elements[parts[i].ctype].specialupdate == true){
 					if(t == PT_PLSM || t == PT_GASEOUS || t == PT_LAVA || t == PT_LIQUID || t == PT_SOLID){
 						type3 = parts[i].ctype;
