@@ -24,7 +24,7 @@ Element_BGLA::Element_BGLA()
 	Meltable = 5;
 	Hardness = 0;
 
-	Weight = 90;
+	Weight = 16;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 150;

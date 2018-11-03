@@ -25,7 +25,7 @@ Element_SNOW::Element_SNOW()
 	Hardness = 20;
 	PhotonReflectWavelengths = 0x03FFFFFF;
 
-	Weight = 50;
+	Weight = 4;
 
 	Temperature = R_TEMP-30.0f+273.15f;
 	HeatConduct = 46;

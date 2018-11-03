@@ -24,7 +24,7 @@ Element_GUNP::Element_GUNP()
 	Meltable = 0;
 	Hardness = 10;
 
-	Weight = 85;
+	Weight = 15;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 97;

@@ -24,7 +24,7 @@ Element_DESL::Element_DESL()
 	Meltable = 0;
 	Hardness = 5;
 
-	Weight = 15;
+	Weight = 9;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 42;

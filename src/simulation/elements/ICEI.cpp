@@ -24,7 +24,7 @@ Element_ICEI::Element_ICEI()
 	Meltable = 0;
 	Hardness = 20;
 
-	Weight = 100;
+	Weight = 4;
 
 	Temperature = R_TEMP-50.0f+273.15f;
 	HeatConduct = 46;

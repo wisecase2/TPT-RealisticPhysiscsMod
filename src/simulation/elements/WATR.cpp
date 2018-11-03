@@ -24,7 +24,7 @@ Element_WATR::Element_WATR()
 	Meltable = 0;
 	Hardness = 20;
 
-	Weight = 30;
+	Weight = 6;
 
 	Temperature = R_TEMP-2.0f	+273.15f;
 	HeatConduct = 29;

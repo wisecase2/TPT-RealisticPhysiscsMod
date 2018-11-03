@@ -24,7 +24,7 @@ Element_OIL::Element_OIL()
 	Meltable = 0;
 	Hardness = 5;
 
-	Weight = 20;
+	Weight = 4;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 42;

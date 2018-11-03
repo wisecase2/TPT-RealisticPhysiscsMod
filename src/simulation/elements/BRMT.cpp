@@ -24,7 +24,7 @@ Element_BRMT::Element_BRMT()
 	Meltable = 2;
 	Hardness = 2;
 
-	Weight = 90;
+	Weight = 46;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 211;

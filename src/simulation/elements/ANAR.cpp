@@ -24,7 +24,7 @@ Element_ANAR::Element_ANAR()
 	Meltable = 0;
 	Hardness = 30;
 
-	Weight = 85;
+	Weight = 2;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 70;

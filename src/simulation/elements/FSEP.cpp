@@ -24,7 +24,7 @@ Element_FSEP::Element_FSEP()
 	Meltable = 0;
 	Hardness = 30;
 
-	Weight = 70;
+	Weight = 30;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 70;

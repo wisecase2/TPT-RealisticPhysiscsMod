@@ -24,7 +24,7 @@ Element_FRZZ::Element_FRZZ()
 	Meltable = 0;
 	Hardness = 20;
 
-	Weight = 50;
+	Weight = 4;
 
 	Temperature = 253.15f;
 	HeatConduct = 46;

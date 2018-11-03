@@ -2348,7 +2348,7 @@ void GameView::OnDraw()
 				}
 
 				// only elements that use .tmp2 show it in the debug HUD
-				if (type == PT_CRAY || type == PT_DRAY || type == PT_EXOT || type == PT_LIGH || type == PT_SOAP || type == PT_TRON || type == PT_VIBR || type == PT_VIRS || type == PT_WARP || type == PT_LCRY || type == PT_CBNW || type == PT_TSNS || type == PT_DTEC || type == PT_LSNS || type == PT_PSTN || type == PT_LDTC || type == PT_NEUT)
+				if (type == PT_CRAY || type == PT_DRAY || type == PT_EXOT || type == PT_LIGH || type == PT_SOAP || type == PT_TRON || type == PT_VIBR || type == PT_VIRS || type == PT_WARP || type == PT_LCRY || type == PT_CBNW || type == PT_TSNS || type == PT_DTEC || type == PT_LSNS || type == PT_PSTN || type == PT_LDTC || type == PT_NEUT || type == PT_CONV)
 					sampleInfo << ", Tmp2: " << sample.particle.tmp2;
 
 				sampleInfo << ", Pressure: " << sample.AirPressure;

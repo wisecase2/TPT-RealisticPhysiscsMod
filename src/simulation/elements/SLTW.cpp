@@ -24,7 +24,7 @@ Element_SLTW::Element_SLTW()
 	Meltable = 0;
 	Hardness = 20;
 
-	Weight = 35;
+	Weight = 7;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 75;

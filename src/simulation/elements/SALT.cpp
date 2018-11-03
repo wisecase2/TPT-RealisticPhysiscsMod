@@ -24,7 +24,7 @@ Element_SALT::Element_SALT()
 	Meltable = 5;
 	Hardness = 1;
 
-	Weight = 75;
+	Weight = 30;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 110;

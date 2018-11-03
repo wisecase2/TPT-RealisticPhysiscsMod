@@ -24,7 +24,7 @@ Element_LNTG::Element_LNTG()
 	Meltable = 0;
 	Hardness = 0;
 
-	Weight = 30;
+	Weight = 3;
 
 	Temperature = 70.15f;
 	HeatConduct = 70;

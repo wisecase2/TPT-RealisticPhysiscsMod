@@ -24,7 +24,7 @@ Element_THRM::Element_THRM()
 	Meltable = 2;
 	Hardness = 2;
 
-	Weight = 90;
+	Weight = 20;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 211;

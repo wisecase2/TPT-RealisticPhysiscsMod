@@ -24,7 +24,7 @@ Element_LIQUID::Element_LIQUID()
 	Meltable = 0;
 	Hardness = 0;
 
-	Weight = 30;
+	Weight = 3;
 
 	Temperature = R_TEMP-2.0f	+273.15f;
 	HeatConduct = 23;

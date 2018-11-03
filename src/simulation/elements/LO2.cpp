@@ -24,7 +24,7 @@ Element_LO2::Element_LO2()
 	Meltable = 0;
 	Hardness = 0;
 
-	Weight = 30;
+	Weight = 3;
 
 	Temperature = 80.0f;
 	HeatConduct = 70;
