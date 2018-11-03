@@ -1,0 +1,26 @@
+v1.0:
+ - Completed most of the elements that can be destroyed with 4 transition states (solid, liquid, gas and plsm).
+ - changed PLUT, URAN fission method.
+ - The penetration power of PROT and NEUT has been changed.
+ - Added latent heat.
+ - The transition from the liquid state to the gaseous state changes the pressure on the cell.
+ - changed air update, asymmetry repaired.
+
+v2.0:
+ - Added broken state
+ - Added the broken state for non-breaking elements, and each of them has breaking strength, which also varies with thickness. Added input key "m", which switches the mode of placing these elements
+in broken state or not (tmp2 = 1000).
+ - fixed infinity salt in sltw.
+ - Added gamma rays.
+ - AMTR now releases gamma rays when it touches matter.
+ - RWST, PLUT, URAN now is radioactive, release gamma rays.
+ - Now GOLD reflect neutrons.
+ - Added solid state for HYGN and NBLE.
+ - Fixed many other minor bugs.
+
+v2.3:
+ - Added ASPR, powered sprk, spark every frame. Tmp: 1 -> pscn, 2 -> inwr, 3 -> replace mod, exclusive for cray, and others like normal conductors.
+ - Filt has 18 more modes.
+ - Now NEUT slows down in the water.
+ - Fixed black hole shadow bug.
+ - CONV now has a new mode, where you change the element type without affecting speed when your tmp2 equals 1.
