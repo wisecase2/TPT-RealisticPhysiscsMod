@@ -4063,10 +4063,6 @@ void Simulation::UpdateParticles(int start, int end)
 #endif
 			}
 
-			if(elements[parts[i].type].notransitionstate || (parts[i].type == PT_SPRK && parts[i].ctype == PT_ASPR)){
-				goto notransition;
-			}
-
 			transitionOccurred = false;
 
 			j = surround_space = nt = 0;//if nt is greater than 1 after this, then there is a particle around the current particle, that is NOT the current particle's type, for water movement.
@@ -4548,7 +4544,6 @@ void Simulation::UpdateParticles(int start, int end)
 						//pv[y / CELL][x / CELL] += 0.00512f*elements[parts[i].ctype].GasTemperaturetransition;
 						addpressure(0.00512f*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
 						parts[i].temp -= elements[parts[i].ctype].LiquidGaslatent;
-						//parts[i].type = parts[i].ctype;
 						t = parts[i].type = PT_GASEOUS;
 						parts[i].tmp = tmpp;
 						goto transited;
@@ -4763,7 +4758,6 @@ void Simulation::UpdateParticles(int start, int end)
 				//gravmap[(y / CELL)*(XRES / CELL) + (x / CELL)] = 0.5f;
 				nuclear_fusion(i);
 			}
-			notransition:
 			//call the particle update function, if there is one
 #if !defined(RENDERER) && defined(LUACONSOLE)
 			if (lua_el_mode[parts[i].type] == 3)

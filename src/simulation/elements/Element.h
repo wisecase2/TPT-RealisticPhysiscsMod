@@ -75,7 +75,6 @@ public:
 	float radabsorb = 0;
 
 	bool specialupdate = false;
-	bool notransitionstate = false;
 	float neutslowdown = 1.f;
 
 

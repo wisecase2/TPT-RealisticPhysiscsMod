@@ -44,7 +44,6 @@ Element_CRAY::Element_CRAY()
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
 
-	bool notransitionstate = true;
 
 
 	Update = &Element_CRAY::update;

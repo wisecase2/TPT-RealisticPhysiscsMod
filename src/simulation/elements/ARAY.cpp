@@ -45,7 +45,6 @@ Element_ARAY::Element_ARAY()
 	PlsmTemperaturetransition = -1;
 
 
-	bool notransitionstate = true;
 
 
 	Update = &Element_ARAY::update;

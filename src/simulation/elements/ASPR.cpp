@@ -47,8 +47,6 @@ Element_ASPR::Element_ASPR()
 	pressureblock = true;
 	radabsorb = 1000;
 
-	bool notransitionstate = true;
-
 
 	Update = &Element_ASPR::update;;
 }
