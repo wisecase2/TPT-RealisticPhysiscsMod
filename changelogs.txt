@@ -20,7 +20,7 @@ in broken state or not (tmp2 = 1000).
 
 v2.3:
  - Added ASPR, powered sprk, spark every frame. Tmp: 1 -> pscn, 2 -> inwr, 3 -> replace mod, exclusive for cray, and others like normal conductors.
- - Filt has 18 more modes.
+ - Filt has 17 more modes.
  - Now NEUT slows down in the water (all states).
  - Fixed black hole shadow bug.
  - CONV now has a new mode, where you change the element type without affecting speed when your tmp2 equals 1.
