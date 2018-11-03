@@ -24,7 +24,7 @@ Element_BREC::Element_BREC()
 	Meltable = 2;
 	Hardness = 2;
 
-	Weight = 40;
+	Weight = 90;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 211;

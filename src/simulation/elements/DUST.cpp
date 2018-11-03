@@ -25,7 +25,7 @@ Element_DUST::Element_DUST()
 	Hardness = 30;
 	PhotonReflectWavelengths = 0x3FFFFFC0;
 
-	Weight = 16;
+	Weight = 85;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 70;

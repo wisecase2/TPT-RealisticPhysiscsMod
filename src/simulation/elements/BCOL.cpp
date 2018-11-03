@@ -25,7 +25,7 @@ Element_BCOL::Element_BCOL()
 	Hardness = 2;
 	PhotonReflectWavelengths = 0x00000000;
 
-	Weight = 10;
+	Weight = 90;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 150;

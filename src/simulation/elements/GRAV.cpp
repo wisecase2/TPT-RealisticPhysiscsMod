@@ -26,7 +26,7 @@ Element_GRAV::Element_GRAV()
 	Meltable = 0;
 	Hardness = 30;
 
-	Weight = 14;
+	Weight = 85;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 70;

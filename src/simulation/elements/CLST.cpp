@@ -24,7 +24,7 @@ Element_CLST::Element_CLST()
 	Meltable = 2;
 	Hardness = 2;
 
-	Weight = 13;
+	Weight = 55;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 70;
