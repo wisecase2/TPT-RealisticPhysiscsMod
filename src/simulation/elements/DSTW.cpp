@@ -50,6 +50,8 @@ Element_DSTW::Element_DSTW()
 	InvHeatcapacity = 1.0f;
 	radabsorb = 15;
 
+	neutslowdown = 0.985f;
+
 	Update = &Element_DSTW::update;
 }
 

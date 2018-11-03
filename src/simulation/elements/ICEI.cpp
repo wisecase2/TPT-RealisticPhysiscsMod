@@ -49,6 +49,7 @@ Element_ICEI::Element_ICEI()
 	Heatcapacity = 2.0f;
 	InvHeatcapacity = 0.5f;
 	radabsorb = 20;
+	neutslowdown = 0.985f;
 
 	Update = &Element_ICEI::update;
 }

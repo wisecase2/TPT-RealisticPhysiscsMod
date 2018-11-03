@@ -44,6 +44,9 @@ Element_CRAY::Element_CRAY()
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
 
+	bool notransitionstate = true;
+
+
 	Update = &Element_CRAY::update;
 }
 
@@ -81,9 +84,10 @@ int Element_CRAY::update(UPDATE_FUNC_ARGS)
 						continue;
 					if (TYP(r)==PT_SPRK && parts[ID(r)].life==3) { //spark found, start creating
 						unsigned int colored = 0;
-						bool destroy = parts[ID(r)].ctype==PT_PSCN;
-						bool nostop = parts[ID(r)].ctype==PT_INST;
-						bool createSpark = (parts[ID(r)].ctype==PT_INWR);
+						int destroy = (parts[ID(r)].ctype == PT_PSCN || (parts[ID(r)].ctype == PT_ASPR && (parts[ID(r)].tmp == 0 || parts[ID(r)].tmp == 3))) ? 1 : 0;
+						int nostop = (parts[ID(r)].ctype == PT_INST || (parts[ID(r)].ctype == PT_ASPR && parts[ID(r)].tmp == 1)) ? 1 : 0;
+						bool createSpark = (parts[ID(r)].ctype == PT_INWR || (parts[ID(r)].ctype == PT_ASPR && parts[ID(r)].tmp == 2));
+					    bool replace = (parts[ID(r)].ctype == PT_ASPR && parts[ID(r)].tmp == 3) ? 1 : 0;
 						int partsRemaining = 255;
 						if (parts[i].tmp) //how far it shoots
 							partsRemaining = parts[i].tmp;
@@ -95,6 +99,7 @@ int Element_CRAY::update(UPDATE_FUNC_ARGS)
 							}
 							r = pmap[y+nyi+nyy][x+nxi+nxx];
 							if (!sim->IsWallBlocking(x+nxi+nxx, y+nyi+nyy, TYP(parts[i].ctype)) && (!sim->pmap[y+nyi+nyy][x+nxi+nxx] || createSpark)) { // create, also set color if it has passed through FILT
+								killed:
 								int nr = sim->create_part(-1, x+nxi+nxx, y+nyi+nyy, TYP(parts[i].ctype), ID(parts[i].ctype));
 								if (nr!=-1) {
 									if (colored)
@@ -119,6 +124,9 @@ int Element_CRAY::update(UPDATE_FUNC_ARGS)
 								docontinue = 1;
 							} else if(destroy && r && (TYP(r) != PT_DMND)) {
 								sim->kill_part(ID(r));
+								if(replace){
+									goto killed;
+								}
 								if(!--partsRemaining)
 									docontinue = 0;
 							}

@@ -50,6 +50,7 @@ Element_CLNE::Element_CLNE()
 //#TPT-Directive ElementHeader Element_CLNE static int update(UPDATE_FUNC_ARGS)
 int Element_CLNE::update(UPDATE_FUNC_ARGS)
 {
+	int np;
 	if (parts[i].ctype<=0 || parts[i].ctype>=PT_NUM || !sim->elements[parts[i].ctype].Enabled || (parts[i].ctype==PT_LIFE && (parts[i].tmp<0 || parts[i].tmp>=NGOL)))
 	{
 		int r, rx, ry, rt;
@@ -77,6 +78,13 @@ int Element_CLNE::update(UPDATE_FUNC_ARGS)
 	else
 	{
 		if (parts[i].ctype==PT_LIFE) sim->create_part(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), PT_LIFE, parts[i].tmp);
+		/*else if(parts[i].ctype == PT_GAMMA){
+			np = sim->create_part(-3, x, y, PT_GAMMA);
+			if(np >= 0){
+				parts[np].temp = parts[i].tmp;
+				parts[i].vx = 6.28f * cosf(0.017444f*parts[i].tmp2);
+				parts[i].vy = 6.28f * sinf(0.017444f*parts[i].tmp2);
+			}*/
 		else if (parts[i].ctype!=PT_LIGH || RNG::Ref().chance(1, 30))
 		{
 			int np = sim->create_part(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), TYP(parts[i].ctype));

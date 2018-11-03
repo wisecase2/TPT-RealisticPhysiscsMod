@@ -47,6 +47,8 @@ Element_WOOD::Element_WOOD()
 	PlsmTemperaturetransition = -1;
 	radabsorb = 20;
 
+	neutslowdown = 0.99f;
+
 	Update = &Element_WOOD::update;
 	Graphics = &Element_WOOD::graphics;
 }

@@ -44,6 +44,9 @@ Element_GAMMA::Element_GAMMA()
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
 
+	bool notransitionstate = true;
+
+
 	Update = &Element_GAMMA::update;
 	Graphics = &Element_GAMMA::graphics;
 }
@@ -53,6 +56,7 @@ Element_GAMMA::Element_GAMMA()
 int Element_GAMMA::update(UPDATE_FUNC_ARGS)
 {
 	int r, idr, typr, absorb, ctype1;
+	float multiplier;
 	bool valid1 = false;
 	r = pmap[y][x];
 	idr = ID(r);
@@ -66,6 +70,7 @@ int Element_GAMMA::update(UPDATE_FUNC_ARGS)
 			if(RNG::Ref().chance(absorb, 400)){
 				parts[idr].temp += parts[i].temp;
 				sim->kill_part(i);
+				return 0;
 			}
 		}
 	} else{
@@ -74,10 +79,44 @@ int Element_GAMMA::update(UPDATE_FUNC_ARGS)
 			if(RNG::Ref().chance(absorb, 400)){
 				parts[idr].temp += parts[i].temp;
 				sim->kill_part(i);
+				return 0;
 			}
 		}
 	}
-
+	switch(typr){
+		case PT_ACEL:
+			if(parts[idr].life != 0){
+				float change = parts[idr].life > 1000 ? 1000 : (parts[idr].life < 0 ? 0 : parts[idr].life);
+				multiplier = 1.0f + (change / 100.0f);
+			} else{
+				multiplier = 1.1f;
+			}
+			parts[i].vx *= multiplier;
+			parts[i].vy *= multiplier;
+			parts[idr].tmp = 1;
+			break;
+		case PT_DCEL:
+			multiplier = 1.0f / 1.1f;
+			if(parts[idr].life != 0){
+				multiplier = 1.0f - ((parts[idr].life > 100 ? 100 : (parts[idr].life < 0 ? 0 : parts[idr].life)) / 100.0f);
+			} else{
+				multiplier = 1.1f;
+			}
+			parts[i].vx *= multiplier;
+			parts[i].vy *= multiplier;
+			parts[idr].tmp = 1;
+			break;
+		case PT_CONV:
+			if(parts[idr].tmp2 != 1){
+				sim->create_part(i, x, y, TYP(parts[idr].ctype));
+			} else{
+				sim->part_change_type(i, x, y, TYP(parts[idr].ctype));
+				parts[i].ctype = 0;
+			}
+			break;
+		default:
+			break;
+	}
 	return 0;
 }
 

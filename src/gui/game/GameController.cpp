@@ -579,7 +579,6 @@ ByteString GameController::StampRegion(ui::Point point1, ui::Point point2, bool 
 	bool incPressure = Client::Ref().GetPrefBool("Simulation.IncludePressure", true);
 	if (!incPressure)
 		includePressure = !includePressure;
-
 	GameSave * newSave = gameModel->GetSimulation()->Save(point1.X, point1.Y, point2.X, point2.Y, includePressure);
 	if(newSave)
 	{

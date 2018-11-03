@@ -47,6 +47,7 @@ Element_PLNT::Element_PLNT()
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
 	radabsorb = 10;
+	neutslowdown = 0.995f;
 
 	Update = &Element_PLNT::update;
 	Graphics = &Element_PLNT::graphics;

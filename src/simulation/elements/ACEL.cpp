@@ -30,7 +30,7 @@ Element_ACEL::Element_ACEL()
 	HeatConduct = 251;
 	Description = "Accelerator, speeds up nearby elements.";
 
-	Properties = TYPE_SOLID;
+	Properties = TYPE_SOLID|PROP_NEUTPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -68,8 +68,12 @@ int Element_ACEL::update(UPDATE_FUNC_ARGS)
 			if (BOUNDS_CHECK && (!rx != !ry))
 			{
 				r = pmap[y+ry][x+rx];
-				if(!r)
-					r = sim->photons[y+ry][x+rx];
+				if(!r){
+					r = sim->photons[y + ry][x + rx];
+					if(ry == 0 && rx == 0){
+						continue;
+					}
+				}
 				if (!r)
 					continue;
 				if(sim->elements[TYP(r)].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY))

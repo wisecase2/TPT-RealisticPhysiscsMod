@@ -49,6 +49,7 @@ Element_RIME::Element_RIME()
 	Heatcapacity = 2.0f;
 	InvHeatcapacity = 0.5f;
 	radabsorb = 20;
+	neutslowdown = 0.99f;
 
 	Update = &Element_RIME::update;
 }

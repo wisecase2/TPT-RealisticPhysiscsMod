@@ -51,15 +51,18 @@ Element_VIBR::Element_VIBR()
 
 //#TPT-Directive ElementHeader Element_VIBR static int update(UPDATE_FUNC_ARGS)
 int Element_VIBR::update(UPDATE_FUNC_ARGS) {
-	int r, rx, ry, rndstore = 0;
+	int r, rx, ry, rndstore = 0, tempadd;
 	int trade, transfer;
 	if (!parts[i].life) //if not exploding
 	{
 		//Heat absorption code
 		if (parts[i].temp > 274.65f)
 		{
-			parts[i].tmp++;
-			parts[i].temp -= 3;
+			//parts[i].tmp++;
+			//parts[i].temp -= 3;
+			tempadd = parts[i].temp / 5555.f + 1.f;
+			parts[i].tmp += tempadd;
+			parts[i].temp -= 3.f*tempadd;
 		}
 		else if (parts[i].temp < 271.65f)
 		{
@@ -221,7 +224,7 @@ int Element_VIBR::graphics(GRAPHICS_FUNC_ARGS)
 	int gradient = cpart->tmp/10;
 	if (gradient >= 100 || cpart->life)
 	{
-		*colr = (int)(fabs(sin(exp((750.0f-cpart->life)/170)))*200.0f);
+		*colr = (int)(fabs(sin(exp((750.0f-cpart->life)/150)))*200.0f);
 		if (cpart->tmp2)
 		{
 			*colg = *colr;

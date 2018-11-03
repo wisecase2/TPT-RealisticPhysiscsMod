@@ -44,6 +44,9 @@ Element_FRAY::Element_FRAY()
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
 
+	bool notransitionstate = true;
+
+
 	Update = &Element_FRAY::update;
 }
 

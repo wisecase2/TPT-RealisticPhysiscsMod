@@ -49,6 +49,7 @@ Element_SLTW::Element_SLTW()
 	Heatcapacity = 4.2f;
 	InvHeatcapacity = 0.238095f;
 	radabsorb = 15;
+	neutslowdown = 0.99f;
 
 	Update = &Element_SLTW::update;
 }

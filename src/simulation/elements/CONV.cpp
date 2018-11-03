@@ -30,7 +30,7 @@ Element_CONV::Element_CONV()
 	HeatConduct = 251;
 	Description = "Converter. Converts everything into whatever it first touches.";
 
-	Properties = TYPE_SOLID|PROP_DRAWONCTYPE|PROP_NOCTYPEDRAW;
+	Properties = TYPE_SOLID|PROP_DRAWONCTYPE|PROP_NOCTYPEDRAW|PROP_NEUTPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -50,17 +50,22 @@ Element_CONV::Element_CONV()
 //#TPT-Directive ElementHeader Element_CONV static int update(UPDATE_FUNC_ARGS)
 int Element_CONV::update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
+	int r, rx, ry, TMP2;
 	int ctype = TYP(parts[i].ctype), ctypeExtra = ID(parts[i].ctype);
+	TMP2 = parts[i].tmp2;
 	if (ctype<=0 || ctype>=PT_NUM || !sim->elements[ctype].Enabled || ctype==PT_CONV || (ctype==PT_LIFE && (ctypeExtra<0 || ctypeExtra>=NGOL)))
 	{
 		for (rx=-1; rx<2; rx++)
 			for (ry=-1; ry<2; ry++)
 				if (BOUNDS_CHECK)
 				{
-					r = sim->photons[y+ry][x+rx];
-					if (!r)
-						r = pmap[y+ry][x+rx];
+					r = pmap[y + ry][x + rx];
+					if(!r){
+						r = sim->photons[y + ry][x + rx];
+						if(ry == 0 && rx == 0){
+							continue;
+						}
+					}
 					if (!r)
 						continue;
 					int rt = TYP(r);
@@ -89,7 +94,12 @@ int Element_CONV::update(UPDATE_FUNC_ARGS)
 						continue;
 					if (TYP(r) != PT_CONV && TYP(r) != PT_DMND && TYP(r) != ctype)
 					{
-						sim->create_part(ID(r), x+rx, y+ry, TYP(parts[i].ctype), ID(parts[i].ctype));
+						if(TMP2 != 1 || TYP(r) == PT_LIFE){
+							sim->create_part(ID(r), x + rx, y + ry, TYP(parts[i].ctype), ID(parts[i].ctype));
+						} else{
+							sim->part_change_type(ID(r), x + rx, y + ry, TYP(parts[i].ctype));
+							parts[ID(r)].ctype = 0;
+						}
 					}
 				}
 	}

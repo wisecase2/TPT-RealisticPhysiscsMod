@@ -53,6 +53,7 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 {
 	int r, rx, ry, identity, tempadd, ident, neut2, cont2, tmp2n, tmpp, idr, typr;
 	unsigned int pressureFactor = 3 + (int)sim->pv[y/CELL][x/CELL];
+	float multiplier, slowdown;
 	r = pmap[y][x];
 
 	////// joins the neutrons if you have more than 4 in the same position.
@@ -72,15 +73,48 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 				cont2 = 1;
 			}
 		}
-		if(sim->idpointer[ident][0] == (sim->currentTick)){
+		if(sim->idpointer[ident][0] == (sim->truecurrentTick)){
 			ident = sim->idpointer[ident][1];
 		}else{
 			break;
 		}
 	}
-	
 	idr = ID(r);
 	typr = TYP(r);
+	switch(typr){
+		case PT_ACEL:
+			if(parts[idr].life != 0){
+				float change = parts[idr].life > 1000 ? 1000 : (parts[idr].life < 0 ? 0 : parts[idr].life);
+				multiplier = 1.0f + (change / 100.0f);
+			} else{
+				multiplier = 1.1f;
+			}
+			parts[i].vx *= multiplier;
+			parts[i].vy *= multiplier;
+			parts[idr].tmp = 1;
+			break;
+		case PT_DCEL:
+			multiplier = 1.0f / 1.1f;
+			if(parts[idr].life != 0){
+				multiplier = 1.0f - ((parts[idr].life > 100 ? 100 : (parts[idr].life < 0 ? 0 : parts[idr].life)) / 100.0f);
+			} else{
+				multiplier = 1.1f;
+			}
+			parts[i].vx *= multiplier;
+			parts[i].vy *= multiplier;
+			parts[idr].tmp = 1;
+			break;
+		case PT_CONV:
+			if(parts[idr].tmp2 != 1){
+				sim->create_part(i, x, y, TYP(parts[idr].ctype));
+			} else{
+				sim->part_change_type(i, x, y, TYP(parts[idr].ctype));
+				parts[i].ctype = 0;
+			}
+			break;
+		default:
+			break;
+	}
 
 	if(parts[i].life && typr == PT_NONE){
 		if(!--parts[i].life)
@@ -89,7 +123,8 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 	
 	//// nuclear fission uranium and plutonium:
 	if (typr == PT_PLUT || typr == PT_GASEOUS && parts[idr].ctype == PT_PLUT || typr == PT_PLSM && parts[idr].ctype == PT_PLUT || typr == PT_LAVA && parts[idr].ctype == PT_PLUT){
-		if (RNG::Ref().chance(1, 3) && (parts[idr].tmp > 0)){
+		//if (RNG::Ref().chance(parts[idr].tmp, 3145728) && (parts[idr].tmp > 0)){
+		if(RNG::Ref().chance(1, 3) && (parts[idr].tmp > 0)){
 		
 			if(parts[i].tmp2 < parts[idr].tmp){
 				identity = sim->create_part(-3, x, y, PT_NEUT);
@@ -119,8 +154,9 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 			Element_FIRE::update(UPDATE_FUNC_SUBCALL_ARGS);
 		}
 	}else if(typr == PT_URAN || typr == PT_GASEOUS && parts[idr].ctype == PT_URAN || typr == PT_PLSM && parts[idr].ctype == PT_URAN || typr == PT_LAVA && parts[idr].ctype == PT_URAN) {
-		if (RNG::Ref().chance(1, 5) && (parts[idr].tmp > 0)) {
-		
+		//if (RNG::Ref().chance(parts[idr].tmp, 2621440) && (parts[idr].tmp > 0)) {
+		if(RNG::Ref().chance(1, 5) && (parts[idr].tmp > 0)){
+
 			if(parts[i].tmp2 < parts[idr].tmp){
 				identity = sim->create_part(-3, x, y, PT_NEUT);
 				tempadd = parts[identity].tmp2 = parts[i].tmp2;
@@ -149,7 +185,15 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 			Element_FIRE::update(UPDATE_FUNC_SUBCALL_ARGS);
 		}
 	}
+	if(sim->IsValidElement(typr)){
 	
+		slowdown = sim->elements[typr].neutslowdown;
+		if(slowdown < 1.f){
+			parts[i].vx *= slowdown;
+			parts[i].vy *= slowdown;
+		}
+	}
+
 	for(rx = -1; rx < 2; rx++){
 		for(ry = -1; ry < 2; ry++){
 			if(BOUNDS_CHECK){
@@ -160,10 +204,6 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 					case PT_WATR:
 						if(RNG::Ref().chance(3, 20))
 							sim->part_change_type(idr, x + rx, y + ry, PT_DSTW);
-					case PT_ICEI:
-					case PT_SNOW:
-						parts[i].vx *= 0.995;
-						parts[i].vy *= 0.995;
 						break;
 #ifdef SDEUT
 					case PT_DEUT:

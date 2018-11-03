@@ -51,8 +51,8 @@ Element_PHOT::Element_PHOT()
 //#TPT-Directive ElementHeader Element_PHOT static int update(UPDATE_FUNC_ARGS)
 int Element_PHOT::update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
-	float rr, rrr;
+	int r, rx, ry,idr,typr;
+	float rr, rrr, multiplier;
 	if (!(parts[i].ctype&0x3FFFFFFF)) {
 		sim->kill_part(i);
 		return 1;
@@ -60,40 +60,36 @@ int Element_PHOT::update(UPDATE_FUNC_ARGS)
 	if (parts[i].temp > 506)
 		if (RNG::Ref().chance(1, 10))
 			Element_FIRE::update(UPDATE_FUNC_SUBCALL_ARGS);
-	for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK) {
-				r = pmap[y+ry][x+rx];
-				if (!r)
+	for(rx = -1; rx < 2; rx++){
+		for(ry = -1; ry < 2; ry++){
+			if(BOUNDS_CHECK){
+				r = pmap[y + ry][x + rx];
+				if(!r)
 					continue;
-				if (TYP(r)==PT_ISOZ || TYP(r)==PT_ISZS)
-				{
-					if (RNG::Ref().chance(1, 400))
-					{
+				if(TYP(r) == PT_ISOZ || TYP(r) == PT_ISZS){
+					if(RNG::Ref().chance(1, 400)){
 						parts[i].vx *= 0.90;
 						parts[i].vy *= 0.90;
-						sim->create_part(ID(r), x+rx, y+ry, PT_PHOT);
+						sim->create_part(ID(r), x + rx, y + ry, PT_PHOT);
 						rrr = RNG::Ref().between(0, 359) * 3.14159f / 180.0f;
-						if (TYP(r) == PT_ISOZ)
+						if(TYP(r) == PT_ISOZ)
 							rr = RNG::Ref().between(128, 255) / 127.0f;
 						else
 							rr = RNG::Ref().between(128, 355) / 127.0f;
-						parts[ID(r)].vx = rr*cosf(rrr);
-						parts[ID(r)].vy = rr*sinf(rrr);
-						sim->pv[y/CELL][x/CELL] -= 15.0f * CFDS;
+						parts[ID(r)].vx = rr * cosf(rrr);
+						parts[ID(r)].vy = rr * sinf(rrr);
+						sim->pv[y / CELL][x / CELL] -= 15.0f * CFDS;
 					}
-				}
-				else if((TYP(r) == PT_QRTZ || TYP(r) == PT_PQRT) && !ry && !rx)//if on QRTZ
+				} else if((TYP(r) == PT_QRTZ || TYP(r) == PT_PQRT) && !ry && !rx)//if on QRTZ
 				{
 					float a = RNG::Ref().between(0, 359) * 3.14159f / 180.0f;
 					parts[i].vx = 3.0f*cosf(a);
 					parts[i].vy = 3.0f*sinf(a);
 					if(parts[i].ctype == 0x3FFFFFFF)
 						parts[i].ctype = 0x1F << RNG::Ref().between(0, 25);
-					if (parts[i].life)
+					if(parts[i].life)
 						parts[i].life++; //Delay death
-				}
-				else if(TYP(r) == PT_BGLA && !ry && !rx)//if on BGLA
+				} else if(TYP(r) == PT_BGLA && !ry && !rx)//if on BGLA
 				{
 					float a = RNG::Ref().between(-50, 50) * 0.001f;
 					float rx = cosf(a), ry = sinf(a), vx, vy;
@@ -101,13 +97,51 @@ int Element_PHOT::update(UPDATE_FUNC_ARGS)
 					vy = rx * parts[i].vy - ry * parts[i].vx;
 					parts[i].vx = vx;
 					parts[i].vy = vy;
-				}
-				else if (TYP(r) == PT_FILT && parts[ID(r)].tmp==9)
-				{
-					parts[i].vx += ((float)RNG::Ref().between(-500, 500))/1000.0f;
-					parts[i].vy += ((float)RNG::Ref().between(-500, 500))/1000.0f;
+				} else if(TYP(r) == PT_FILT && parts[ID(r)].tmp == 9){
+					parts[i].vx += ((float)RNG::Ref().between(-500, 500)) / 1000.0f;
+					parts[i].vy += ((float)RNG::Ref().between(-500, 500)) / 1000.0f;
 				}
 			}
+		}
+	}
+	r = pmap[y][x];
+	idr = ID(r);
+	typr = TYP(r);
+	switch(typr){
+		case PT_ACEL:
+			if(parts[idr].life != 0){
+				float change = parts[idr].life > 1000 ? 1000 : (parts[idr].life < 0 ? 0 : parts[idr].life);
+				multiplier = 1.0f + (change / 100.0f);
+			} else{
+				multiplier = 1.1f;
+			}
+			parts[i].vx *= multiplier;
+			parts[i].vy *= multiplier;
+			parts[idr].tmp = 1;
+			break;
+		case PT_DCEL:
+			multiplier = 1.0f / 1.1f;
+			if(parts[idr].life != 0){
+				multiplier = 1.0f - ((parts[idr].life > 100 ? 100 : (parts[idr].life < 0 ? 0 : parts[idr].life)) / 100.0f);
+			} else{
+				multiplier = 1.1f;
+			}
+			parts[i].vx *= multiplier;
+			parts[i].vy *= multiplier;
+			parts[idr].tmp = 1;
+			break;
+		case PT_CONV:
+			if(parts[idr].tmp2 != 1){
+				sim->create_part(i, x, y, TYP(parts[idr].ctype));
+			} else{
+				sim->part_change_type(i, x, y, TYP(parts[idr].ctype));
+				parts[i].ctype = 0;
+			}
+			break;
+		default:
+			break;
+	}
+
 	return 0;
 }
 

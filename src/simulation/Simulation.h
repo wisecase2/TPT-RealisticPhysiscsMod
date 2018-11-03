@@ -49,6 +49,7 @@ public:
 	std::vector<menu_section> msections;
 
 	int currentTick;
+	int truecurrentTick;
 	int replaceModeSelected;
 	int replaceModeFlags;
 	int blockcount[YRES / CELL][XRES / CELL];
@@ -105,7 +106,7 @@ public:
 	//Particles
 	Particle parts[NPART]; // ~ 1 megabytes 
 	int idpointer[NPART][3]; // ~ 3 megabytes
-	bool blackhole[YRES][XRES];
+	int blackhole[YRES][XRES][2];
 	int pmap[YRES][XRES]; // ~ 1 megabytes 
 	int pmap2[YRES][XRES][4]; // ~ 4 megabytes 
 	int photons[YRES][XRES]; // ~ 1 megabytes 

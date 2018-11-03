@@ -1538,8 +1538,8 @@ int Simulation::CreateParts(int positionX, int positionY, int c, Brush * cBrush,
 			if (currentTick < lightningRecreate)
 				return 1;
 			int newlife = radiusX + radiusY;
-			if (newlife > 10)
-				newlife = 10;
+			if (newlife > 55)
+				newlife = 55;
 			c = PMAP(newlife, c);
 			lightningRecreate = currentTick+newlife/4;
 			return CreatePartFlags(positionX, positionY, c, flags);
@@ -2107,6 +2107,7 @@ void Simulation::create_arc(int sx, int sy, int dx, int dy, int midpoints, int v
 	free(ymid);
 }
 
+
 void Simulation::clear_sim(void)
 {
 	debug_currentParticle = 0;
@@ -2122,6 +2123,11 @@ void Simulation::clear_sim(void)
 	pfree = 0;
 	parts_lastActiveIndex = 0;
 	memset(pmap, 0, sizeof(pmap));
+	memset(pmap2, 0, sizeof(pmap2));
+	memset(idpointer, 0, sizeof(idpointer));
+	memset(blackhole, 0, sizeof(blackhole));
+	memset(storepressure, 0, sizeof(storepressure));
+	memset(dthv, 0, sizeof(dthv));
 	memset(fvx, 0, sizeof(fvx));
 	memset(fvy, 0, sizeof(fvy));
 	memset(photons, 0, sizeof(photons));
@@ -2413,6 +2419,9 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned *rr, int id)
 			result =  1;
 		}
 	}
+	//if(elements[pt].Properties&TYPE_GAS && (elements[typr].Properties&TYPE_GAS || typr == PT_NONE)){
+	//	result = 2;
+	//}
 	if (bmap[ny/CELL][nx/CELL])
 	{
 		if (IsWallBlocking(nx, ny, pt))
@@ -2652,6 +2661,9 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 		if ((elements[parts[i].type].Properties & TYPE_ENERGY))
 		{
 			parts[ID(r)].tmp += 20;
+			if(parts[i].type == PT_GAMMA){
+				parts[ID(r)].temp += parts[i].temp;
+			}
 			kill_part(i);
 			return 0;
 		}
@@ -2976,7 +2988,7 @@ void Simulation::kill_part(int i)//kills particle number i
 			etrd_life0_count--;
 		break;
 	case PT_NBHL:
-		blackhole[y][x] = false;
+		blackhole[y][x][1]--;
 		break;
 	}
 
@@ -3142,7 +3154,7 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 			if (drawOn == t)
 				return -1;
 			if (((elements[drawOn].Properties & PROP_DRAWONCTYPE) ||
-				 (drawOn == PT_STOR && !(elements[t].Properties & TYPE_SOLID)) ||
+				 (drawOn == PT_STOR) ||
 				 (drawOn == PT_PCLN && t != PT_PSCN && t != PT_NSCN) ||
 				 (drawOn == PT_PBCN && t != PT_PSCN && t != PT_NSCN))
 				&& (!(elements[t].Properties & PROP_NOCTYPEDRAW)))
@@ -3257,7 +3269,7 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	switch (t)
 	{
 	case PT_NBHL:
-		blackhole[y][x] = true;
+		blackhole[y][x][1]++;
 		break;
 	case PT_SOAP:
 		parts[i].tmp = -1;
@@ -3858,7 +3870,7 @@ void Simulation::nuclear_fusion(int id)
 void Simulation::UpdateParticles(int start, int end)
 {
 	int i, j, x, y, t, t2, nx, ny, r, surround_space, s, rt, nt, partpos, vary, ctypep, tmpp, tmp2p;
-	float mv, dx, dy, nrx, nry, dp, ctemph, ctempl, gravtot, starttemp, dtemp, invmaxtemp = 1.f/MAX_TEMP;
+	float mv, dx, dy, nrx, nry, dp, ctemph, ctempl, gravtot, dtemp, invmaxtemp = 1.f/MAX_TEMP;
 	int fin_x, fin_y, clear_x, clear_y, stagnant, pt_beforetransition, sorroundtype, type3;
 	float fin_xf, fin_yf, clear_xf, clear_yf, diffy, diffx;
 	float nn, ct1, ct2, swappage;
@@ -3868,43 +3880,86 @@ void Simulation::UpdateParticles(int start, int end)
 	int surround[8], type2;
 	int surround_hconduct[8];
 	float pGravX, pGravY, pGravD, beforelatent;
-	bool transitionOccurred, transitionchange, ftransition;
-	//the main particle loop function, goes over all particles.
-	for (i = start; i <= end && i <= parts_lastActiveIndex; i++)
+	bool transitionOccurred, transitionchange;
 
-		if (parts[i].type)
-		{
-			t = parts[i].type;
-			//starttemp = parts[i].temp;
-			
+	for(i = start; i <= end && i <= parts_lastActiveIndex; i++){
+		if(parts[i].type){
+
 			x = (int)(parts[i].x + 0.5f);
 			y = (int)(parts[i].y + 0.5f);
 
+
+			if(blackhole[y][x][0] != truecurrentTick){
+				blackhole[y][x][0] = truecurrentTick;
+				blackhole[y][x][1] = 0;
+			}
+			if(blackhole[y][x][1] == 0  && parts[i].type == PT_NBHL){
+				blackhole[y][x][1] = 1;
+			} else if(parts[i].type == PT_NBHL){
+				kill_part(i);
+				continue;
+			}
+
+			////// store deep particles and check excessive stacking, with id pointer
+			if(pmap2[y][x][0] != truecurrentTick){
+				pmap2[y][x][0] = truecurrentTick;
+				pmap2[y][x][1] = i; //first particle  x,y
+				pmap2[y][x][2] = i; //last particle  x,y
+				pmap2[y][x][3] = 0; // reset deep x,y
+				idpointer[i][2] = 0; // reset deep for id
+			} else{
+				idpointer[pmap2[y][x][2]][0] = truecurrentTick;
+				idpointer[pmap2[y][x][2]][1] = i; // next id
+				idpointer[pmap2[y][x][2]][2] = pmap2[y][x][3]; //deep id
+				pmap2[y][x][2] = i; // last particle
+				pmap2[y][x][3]++; //increase deep
+				//check excessive stacking
+				if(pmap2[y][x][3] > 1500){
+					create_part(pmap2[y][x][1], x, y, PT_NBHL);// change first particle x,y to black hole
+				}
+			}
+		}
+	} 
+
+	//the main particle loop function, goes over all particles.
+	for (i = start; i <= end && i <= parts_lastActiveIndex; i++)
+
+		if(parts[i].type){
+			t = parts[i].type;
+
+			x = (int)(parts[i].x + 0.5f);
+			y = (int)(parts[i].y + 0.5f);
+
+
+			if(blackhole[y][x][1] == 1 && parts[i].type != PT_NBHL){
+				kill_part(i);
+				continue;
+			}
+
 			//this kills any particle out of the screen, or in a wall where it isn't supposed to go
-			if (x<CELL || y<CELL || x>=XRES-CELL || y>=YRES-CELL ||
-			        (bmap[y/CELL][x/CELL] &&
-			         (bmap[y/CELL][x/CELL]==WL_WALL ||
-			          bmap[y/CELL][x/CELL]==WL_WALLELEC ||
-			          bmap[y/CELL][x/CELL]==WL_ALLOWAIR ||
-			          (bmap[y/CELL][x/CELL]==WL_DESTROYALL) ||
-			          (bmap[y/CELL][x/CELL]==WL_ALLOWLIQUID && !(elements[t].Properties&TYPE_LIQUID)) ||
-			          (bmap[y/CELL][x/CELL]==WL_ALLOWPOWDER && !(elements[t].Properties&TYPE_PART)) ||
-			          (bmap[y/CELL][x/CELL]==WL_ALLOWGAS && !(elements[t].Properties&TYPE_GAS)) || //&& elements[t].Falldown!=0 && parts[i].type!=PT_FIRE && parts[i].type!=PT_SMKE && parts[i].type!=PT_CFLM) ||
-			          (bmap[y/CELL][x/CELL]==WL_ALLOWENERGY && !(elements[t].Properties&TYPE_ENERGY)) ||
-					  (bmap[y/CELL][x/CELL]==WL_DETECT && (t==PT_METL || t==PT_SPRK)) ||
-			          (bmap[y/CELL][x/CELL]==WL_EWALL && !emap[y/CELL][x/CELL])) && (t!=PT_STKM) && (t!=PT_STKM2) && (t!=PT_FIGH)))
-			{
+			if(x < CELL || y < CELL || x >= XRES - CELL || y >= YRES - CELL ||
+				(bmap[y / CELL][x / CELL] &&
+				(bmap[y / CELL][x / CELL] == WL_WALL ||
+				bmap[y / CELL][x / CELL] == WL_WALLELEC ||
+				bmap[y / CELL][x / CELL] == WL_ALLOWAIR ||
+				(bmap[y / CELL][x / CELL] == WL_DESTROYALL) ||
+				(bmap[y / CELL][x / CELL] == WL_ALLOWLIQUID && !(elements[t].Properties&TYPE_LIQUID)) ||
+				(bmap[y / CELL][x / CELL] == WL_ALLOWPOWDER && !(elements[t].Properties&TYPE_PART)) ||
+				(bmap[y / CELL][x / CELL] == WL_ALLOWGAS && !(elements[t].Properties&TYPE_GAS)) || //&& elements[t].Falldown!=0 && parts[i].type!=PT_FIRE && parts[i].type!=PT_SMKE && parts[i].type!=PT_CFLM) ||
+				(bmap[y / CELL][x / CELL] == WL_ALLOWENERGY && !(elements[t].Properties&TYPE_ENERGY)) ||
+				(bmap[y / CELL][x / CELL] == WL_DETECT && (t == PT_METL || t == PT_SPRK)) ||
+				(bmap[y / CELL][x / CELL] == WL_EWALL && !emap[y / CELL][x / CELL])) && (t != PT_STKM) && (t != PT_STKM2) && (t != PT_FIGH))){
 				kill_part(i);
 				continue;
 			}
 
 			// Make sure that STASIS'd particles don't tick.
-			if (bmap[y/CELL][x/CELL] == WL_STASIS && emap[y/CELL][x/CELL]<8) {
+			if(bmap[y / CELL][x / CELL] == WL_STASIS && emap[y / CELL][x / CELL] < 8){
 				continue;
 			}
 
-			if (bmap[y/CELL][x/CELL]==WL_DETECT && emap[y/CELL][x/CELL]<8)
-				set_emap(x/CELL, y/CELL);
+			if(bmap[y / CELL][x / CELL] == WL_DETECT && emap[y / CELL][x / CELL] < 8)
+				set_emap(x / CELL, y / CELL);
 
 			//adding to velocity from the particle's velocity
 			if(!(parts[i].tmp2 < 1000) || !(elements[t].Properties&TYPE_SOLID)){
@@ -3942,49 +3997,47 @@ void Simulation::UpdateParticles(int start, int end)
 				}
 			}
 			*/
-			if (elements[t].Gravity || !((elements[t].Properties & TYPE_SOLID)&& parts[i].tmp2 < 1000))
-			{
+			if(elements[t].Gravity || !((elements[t].Properties & TYPE_SOLID) && parts[i].tmp2 < 1000)){
 				//Gravity mode by Moach
-				switch (gravityMode)
-				{
-				default:
-				case 0:
-					pGravX = 0.0f;
-					pGravY = elements[t].Gravity;
-					break;
-				case 1:
-					pGravX = pGravY = 0.0f;
-					break;
-				case 2:
-					pGravD = 0.01f - hypotf((x - XCNTR), (y - YCNTR));
-					pGravX = elements[t].Gravity * ((float)(x - XCNTR) / pGravD);
-					pGravY = elements[t].Gravity * ((float)(y - YCNTR) / pGravD);
-					break;
+				switch(gravityMode){
+					default:
+					case 0:
+						pGravX = 0.0f;
+						pGravY = elements[t].Gravity;
+						break;
+					case 1:
+						pGravX = pGravY = 0.0f;
+						break;
+					case 2:
+						pGravD = 0.01f - hypotf((x - XCNTR), (y - YCNTR));
+						pGravX = elements[t].Gravity * ((float)(x - XCNTR) / pGravD);
+						pGravY = elements[t].Gravity * ((float)(y - YCNTR) / pGravD);
+						break;
 				}
 				//Get some gravity from the gravity map
-				if (t==PT_ANAR)
-				{
+				if(t == PT_ANAR){
 					// perhaps we should have a ptypes variable for this
-					pGravX -= gravx[(y/CELL)*(XRES/CELL)+(x/CELL)];
-					pGravY -= gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
+					pGravX -= gravx[(y / CELL)*(XRES / CELL) + (x / CELL)];
+					pGravY -= gravy[(y / CELL)*(XRES / CELL) + (x / CELL)];
+				} else if(t != PT_STKM && t != PT_STKM2 && t != PT_FIGH && !((elements[t].Properties & TYPE_SOLID) && parts[i].tmp2 < 1000)){
+					pGravX += gravx[(y / CELL)*(XRES / CELL) + (x / CELL)];
+					pGravY += gravy[(y / CELL)*(XRES / CELL) + (x / CELL)];
 				}
-				else if(t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH && !((elements[t].Properties & TYPE_SOLID) && parts[i].tmp2 < 1000))
-				{
-					pGravX += gravx[(y/CELL)*(XRES/CELL)+(x/CELL)];
-					pGravY += gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
-				}
-			}
-			else
+			} else
 				pGravX = pGravY = 0;
 			//velocity updates for the particle
-			if (t != PT_SPNG || !(parts[i].flags&FLAG_MOVABLE))
-			{
+			if(t != PT_SPNG || !(parts[i].flags&FLAG_MOVABLE)){
+				//if(elements[t].Properties&TYPE_GAS){
+				//	parts[i].vx *= 1.f-0.1f*(1.f-elements[t].Loss);
+				//	parts[i].vy *= 1.f-0.1f*(1.f-elements[t].Loss);
+				//}else{
 				parts[i].vx *= elements[t].Loss;
 				parts[i].vy *= elements[t].Loss;
+			//}
 			}
 			//particle gets velocity from the vx and vy maps
-			
-            if(!(parts[i].tmp2 < 1000) || !(elements[t].Properties&TYPE_SOLID)){
+
+			if(!(parts[i].tmp2 < 1000) || !(elements[t].Properties&TYPE_SOLID)){
 				if(elements[t].Properties&TYPE_GAS){
 					parts[i].vx += elements[t].Advection*vx[y / CELL][x / CELL] + pGravX;
 					parts[i].vy += elements[t].Advection*vy[y / CELL][x / CELL] + pGravY;
@@ -3993,21 +4046,25 @@ void Simulation::UpdateParticles(int start, int end)
 					parts[i].vy += 0.5f*elements[t].Advection*vy[y / CELL][x / CELL] + pGravY;
 				}
 			}
-			
-			if (elements[t].Diffusion)//the random diffusion that gasses have
+
+			if(elements[t].Diffusion)//the random diffusion that gasses have
 			{
 #ifdef REALISTIC
 				//The magic number controls diffusion speed
-				parts[i].vx += 0.05*sqrtf(parts[i].temp)*elements[t].Diffusion*(2.0f*RNG::Ref().uniform01()-1.0f);
-				parts[i].vy += 0.05*sqrtf(parts[i].temp)*elements[t].Diffusion*(2.0f*RNG::Ref().uniform01()-1.0f);
+				parts[i].vx += 0.05*sqrtf(parts[i].temp)*elements[t].Diffusion*(2.0f*RNG::Ref().uniform01() - 1.0f);
+				parts[i].vy += 0.05*sqrtf(parts[i].temp)*elements[t].Diffusion*(2.0f*RNG::Ref().uniform01() - 1.0f);
 #else
 				// this is better
 				parts[i].temp = restrict_flt(parts[i].temp, 0.f, MAX_TEMP);
-				parts[i].vx += 0.070710678f*sqrtf(0.5f*parts[i].temp+0.01f)*elements[t].Diffusion*(2.0f*RNG::Ref().uniform01()-1.0f);
-				parts[i].vy += 0.070710678f*sqrtf(0.5f*parts[i].temp+0.01f)*elements[t].Diffusion*(2.0f*RNG::Ref().uniform01()-1.0f);
+				parts[i].vx += 0.070710678f*sqrtf(0.5f*parts[i].temp + 0.01f)*elements[t].Diffusion*(2.0f*RNG::Ref().uniform01() - 1.0f);
+				parts[i].vy += 0.070710678f*sqrtf(0.5f*parts[i].temp + 0.01f)*elements[t].Diffusion*(2.0f*RNG::Ref().uniform01() - 1.0f);
 				//parts[i].vx += elements[t].Diffusion*(2.0f*RNG::Ref().uniform01()-1.0f);
 				//parts[i].vy += elements[t].Diffusion*(2.0f*RNG::Ref().uniform01()-1.0f);
 #endif
+			}
+
+			if(elements[parts[i].type].notransitionstate || (parts[i].type == PT_SPRK && parts[i].ctype == PT_ASPR)){
+				goto notransition;
 			}
 
 			transitionOccurred = false;
@@ -4041,7 +4098,6 @@ void Simulation::UpdateParticles(int start, int end)
 						}
 					}
 				}
-				starttemp = parts[i].temp;
 				//heat transfer code
 				h_count = 0;
 #ifdef REALISTIC
@@ -4072,7 +4128,6 @@ void Simulation::UpdateParticles(int start, int end)
 						}
 						/////
 						hv[y/CELL][x/CELL] -= c_heat;
-						starttemp = parts[i].temp;
 #endif
 					}
 					c_heat = 0.0f;
@@ -4500,6 +4555,7 @@ void Simulation::UpdateParticles(int start, int end)
 					}
 					////PLSM transition
 					if(t == PT_GASEOUS && pt >= elements[parts[i].ctype].PlsmTemperaturetransition &&  elements[parts[i].ctype].PlsmTemperaturetransition != -1) {
+						addpressure(0.00256f*elements[parts[i].ctype].PlsmTemperaturetransition, i, y / CELL, x / CELL);
 						parts[i].temp -= elements[parts[i].ctype].GasPlsmlatent;
 						ctypep = parts[i].ctype;
 						create_part(i, parts[i].x, parts[i].y, PT_PLSM);
@@ -4510,6 +4566,7 @@ void Simulation::UpdateParticles(int start, int end)
 						parts[i].tmp2 = 1;
 						goto transited;
 					}else if (t == PT_PLSM && pt < elements[parts[i].ctype].PlsmTemperaturetransition &&  elements[parts[i].ctype].PlsmTemperaturetransition > -1) {
+						addpressure(-0.00256f*elements[parts[i].ctype].PlsmTemperaturetransition, i, y / CELL, x / CELL);
 						parts[i].temp += elements[parts[i].ctype].GasPlsmlatent;
 						if(elements[parts[i].ctype].GasTransition != NT){
 							t = parts[i].type = PT_GASEOUS;
@@ -4522,6 +4579,7 @@ void Simulation::UpdateParticles(int start, int end)
 						parts[i].tmp2 = 0;
 						goto transited;
 					} else if(pt >= elements[t].PlsmTemperaturetransition && elements[t].PlsmTemperaturetransition != -1 && t != PT_LAVA){
+						addpressure(0.00256f*elements[t].PlsmTemperaturetransition, i, y / CELL, x / CELL);
 						parts[i].temp -= elements[t].GasPlsmlatent;
 						ctypep = parts[i].type;
 						create_part(i, parts[i].x, parts[i].y, PT_PLSM);
@@ -4536,20 +4594,7 @@ void Simulation::UpdateParticles(int start, int end)
 					s = 0;
 					//deltap = pv[y/CELL][x/CELL] - dpv[y/CELL][x/CELL]; // not yet
 				    transited:
-					ftransition = s;
 					parts[i].temp = restrict_flt(parts[i].temp, 0.f, MAX_TEMP);
-					//dtemp = parts[i].temp - starttemp;
-					//if(!s && ((elements[parts[i].type].Properties&TYPE_GAS) || parts[i].type == PT_PLSM)){
-					//	pv[y / CELL][x / CELL] += 0.00512f*dtemp;
-						//parts[i].temp += 195.3105f*deltap;
-					//}
-					/*
-					dtemp = parts[i].temp - starttemp;
-					if(!ftransition && ((elements[parts[i].type].Properties&TYPE_GAS) || parts[i].type == PT_PLSM)){
-						pv[y / CELL][x / CELL] += 0.00512f*dtemp;
-					   // parts[i].temp += 195.3105f*deltap;
-					}
-					*/
 
 					pt = parts[i].temp = restrict_flt(parts[i].temp, MIN_TEMP, MAX_TEMP);
 					if (t == PT_LAVA)
@@ -4680,29 +4725,6 @@ void Simulation::UpdateParticles(int start, int end)
 				transitionOccurred = true;
 			}
 
-			if(blackhole[y][x] && parts[i].type != PT_NBHL){
-				kill_part(i);
-				continue;
-			}
-
-			////// store deep particles and check excessive stacking, with id pointer
-			if(pmap2[y][x][0] != currentTick){
-				pmap2[y][x][0] = currentTick;
-				pmap2[y][x][1] = i; //first particle  x,y
-				pmap2[y][x][2] = i; //last particle  x,y
-				pmap2[y][x][3] = 0; // reset deep x,y
-				idpointer[i][2] = 0; // reset deep for id
-			} else{
-				idpointer[pmap2[y][x][2]][0] = currentTick;
-				idpointer[pmap2[y][x][2]][1] = i; // next id
-				idpointer[pmap2[y][x][2]][2] = pmap2[y][x][3]; //deep id
-				pmap2[y][x][2] = i; // last particle
-				pmap2[y][x][3]++; //increase deep
-				//check excessive stacking
-				if(pmap2[y][x][3] > 1500){
-					create_part(pmap2[y][x][1], x, y, PT_NBHL);// change first particle x,y to black hole
-				}
-			}
 
             //update pressure resistance, and change to broken state, using tmp2 == 1000
 			if(parts[i].tmp2 < 1000 && elements[t].pressureresistance > 0 && elements[t].Properties&TYPE_SOLID){
@@ -4741,6 +4763,7 @@ void Simulation::UpdateParticles(int start, int end)
 				//gravmap[(y / CELL)*(XRES / CELL) + (x / CELL)] = 0.5f;
 				nuclear_fusion(i);
 			}
+			notransition:
 			//call the particle update function, if there is one
 #if !defined(RENDERER) && defined(LUACONSOLE)
 			if (lua_el_mode[parts[i].type] == 3)
@@ -5549,7 +5572,7 @@ void Simulation::RecalcFreeParticles(bool do_life_dec)
 					elementCount[t]++;
 
 				unsigned int elem_properties = elements[t].Properties;
-				if (!(parts[i].tmp2 == 1 && parts[i].type == PT_PLSM) && parts[i].life>0 && (elem_properties&PROP_LIFE_DEC) && !(inBounds && bmap[y/CELL][x/CELL] == WL_STASIS && emap[y/CELL][x/CELL]<8))
+				if (!(parts[i].tmp2 == 1 && parts[i].type == PT_PLSM) && !(parts[i].ctype == PT_ASPR) && parts[i].life>0 && (elem_properties&PROP_LIFE_DEC) && !(inBounds && bmap[y/CELL][x/CELL] == WL_STASIS && emap[y/CELL][x/CELL]<8))
 				{
 					// automatically decrease life
 					parts[i].life--;
@@ -5574,6 +5597,7 @@ void Simulation::RecalcFreeParticles(bool do_life_dec)
 			else parts[lastPartUnused].life = i;
 			lastPartUnused = i;
 		}
+
 	}
 	if (lastPartUnused == -1)
 	{
@@ -5659,6 +5683,9 @@ void Simulation::CheckStacking()
 void Simulation::BeforeSim()
 {
 	int r, count;
+	//solve bugs
+	truecurrentTick++;
+
 	if (!sys_pause||framerender)
 	{
 
@@ -5913,6 +5940,7 @@ Simulation::Simulation():
 	memcpy(portal_ry, tportal_ry, sizeof(tportal_ry));
 
 	currentTick = 0;
+	truecurrentTick = 0;
 	std::fill(elementCount, elementCount+PT_NUM, 0);
 	elementRecount = true;
 
@@ -5939,7 +5967,8 @@ Simulation::Simulation():
 			pmap2[y][x][1] = 0;
 			pmap2[y][x][2] = 0;
 			pmap2[y][x][3] = 0;
-			blackhole[y][x] = false;
+			blackhole[y][x][0] = 0;
+			blackhole[y][x][1] = 0;
 		}
 	}
 	for(int y = 0; y < YRES / CELL; y++){

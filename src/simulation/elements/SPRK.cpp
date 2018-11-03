@@ -84,6 +84,8 @@ int Element_SPRK::update(UPDATE_FUNC_ARGS)
 	case PT_PTCT:
 		Element_NTCT::update(UPDATE_FUNC_SUBCALL_ARGS);
 		break;
+	case PT_ASPR:
+		return 0;
 	case PT_ETRD:
 		if (parts[i].life==1)
 		{
@@ -210,11 +212,18 @@ int Element_SPRK::update(UPDATE_FUNC_ARGS)
 								parts[ID(r)].life = 9;
 							}
 						}
-						else if(parts[ID(r)].ctype==PT_NTCT||parts[ID(r)].ctype==PT_PTCT)
-							if (sender==PT_METL)
-							{
+						else if(parts[ID(r)].ctype == PT_NTCT || parts[ID(r)].ctype == PT_PTCT){
+							if(sender == PT_METL){
 								parts[ID(r)].temp = 473.0f;
 							}
+						} else if(sender == PT_NSCN && parts[i].life == 3){
+							if(parts[ID(r)].ctype == PT_ASPR){
+								sim->part_change_type(ID(r), x + rx, y + ry, PT_ASPR);
+								parts[ID(r)].ctype = PT_NONE;
+								parts[ID(r)].life = 0;
+								parts[ID(r)].tmp2 = 1;
+							}
+						}
 					}
 					continue;
 				case PT_PUMP: case PT_GPMP: case PT_HSWC: case PT_PBCN:
@@ -222,6 +231,14 @@ int Element_SPRK::update(UPDATE_FUNC_ARGS)
 					{
 						if (sender==PT_PSCN) parts[ID(r)].life = 10;
 						else if (sender==PT_NSCN && parts[ID(r)].life>=10) parts[ID(r)].life = 9;
+					}
+					continue;
+				case PT_ASPR:
+					if(sender == PT_PSCN && parts[i].life == 3){
+						sim->part_change_type(ID(r), x + rx, y + ry, PT_SPRK);
+						parts[ID(r)].ctype = PT_ASPR;
+						parts[ID(r)].life = 3;
+						parts[ID(r)].tmp2 = 0;
 					}
 					continue;
 				case PT_LCRY:

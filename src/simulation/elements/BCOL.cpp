@@ -46,6 +46,8 @@ Element_BCOL::Element_BCOL()
 	PlsmTemperaturetransition = 9999.f;
 	radabsorb = 30;
 
+	neutslowdown = 0.99f;
+
 	Update = &Element_COAL::update;
 	Graphics = &Element_COAL::graphics;
 }

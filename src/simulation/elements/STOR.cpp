@@ -63,7 +63,7 @@ int Element_STOR::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if ((ID(r))>=NPART || !r)
 					continue;
-				if (!parts[i].tmp && !parts[i].life && TYP(r)!=PT_STOR && !(sim->elements[TYP(r)].Properties&TYPE_SOLID && parts[ID(r)].tmp2 != 1000) && (!parts[i].ctype || TYP(r)==parts[i].ctype))
+				if (!parts[i].tmp && !parts[i].life && TYP(r)!=PT_STOR && !(sim->elements[TYP(r)].Properties&TYPE_SOLID && parts[ID(r)].tmp2 < 1000) && (!parts[i].ctype || TYP(r)==parts[i].ctype))
 				{
 					if (TYP(r) == PT_SOAP)
 						Element_SOAP::detach(sim, ID(r));
@@ -85,11 +85,11 @@ int Element_STOR::update(UPDATE_FUNC_ARGS)
 								parts[np].life = parts[i].tmp2;
 								parts[np].tmp = parts[i].pavg[0];
 								parts[np].ctype = parts[i].pavg[1];
-								parts[i].tmp = 0;
-								parts[i].life = 10;
 								if(sim->elements[TYP(parts[i].tmp)].Properties&TYPE_SOLID){
 									parts[i].tmp2 = 1000;
 								}
+								parts[i].tmp = 0;
+								parts[i].life = 10;
 								break;
 							}
 						}

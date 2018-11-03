@@ -49,6 +49,7 @@ Element_WTRV::Element_WTRV()
 	Heatcapacity = 2.0f;
 	InvHeatcapacity = 1.0f;
 	radabsorb = 15;
+	neutslowdown = 0.985f;
 
 	Update = &Element_WTRV::update;
 }

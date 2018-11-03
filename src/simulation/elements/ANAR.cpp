@@ -44,6 +44,7 @@ Element_ANAR::Element_ANAR()
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
 
+
 	Update = &Element_ANAR::update;
 }
 

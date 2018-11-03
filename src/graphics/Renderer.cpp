@@ -1064,67 +1064,64 @@ void Renderer::render_gravlensing(pixel * source)
 #endif
 }
 
-void Renderer::render_fire()
-{
+void Renderer::render_fire(){
 #ifndef OGLR
 	if(!(render_mode & FIREMODE))
 		return;
-	int i,j,x,y,r,g,b,a;
-	for (j=0; j<YRES/CELL; j++)
-		for (i=0; i<XRES/CELL; i++)
-		{
+	int i, j, x, y, r, g, b, a;
+	for(j = 0; j < YRES / CELL; j++)
+		for(i = 0; i < XRES / CELL; i++){
 			r = fire_r[j][i];
 			g = fire_g[j][i];
 			b = fire_b[j][i];
-			if (r || g || b)
-				for (y=-CELL; y<2*CELL; y++)
-					for (x=-CELL; x<2*CELL; x++)
-					{
-						a = fire_alpha[y+CELL][x+CELL];
-						if (findingElement)
+			if(r || g || b)
+				for(y = -CELL; y < 2 * CELL; y++)
+					for(x = -CELL; x < 2 * CELL; x++){
+						a = fire_alpha[y + CELL][x + CELL];
+						if(findingElement)
 							a /= 2;
-						addpixel(i*CELL+x, j*CELL+y, r, g, b, a);
+						addpixel(i*CELL + x, j*CELL + y, r, g, b, a);
 					}
 			r *= 8;
 			g *= 8;
 			b *= 8;
-			for (y=-1; y<2; y++)
-				for (x=-1; x<2; x++)
-					if ((x || y) && i+x>=0 && j+y>=0 && i+x<XRES/CELL && j+y<YRES/CELL)
-					{
-						r += fire_r[j+y][i+x];
-						g += fire_g[j+y][i+x];
-						b += fire_b[j+y][i+x];
+			for(y = -1; y < 2; y++)
+				for(x = -1; x < 2; x++)
+					if((x || y) && i + x >= 0 && j + y >= 0 && i + x < XRES / CELL && j + y < YRES / CELL){
+						r += fire_r[j + y][i + x];
+						g += fire_g[j + y][i + x];
+						b += fire_b[j + y][i + x];
 					}
 			r /= 16;
 			g /= 16;
 			b /= 16;
-			fire_r[j][i] = r>4 ? r-4 : 0;
-			fire_g[j][i] = g>4 ? g-4 : 0;
-			fire_b[j][i] = b>4 ? b-4 : 0;
+			fire_r[j][i] = r > 4 ? r - 4 : 0;
+			fire_g[j][i] = g > 4 ? g - 4 : 0;
+			fire_b[j][i] = b > 4 ? b - 4 : 0;
 		}
 #endif
 }
 
-float temp[CELL*3][CELL*3];
-float fire_alphaf[CELL*3][CELL*3];
+
+float temp[CELL * 3][CELL * 3];
+float fire_alphaf[CELL * 3][CELL * 3];
 float glow_alphaf[11][11];
 float blur_alphaf[7][7];
-void Renderer::prepare_alpha(int size, float intensity)
-{
+void Renderer::prepare_alpha(int size, float intensity){
 	//TODO: implement size
-	int x,y,i,j;
+	int x, y, i, j;
 	float multiplier = 255.0f*intensity;
 
 	memset(temp, 0, sizeof(temp));
-	for (x=0; x<CELL; x++)
-		for (y=0; y<CELL; y++)
-			for (i=-CELL; i<CELL; i++)
-				for (j=-CELL; j<CELL; j++)
-					temp[y+CELL+j][x+CELL+i] += expf(-0.1f*(i*i+j*j));
-	for (x=0; x<CELL*3; x++)
-		for (y=0; y<CELL*3; y++)
-			fire_alpha[y][x] = (int)(multiplier*temp[y][x]/(CELL*CELL));
+	for(x = 0; x < CELL; x++)
+		for(y = 0; y < CELL; y++)
+			for(i = -CELL; i < CELL; i++)
+				for(j = -CELL; j < CELL; j++)
+					temp[y + CELL + j][x + CELL + i] += expf(-0.1f*(i*i + j * j));
+	for(x = 0; x < CELL * 3; x++)
+		for(y = 0; y < CELL * 3; y++)
+			fire_alpha[y][x] = (int)(multiplier*temp[y][x] / (CELL*CELL));
+
 
 #ifdef OGLR
 	memset(fire_alphaf, 0, sizeof(fire_alphaf));
@@ -1243,13 +1240,13 @@ void Renderer::render_parts()
 #endif
 	foundElements = 0;
 	for(i = 0; i<=sim->parts_lastActiveIndex; i++) {
-		if (sim->parts[i].type && sim->parts[i].type >= 0 && sim->parts[i].type < PT_NUM && (!(sim->idpointer[i][2] > 3 && sim->currentTick == sim->idpointer[i][0]))) { // só desenha, se a particula tem profundidade menor que 3;
+		if (sim->parts[i].type && sim->parts[i].type >= 0 && sim->parts[i].type < PT_NUM && (!(sim->idpointer[i][2] > 3 && sim->truecurrentTick == sim->idpointer[i][0]))) { // só desenha, se a particula tem profundidade menor que 3;
 			
 			type3 = t = sim->parts[i].type;
 
 			isvalid = type2 = sim->parts[i].ctype;
 			isvalid = (isvalid >= 0 && isvalid < PT_NUM && sim->elements[isvalid].Enabled);
-			if((t == PT_BRMT || t == PT_PLSM || t == PT_GASEOUS || t == PT_LIQUID || t == PT_SOLID)
+			if((t == PT_PLSM || t == PT_GASEOUS || t == PT_LIQUID || t == PT_SOLID)
 				&& isvalid && type2 != PT_NONE){
 				type3 = type2;
     		}
@@ -2046,7 +2043,7 @@ void Renderer::render_parts()
 							type = PT_PRTI;
 						for (int z = 0; z <= sim->parts_lastActiveIndex; z++)
 						{
-							if (parts[z].type == type && (!(sim->idpointer[z][2] > 3 && sim->currentTick == sim->idpointer[z][0])))
+							if (parts[z].type == type && (!(sim->idpointer[z][2] > 3 && sim->truecurrentTick == sim->idpointer[z][0])))
 							{
 								othertmp = (int)((parts[z].temp-73.15f)/100+1);
 								if (tmp == othertmp)

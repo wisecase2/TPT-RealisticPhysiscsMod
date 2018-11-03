@@ -29,6 +29,15 @@ String sign::getText(Simulation *sim)
 				aheat = sim->hv[y/CELL][x/CELL];
 			return String::Build(Format::Precision(Format::ShowPoint(aheat - 273.15f), 2));
 		}
+		else if(text == "{ctype}")
+		{
+			{
+				if(x >= 0 && x < XRES && y >= 0 && y < YRES && sim->pmap[y][x])
+					return String::Build("ctype: ", Format::Precision(Format::ShowPoint(sim->parts[ID(sim->pmap[y][x])].ctype), 2));
+				else
+					return String::Build("ctype: ", Format::Precision(Format::ShowPoint(0), 2));
+			}
+		}
 		else if (text == "{t}")
 		{
 			if (x >= 0 && x < XRES && y >= 0 && y < YRES && sim->pmap[y][x])

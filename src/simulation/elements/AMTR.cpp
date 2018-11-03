@@ -45,6 +45,7 @@ Element_AMTR::Element_AMTR()
 	PlsmTemperaturetransition = -1;
 	radabsorb = 50;
 
+
 	Update = &Element_AMTR::update;
 	Graphics = &Element_AMTR::graphics;
 }

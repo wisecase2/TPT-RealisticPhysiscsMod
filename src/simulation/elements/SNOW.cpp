@@ -50,6 +50,7 @@ Element_SNOW::Element_SNOW()
 	Heatcapacity = 2.0f;
 	InvHeatcapacity = 0.5f;
 	radabsorb = 15;
+	neutslowdown = 0.985f;
 
 	Update = &Element_SNOW::update;
 }
