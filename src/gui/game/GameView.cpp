@@ -660,6 +660,7 @@ bool GameView::GetDebugHUD()
 	return showDebug;
 }
 
+
 ui::Point GameView::GetMousePosition()
 {
 	return currentMouse;
@@ -1430,8 +1431,17 @@ void GameView::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl,
 		}
 	}
 
-	if (repeat)
+	if(repeat){
+		switch(key){
+			case SDLK_F7:
+				c->changelvl(1);
+				break;
+			case SDLK_F6:
+				c->changelvl(0);
+				break;
+		}
 		return;
+	}
 	if (scan == SDL_SCANCODE_GRAVE)
 	{
 		c->ShowConsole();
@@ -1576,6 +1586,15 @@ void GameView::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl,
 		break;
 	case 'm':
 		c->togglebrokenstate();
+		break;
+	case SDLK_F7:
+		c->changelvl(1);
+		break;
+	case SDLK_F6:
+		c->changelvl(0);
+		break;
+	case SDLK_F8:
+			c->resetLVL();
 		break;
 	case 'n':
 		c->ToggleNewtonianGravity();
@@ -2284,7 +2303,7 @@ void GameView::OnDraw()
 		if (alpha < 50)
 			alpha = 50;
 		StringBuilder sampleInfo;
-		sampleInfo << Format::Precision(2);
+		sampleInfo << Format::Precision(4);
 
 		int type = sample.particle.type;
 		if (type)
@@ -2428,7 +2447,7 @@ void GameView::OnDraw()
 		if (showDebug)
 		{
 			StringBuilder sampleInfo;
-			sampleInfo << Format::Precision(2);
+			sampleInfo << Format::Precision(4);
 
 			if (type)
 				sampleInfo << "#" << sample.ParticleID << ", ";
@@ -2438,8 +2457,15 @@ void GameView::OnDraw()
 			if (sample.Gravity)
 				sampleInfo << ", GX: " << sample.GravityVelocityX << " GY: " << sample.GravityVelocityY;
 
+			sampleInfo << ", stacks: " << (sample.numpartxy);
+			
+			if(sample.LVL > 0){
+				sampleInfo << ", LVL: " << sample.LVL;
+			}
 			if (c->GetAHeatEnable())
 				sampleInfo << ", AHeat: " << sample.AirTemperature - 273.15f << " C";
+
+			//sampleInfo << ", tick: " << sample.truecurrenttick;
 
 			textWidth = Graphics::textwidth(sampleInfo.Build());
 			g->fillrect(XRES-20-textWidth, 27, textWidth+8, 14, 0, 0, 0, alpha*0.5f);

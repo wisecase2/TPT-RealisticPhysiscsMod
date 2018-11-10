@@ -101,7 +101,7 @@ int Element_BANG::update(UPDATE_FUNC_ARGS)
 				sim->create_part(i, x, y, PT_SMKE);
 				parts[i].life = RNG::Ref().between(500, 549);
 			}
-			parts[i].temp = restrict_flt((MAX_TEMP/4)+otemp, MIN_TEMP, MAX_TEMP);
+			parts[i].temp = restrict_flt((0.025f*MAX_TEMP)+otemp, MIN_TEMP, MAX_TEMP);
 		}
 		else
 		{
@@ -110,7 +110,7 @@ int Element_BANG::update(UPDATE_FUNC_ARGS)
 				sim->create_part(i, x, y, PT_EMBR);
 				parts[i].tmp = 0;
 				parts[i].life = 50;
-				parts[i].temp = restrict_flt((MAX_TEMP/3)+otemp, MIN_TEMP, MAX_TEMP);
+				parts[i].temp = restrict_flt((0.0333f*MAX_TEMP)+otemp, MIN_TEMP, MAX_TEMP);
 				parts[i].vx = RNG::Ref().between(-10, 10);
 				parts[i].vy = RNG::Ref().between(-10, 10);
 			}

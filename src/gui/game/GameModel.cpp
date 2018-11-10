@@ -966,6 +966,25 @@ void GameModel::setbrokenstate(bool state){
 		SetInfoTip("Broken state: Off");
 }
 
+void GameModel::changeLVL(bool mode){
+	if(mode){
+		sim->lvl++;
+		SetInfoTip("LVL increased");
+	} else if(sim->lvl > 0){
+		sim->lvl--;
+		SetInfoTip("LVL decreased");
+	}
+	UpdateQuickOptions();
+}
+
+void GameModel::resetlvl(){
+
+	sim->lvl = 0;
+	SetInfoTip("changed LVL to 0");
+
+	UpdateQuickOptions();
+}
+
 bool GameModel::GetAHeatEnable()
 {
 	return sim->aheat_enable;

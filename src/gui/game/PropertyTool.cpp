@@ -232,11 +232,26 @@ void PropertyTool::OpenWindow(Simulation *sim)
 
 void PropertyTool::SetProperty(Simulation *sim, ui::Point position)
 {
+	int i;
 	if(position.X<0 || position.X>XRES || position.Y<0 || position.Y>YRES)
 		return;
-	int i = sim->pmap[position.Y][position.X];
-	if(!i)
-		i = sim->photons[position.Y][position.X];
+	
+	//i = sim->pmap[position.Y][position.X];
+	//if(!i)
+	//	i = sim->photons[position.Y][position.X];
+
+
+	if(sim->lvl){
+		if(sim->viewpmap[position.Y][position.X][1] == sim->truecurrentTick){
+			i = sim->viewpmap[position.Y][position.X][0] << PMAPBITS | sim->parts[sim->viewpmap[position.Y][position.X][0]].type;
+		}
+	} else{
+	    i = sim->pmap[position.Y][position.X];
+		if(!i)
+			i = sim->photons[position.Y][position.X];
+
+	}
+
 	if(!i)
 		return;
 	switch (propType)

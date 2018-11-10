@@ -112,6 +112,7 @@ int Element_SPRK::update(UPDATE_FUNC_ARGS)
 				parts[i].tmp |= 0x4;
 			parts[i].temp = 3500;
 			sim->pv[y/CELL][x/CELL] += 1;
+			sim->addpressure(0.00256f*sim->elements[parts[i].ctype].PlsmTemperaturetransition, i, y / CELL, x / CELL);
 		}
 		break;
 	case PT_TESC:

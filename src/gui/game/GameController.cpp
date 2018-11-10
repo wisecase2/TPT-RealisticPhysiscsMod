@@ -951,6 +951,14 @@ void GameController::togglebrokenstate(){
 	gameModel->setbrokenstate(!gameModel->Getbrokenstate());
 }
 
+void GameController::changelvl(bool mode){
+	gameModel->changeLVL(mode);
+}
+
+void GameController::resetLVL(){
+	gameModel->resetlvl();
+}
+
 bool GameController::GetAHeatEnable()
 {
 	return gameModel->GetAHeatEnable();
@@ -982,6 +990,7 @@ void GameController::Update()
 
 	Simulation * sim = gameModel->GetSimulation();
 	sim->BeforeSim();
+	sim->updateidpointer();
 	if (!sim->sys_pause || sim->framerender)
 	{
 		sim->UpdateParticles(0, NPART);

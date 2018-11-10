@@ -43,7 +43,7 @@ int Simulation::Load(int fullX, int fullY, GameSave * save, bool includePressure
 	{
 		save->Expand();
 	}
-	catch (ParseException)
+	catch (ParseException &)
 	{
 		return 1;
 	}
@@ -239,6 +239,7 @@ int Simulation::Load(int fullX, int fullY, GameSave * save, bool includePressure
 	force_stacking_check = true;
 	Element_PPIP::ppip_changed = 1;
 	RecalcFreeParticles(false);
+	updateidpointer();
 
 	// fix SOAP links using soapList, a map of old particle ID -> new particle ID
 	// loop through every old particle (loaded from save), and convert .tmp / .tmp2
@@ -513,6 +514,7 @@ void Simulation::Restore(const Snapshot & snap)
 	std::copy(snap.Particles.begin(), snap.Particles.end(), parts);
 	parts_lastActiveIndex = NPART-1;
 	RecalcFreeParticles(false);
+	updateidpointer();
 	std::copy(snap.PortalParticles.begin(), snap.PortalParticles.end(), &portalp[0][0][0]);
 	std::copy(snap.WirelessData.begin(), snap.WirelessData.end(), &wireless[0][0]);
 	if (grav->ngrav_enable)
@@ -574,13 +576,25 @@ bool Simulation::FloodFillPmapCheck(int x, int y, int type)
 
 int Simulation::flood_prop(int x, int y, size_t propoffset, PropertyValue propvalue, StructProperty::PropertyType proptype)
 {
-	int i, x1, x2, dy = 1;
+	int i, x1, x2, dy = 1, r;
 	int did_something = 0;
-	int r = pmap[y][x];
-	if (!r)
-		r = photons[y][x];
-	if (!r)
-		return 0;
+	
+	if(lvl){
+		if(viewpmap[y][x][1] == truecurrentTick){
+			r = viewpmap[y][x][0] << PMAPBITS | parts[viewpmap[y][x][0]].type;
+			if(!r)
+				return 0;
+		} else{
+			return 0;
+		}
+	} else{
+		r = pmap[y][x];
+		if(!r)
+			r = photons[y][x];
+		if(!r)
+			return 0;
+	}
+
 	int parttype = TYP(r);
 	char * bitmap = (char*)malloc(XRES*YRES); //Bitmap for checking
 	if (!bitmap) return -1;
@@ -659,35 +673,64 @@ SimulationSample Simulation::GetSample(int x, int y)
 	sample.PositionY = y;
 	if (x >= 0 && x < XRES && y >= 0 && y < YRES)
 	{
-		if (photons[y][x])
-		{
-			sample.particle = parts[ID(photons[y][x])];
-			sample.ParticleID = ID(photons[y][x]);
-		}
-		else if (pmap[y][x])
-		{
-			sample.particle = parts[ID(pmap[y][x])];
-			sample.ParticleID = ID(pmap[y][x]);
-		}
-		if (bmap[y/CELL][x/CELL])
-		{
-			sample.WallType = bmap[y/CELL][x/CELL];
-		}
-		sample.AirPressure = pv[y/CELL][x/CELL];
-		sample.AirTemperature = hv[y/CELL][x/CELL];
-		sample.AirVelocityX = vx[y/CELL][x/CELL];
-		sample.AirVelocityY = vy[y/CELL][x/CELL];
+		if(!lvl){
+			if(photons[y][x]){
+				sample.particle = parts[ID(photons[y][x])];
+				sample.ParticleID = ID(photons[y][x]);
+			} else if(pmap[y][x]){
+				sample.particle = parts[ID(pmap[y][x])];
+				sample.ParticleID = ID(pmap[y][x]);
+			}
+			if(bmap[y / CELL][x / CELL]){
+				sample.WallType = bmap[y / CELL][x / CELL];
+			}
+			sample.AirPressure = pv[y / CELL][x / CELL];
+			sample.AirTemperature = hv[y / CELL][x / CELL];
+			sample.AirVelocityX = vx[y / CELL][x / CELL];
+			sample.AirVelocityY = vy[y / CELL][x / CELL];
+			if(pmap2[y][x][0] == truecurrentTick){
+				if(pmap2[y][x][1]){
+					sample.numpartxy = pmap2[y][x][3] + 1;
+				}
+			}
+			sample.truecurrenttick = truecurrentTick;
 
-		if(grav->ngrav_enable)
-		{
-			sample.Gravity = gravp[(y/CELL)*(XRES/CELL)+(x/CELL)];
-			sample.GravityVelocityX = gravx[(y/CELL)*(XRES/CELL)+(x/CELL)];
-			sample.GravityVelocityY = gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
+			if(grav->ngrav_enable){
+				sample.Gravity = gravp[(y / CELL)*(XRES / CELL) + (x / CELL)];
+				sample.GravityVelocityX = gravx[(y / CELL)*(XRES / CELL) + (x / CELL)];
+				sample.GravityVelocityY = gravy[(y / CELL)*(XRES / CELL) + (x / CELL)];
+			}
+		} else{
+			if(viewpmap[y][x][1] == truecurrentTick){
+				sample.particle = parts[viewpmap[y][x][0]];
+				sample.ParticleID = viewpmap[y][x][0];
+			}
+			if(bmap[y / CELL][x / CELL]){
+				sample.WallType = bmap[y / CELL][x / CELL];
+			}
+			sample.AirPressure = pv[y / CELL][x / CELL];
+			sample.AirTemperature = hv[y / CELL][x / CELL];
+			sample.AirVelocityX = vx[y / CELL][x / CELL];
+			sample.AirVelocityY = vy[y / CELL][x / CELL];
+
+			if(pmap2[y][x][0] == truecurrentTick){
+				if(pmap2[y][x][1]){
+					sample.numpartxy = pmap2[y][x][3] + 1;
+				}
+			}
+			sample.truecurrenttick = truecurrentTick;
+
+			if(grav->ngrav_enable){
+				sample.Gravity = gravp[(y / CELL)*(XRES / CELL) + (x / CELL)];
+				sample.GravityVelocityX = gravx[(y / CELL)*(XRES / CELL) + (x / CELL)];
+				sample.GravityVelocityY = gravy[(y / CELL)*(XRES / CELL) + (x / CELL)];
+			}
 		}
 	}
 	else
 		sample.isMouseInSim = false;
 
+	sample.LVL = lvl;
 	sample.NumParts = NUM_PARTS;
 	return sample;
 }
@@ -1235,10 +1278,18 @@ int Simulation::Tool(int x, int y, int tool, int brushX, int brushY, float stren
 	{
 		Particle * cpart = NULL;
 		int r;
-		if ((r = pmap[y][x]))
-			cpart = &(parts[ID(r)]);
-		else if ((r = photons[y][x]))
-			cpart = &(parts[ID(r)]);
+
+		if(lvl){
+			if(viewpmap[y][x][1] == truecurrentTick){
+				cpart = &parts[viewpmap[y][x][0]];
+			}
+		} else{
+			if((r = pmap[y][x]))
+				cpart = &(parts[ID(r)]);
+			else if((r = photons[y][x]))
+				cpart = &(parts[ID(r)]);
+		}
+
 		return tools[tool]->Perform(this, cpart, x, y, brushX, brushY, strength);
 	}
 	return 0;
@@ -2121,6 +2172,7 @@ void Simulation::clear_sim(void)
 		parts[i].life = i+1;
 	parts[NPART-1].life = -1;
 	pfree = 0;
+	lvl = 0;
 	parts_lastActiveIndex = 0;
 	memset(pmap, 0, sizeof(pmap));
 	memset(pmap2, 0, sizeof(pmap2));
@@ -3147,57 +3199,102 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	}
 	else if (p==-2)//creating from brush
 	{
-		if (pmap[y][x])
-		{
-			//If an element has the PROP_DRAWONCTYPE property, and the element being drawn to it does not have PROP_NOCTYPEDRAW (Also some special cases), set the element's ctype
-			int drawOn = TYP(pmap[y][x]);
-			if (drawOn == t)
+		if(!lvl){
+			if(pmap[y][x]){
+				//If an element has the PROP_DRAWONCTYPE property, and the element being drawn to it does not have PROP_NOCTYPEDRAW (Also some special cases), set the element's ctype
+				int drawOn = TYP(pmap[y][x]);
+				if(drawOn == t)
+					return -1;
+				if(((elements[drawOn].Properties & PROP_DRAWONCTYPE) ||
+					(drawOn == PT_STOR) ||
+					(drawOn == PT_PCLN && t != PT_PSCN && t != PT_NSCN) ||
+					(drawOn == PT_PBCN && t != PT_PSCN && t != PT_NSCN))
+					&& (!(elements[t].Properties & PROP_NOCTYPEDRAW))){
+					parts[ID(pmap[y][x])].ctype = t;
+					if(t == PT_LIFE && v >= 0 && v < NGOL){
+						if(drawOn == PT_CONV)
+							parts[ID(pmap[y][x])].ctype |= PMAPID(v);
+						else if(drawOn != PT_STOR)
+							parts[ID(pmap[y][x])].tmp = v;
+					}
+				} else if(drawOn == PT_DTEC || (drawOn == PT_PSTN && t != PT_FRME) || drawOn == PT_DRAY){
+					parts[ID(pmap[y][x])].ctype = t;
+					if(t == PT_LIFE && v >= 0 && v < NGOL){
+						if(drawOn == PT_DTEC)
+							parts[ID(pmap[y][x])].tmp = v;
+						else if(drawOn == PT_DRAY)
+							parts[ID(pmap[y][x])].ctype |= PMAPID(v);
+					}
+				} else if(drawOn == PT_CRAY){
+					parts[ID(pmap[y][x])].ctype = t;
+					if(t == PT_LIFE && v >= 0 && v < NGOL)
+						parts[ID(pmap[y][x])].ctype |= PMAPID(v);
+					if(t == PT_LIGH)
+						parts[ID(pmap[y][x])].ctype |= PMAPID(30);
+					parts[ID(pmap[y][x])].temp = elements[t].Temperature;
+				}
 				return -1;
-			if (((elements[drawOn].Properties & PROP_DRAWONCTYPE) ||
-				 (drawOn == PT_STOR) ||
-				 (drawOn == PT_PCLN && t != PT_PSCN && t != PT_NSCN) ||
-				 (drawOn == PT_PBCN && t != PT_PSCN && t != PT_NSCN))
-				&& (!(elements[t].Properties & PROP_NOCTYPEDRAW)))
-			{
-				parts[ID(pmap[y][x])].ctype = t;
-				if (t == PT_LIFE && v >= 0 && v < NGOL)
-				{
-					if (drawOn == PT_CONV)
-						parts[ID(pmap[y][x])].ctype |= PMAPID(v);
-					else if (drawOn != PT_STOR)
-						parts[ID(pmap[y][x])].tmp = v;
+			} else if(IsWallBlocking(x, y, t))
+				return -1;
+			if(photons[y][x] && (elements[t].Properties & TYPE_ENERGY))
+				return -1;
+			if(pfree == -1)
+				return -1;
+			i = pfree;
+			pfree = parts[i].life;
+		} else{
+			if(viewpmap[y][x][1] == truecurrentTick && viewpmap[y][x][0]){ // set ctypes and draw particles
+	            //If an element has the PROP_DRAWONCTYPE property, and the element being drawn to it does not have PROP_NOCTYPEDRAW (Also some special cases), set the element's ctype
+				int drawOn = parts[viewpmap[y][x][0]].type;
+				if(drawOn == t)
+					return -1;
+				if(((elements[drawOn].Properties & PROP_DRAWONCTYPE) ||
+					(drawOn == PT_STOR) ||
+					(drawOn == PT_PCLN && t != PT_PSCN && t != PT_NSCN) ||
+					(drawOn == PT_PBCN && t != PT_PSCN && t != PT_NSCN))
+					&& (!(elements[t].Properties & PROP_NOCTYPEDRAW))){
+					parts[viewpmap[y][x][0]].ctype = t;
+					if(t == PT_LIFE && v >= 0 && v < NGOL){
+						if(drawOn == PT_CONV)
+							parts[viewpmap[y][x][0]].ctype |= PMAPID(v);
+						else if(drawOn != PT_STOR)
+							parts[viewpmap[y][x][0]].tmp = v;
+					}
+				} else if(drawOn == PT_DTEC || (drawOn == PT_PSTN && t != PT_FRME) || drawOn == PT_DRAY){
+					parts[viewpmap[y][x][0]].ctype = t;
+					if(t == PT_LIFE && v >= 0 && v < NGOL){
+						if(drawOn == PT_DTEC)
+							parts[viewpmap[y][x][0]].tmp = v;
+						else if(drawOn == PT_DRAY)
+							parts[viewpmap[y][x][0]].ctype |= PMAPID(v);
+					}
+				} else if(drawOn == PT_CRAY){
+					parts[viewpmap[y][x][0]].ctype = t;
+					if(t == PT_LIFE && v >= 0 && v < NGOL)
+						parts[viewpmap[y][x][0]].ctype |= PMAPID(v);
+					if(t == PT_LIGH)
+						parts[viewpmap[y][x][0]].ctype |= PMAPID(30);
+					parts[viewpmap[y][x][0]].temp = elements[t].Temperature;
 				}
+				return -1;
+			} else if(IsWallBlocking(x, y, t))
+				return -1;
+			if(photons[y][x] && (elements[t].Properties & TYPE_ENERGY))
+				return -1;
+			if(pfree == -1)
+				return -1;
+			
+			if(!(drawviewpmap[y][x][1] == truecurrentTick && drawviewpmap[y][x][0]) && lvl != 1){ 
+				return -1;
 			}
-			else if (drawOn == PT_DTEC || (drawOn == PT_PSTN && t != PT_FRME) || drawOn == PT_DRAY)
-			{
-				parts[ID(pmap[y][x])].ctype = t;
-				if (t == PT_LIFE && v >= 0 && v < NGOL)
-				{
-					if (drawOn == PT_DTEC)
-						parts[ID(pmap[y][x])].tmp = v;
-					else if (drawOn == PT_DRAY)
-						parts[ID(pmap[y][x])].ctype |= PMAPID(v);
-				}
+			if(drawviewpmap[y][x][0] == truecurrentTick){// solve draw two times bug
+				return -1;
 			}
-			else if (drawOn == PT_CRAY)
-			{
-				parts[ID(pmap[y][x])].ctype = t;
-				if (t == PT_LIFE && v >= 0 && v < NGOL)
-					parts[ID(pmap[y][x])].ctype |= PMAPID(v);
-				if (t == PT_LIGH)
-					parts[ID(pmap[y][x])].ctype |= PMAPID(30);
-				parts[ID(pmap[y][x])].temp = elements[t].Temperature;
-			}
-			return -1;
+			drawviewpmap[y][x][0] = truecurrentTick;
+
+			i = pfree;
+			pfree = parts[i].life;
 		}
-		else if (IsWallBlocking(x, y, t))
-			return -1;
-		if (photons[y][x] && (elements[t].Properties & TYPE_ENERGY))
-			return -1;
-		if (pfree == -1)
-			return -1;
-		i = pfree;
-		pfree = parts[i].life;
 	}
 	else if (p==-3)//skip pmap checks, e.g. for sing explosion
 	{
@@ -3711,6 +3808,20 @@ void Simulation::delete_part(int x, int y)//calls kill_part with the particle lo
 		i = pmap[y][x];
 	}
 
+	if(lvl){
+		if(viewpmap[y][x][1] == truecurrentTick){
+			i = viewpmap[y][x][0] << PMAPBITS | parts[viewpmap[y][x][0]].type;
+		} else{
+			return;
+		}
+	} else{
+		if(photons[y][x]){
+			i = photons[y][x];
+		} else{
+			i = pmap[y][x];
+		}
+	}
+
 	if (!i)
 		return;
 	kill_part(ID(i));
@@ -3867,35 +3978,23 @@ void Simulation::nuclear_fusion(int id)
 			}
 		}
 }
-void Simulation::UpdateParticles(int start, int end)
-{
-	int i, j, x, y, t, t2, nx, ny, r, surround_space, s, rt, nt, partpos, vary, ctypep, tmpp, tmp2p;
-	float mv, dx, dy, nrx, nry, dp, ctemph, ctempl, gravtot, dtemp, invmaxtemp = 1.f/MAX_TEMP;
-	int fin_x, fin_y, clear_x, clear_y, stagnant, pt_beforetransition, sorroundtype, type3;
-	float fin_xf, fin_yf, clear_xf, clear_yf, diffy, diffx;
-	float nn, ct1, ct2, swappage;
-	float pt = R_TEMP;
-	float c_heat = 0.0f;
-	int h_count = 0;
-	int surround[8], type2;
-	int surround_hconduct[8];
-	float pGravX, pGravY, pGravD, beforelatent;
-	bool transitionOccurred, transitionchange;
 
+void Simulation::updateidpointer(){
+	int x, y, i, start = 0, end = NPART;
 	for(i = start; i <= end && i <= parts_lastActiveIndex; i++){
 		if(parts[i].type){
 
 			x = (int)(parts[i].x + 0.5f);
 			y = (int)(parts[i].y + 0.5f);
 
-
+			//black hole check
 			if(blackhole[y][x][0] != truecurrentTick){
 				blackhole[y][x][0] = truecurrentTick;
 				blackhole[y][x][1] = 0;
 			}
-			if(blackhole[y][x][1] == 0  && parts[i].type == PT_NBHL){
+			if(blackhole[y][x][1] == 0 && parts[i].type == PT_NBHL){
 				blackhole[y][x][1] = 1;
-			} else if(parts[i].type == PT_NBHL){
+			} else if(blackhole[y][x][1] > 0){
 				kill_part(i);
 				continue;
 			}
@@ -3906,21 +4005,66 @@ void Simulation::UpdateParticles(int start, int end)
 				pmap2[y][x][1] = i; //first particle  x,y
 				pmap2[y][x][2] = i; //last particle  x,y
 				pmap2[y][x][3] = 0; // reset deep x,y
-				idpointer[i][2] = 0; // reset deep for id
+
+				idpointer[i][0] = truecurrentTick;
+				idpointer[i][1] = i;
+				idpointer[i][2] = 0;
+				idpointer[i][3] = i;
 			} else{
 				idpointer[pmap2[y][x][2]][0] = truecurrentTick;
 				idpointer[pmap2[y][x][2]][1] = i; // next id
 				idpointer[pmap2[y][x][2]][2] = pmap2[y][x][3]; //deep id
+				idpointer[i][3] = pmap2[y][x][2]; // before
+
 				pmap2[y][x][2] = i; // last particle
 				pmap2[y][x][3]++; //increase deep
+
+				idpointer[i][0] = truecurrentTick;
+				idpointer[i][1] = i; // next id
+				idpointer[i][2] = pmap2[y][x][3]; //deep id
+
 				//check excessive stacking
 				if(pmap2[y][x][3] > 1500){
 					create_part(pmap2[y][x][1], x, y, PT_NBHL);// change first particle x,y to black hole
 				}
 			}
-		}
-	} 
 
+			if((lvl - 1) == idpointer[i][2]){
+				viewpmap[y][x][0] = i;
+				viewpmap[y][x][1] = truecurrentTick;
+			}
+		}
+	}
+	for(i = start; i <= end && i <= parts_lastActiveIndex; i++){
+		if(parts[i].type){
+
+			x = (int)(parts[i].x + 0.5f);
+			y = (int)(parts[i].y + 0.5f);
+
+			if((lvl - 2) == idpointer[i][2] && i == pmap2[y][x][2]){
+				drawviewpmap[y][x][0] = 1;
+				drawviewpmap[y][x][1] = truecurrentTick;
+			}
+		}
+	}
+
+}
+
+void Simulation::UpdateParticles(int start, int end)
+{
+	int i, j, x, y, t, t2, nx, ny, r, surround_space, s, rt, nt, partpos, vary, ctypep, tmpp, tmp2p;
+	float mv, dx, dy, nrx, nry, dp, ctemph, ctempl, gravtot, dtemp, invmaxtemp = 1.f/MAX_TEMP;
+	int fin_x, fin_y, clear_x, clear_y, stagnant, pt_beforetransition, sorroundtype, type3;
+	float fin_xf, fin_yf, clear_xf, clear_yf, diffy, diffx;
+	float nn, ct1, ct2, swappage, air1, air2;
+	float pt = R_TEMP;
+	float c_heat = 0.0f;
+	int h_count = 0;
+	int surround[8], type2;
+	int surround_hconduct[8];
+	float pGravX, pGravY, pGravD, beforelatent;
+	bool transitionOccurred, transitionchange;
+	
 	//the main particle loop function, goes over all particles.
 	for (i = start; i <= end && i <= parts_lastActiveIndex; i++)
 
@@ -3929,12 +4073,6 @@ void Simulation::UpdateParticles(int start, int end)
 
 			x = (int)(parts[i].x + 0.5f);
 			y = (int)(parts[i].y + 0.5f);
-
-
-			if(blackhole[y][x][1] == 1 && parts[i].type != PT_NBHL){
-				kill_part(i);
-				continue;
-			}
 
 			//this kills any particle out of the screen, or in a wall where it isn't supposed to go
 			if(x < CELL || y < CELL || x >= XRES - CELL || y >= YRES - CELL ||
@@ -4733,7 +4871,32 @@ void Simulation::UpdateParticles(int start, int end)
 					}
 				}
 				parts[i].tmp2 *= 0.222222f;
-				diffy = pv[y / CELL + 1][x / CELL] - pv[y / CELL - 1][x / CELL];
+				/*
+				if(!bmap[y / CELL + 1][x / CELL]){
+					air1 = pv[y / CELL + 1][x / CELL];
+				} else{
+					air1 = 0;
+				}
+				if(!bmap[y / CELL - 1][x / CELL]){
+					air2 = pv[y / CELL - 1][x / CELL];
+				} else{
+					air2 = 0;
+				}
+				diffy = air1 - air2;
+
+				if(!bmap[y / CELL][x / CELL + 1]){
+					air1 = pv[y / CELL][x / CELL + 1];
+				} else{
+					air1 = 0;
+				}
+				if(!bmap[y / CELL][x / CELL - 1]){
+					air2 = pv[y / CELL][x / CELL - 1];
+				} else{
+					air2 = 0;
+				}
+				diffx = air1 - air2;
+				*/
+				diffy = pv[y / CELL + 1][x / CELL] - pv[y / CELL - 1][x / CELL]; 
 				diffx = pv[y / CELL][x / CELL + 1] - pv[y / CELL][x / CELL - 1];
 				diffdt = gravtot + sqrt(diffy*diffy+diffx*diffx);
 
@@ -5679,7 +5842,7 @@ void Simulation::BeforeSim()
 	int r, count;
 	//solve bugs
 	truecurrentTick++;
-
+	
 	if (!sys_pause||framerender)
 	{
 

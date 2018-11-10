@@ -161,6 +161,8 @@ public:
 	bool GetAHeatEnable();
 	void ToggleNewtonianGravity();
 	void togglebrokenstate();
+	void changelvl(bool mode);
+	void resetLVL();
 
 	bool LoadClipboard();
 	void LoadStamp(GameSave *stamp);

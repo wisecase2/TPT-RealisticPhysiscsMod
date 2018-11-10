@@ -59,7 +59,7 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 	////// joins the neutrons if you have more than 4 in the same position.
 	
 	cont2 = 0;
-	ident = sim->pmap2[y][x][1];
+	ident = sim->pmap2[y][x][2]; // last particle
 	for (int cont = 0; cont < 6 && cont <= sim->pmap2[y][x][3]; cont++) {
 		if(parts[ident].type == PT_NEUT && ident != i){
 			cont2++;
@@ -73,14 +73,16 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 				cont2 = 1;
 			}
 		}
-		if(sim->idpointer[ident][0] == (sim->truecurrentTick)){
-			ident = sim->idpointer[ident][1];
+		if(sim->idpointer[ident][3] != ident){
+			ident = sim->idpointer[ident][3];
 		}else{
 			break;
 		}
 	}
+
 	idr = ID(r);
 	typr = TYP(r);
+
 	switch(typr){
 		case PT_ACEL:
 			if(parts[idr].life != 0){
@@ -122,69 +124,83 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 	}
 	
 	//// nuclear fission uranium and plutonium:
-	if (typr == PT_PLUT || typr == PT_GASEOUS && parts[idr].ctype == PT_PLUT || typr == PT_PLSM && parts[idr].ctype == PT_PLUT || typr == PT_LAVA && parts[idr].ctype == PT_PLUT){
-		//if (RNG::Ref().chance(parts[idr].tmp, 3145728) && (parts[idr].tmp > 0)){
-		if(RNG::Ref().chance(1, 3) && (parts[idr].tmp > 0)){
-		
-			if(parts[i].tmp2 < parts[idr].tmp){
-				identity = sim->create_part(-3, x, y, PT_NEUT);
-				tempadd = parts[identity].tmp2 = parts[i].tmp2;
-				parts[identity].temp = parts[i].temp + tempadd;
-				parts[idr].temp += tempadd;
-				parts[idr].tmp -= parts[i].tmp2;
-				parts[i].temp += tempadd;
-				if(RNG::Ref().chance(1, 3)){
-					identity = sim->create_part(-3, x, y, PT_GAMMA);
-					parts[identity].temp = tempadd;
+	ident = sim->pmap2[y][x][1]; // first particle
+	for(int cont = 0; cont < 3 && cont <= sim->pmap2[y][x][3]; cont++){
+		idr = ident;
+		typr = parts[ident].type;
+		if(typr == PT_PLUT || typr == PT_GASEOUS && parts[idr].ctype == PT_PLUT || typr == PT_PLSM && parts[idr].ctype == PT_PLUT || typr == PT_LAVA && parts[idr].ctype == PT_PLUT){
+			//if (RNG::Ref().chance(parts[idr].tmp, 3145728) && (parts[idr].tmp > 0)){
+			if(RNG::Ref().chance(1, 3) && (parts[idr].tmp > 0)){
+
+				if(parts[i].tmp2 < parts[idr].tmp){
+					identity = sim->create_part(-3, x, y, PT_NEUT);
+					tempadd = parts[identity].tmp2 = parts[i].tmp2;
+					parts[identity].temp = parts[i].temp + tempadd;
+					parts[idr].temp += tempadd;
+					parts[idr].tmp -= parts[i].tmp2;
+					parts[i].temp += tempadd;
+					if(RNG::Ref().chance(1, 3)){
+						identity = sim->create_part(-3, x, y, PT_GAMMA);
+						parts[identity].temp = tempadd;
+					}
+				} else{
+					identity = sim->create_part(-3, x, y, PT_NEUT);
+					tempadd = parts[identity].tmp2 = parts[idr].tmp;
+					parts[identity].temp = parts[i].temp + tempadd;
+					parts[idr].temp += tempadd;
+					parts[idr].tmp = 0;
+					parts[i].temp += tempadd;
+					if(RNG::Ref().chance(1, 3)){
+						identity = sim->create_part(-3, x, y, PT_GAMMA);
+						parts[identity].temp = tempadd;
+					}
 				}
-			} else{
-				identity = sim->create_part(-3, x, y, PT_NEUT);
-				tempadd = parts[identity].tmp2 = parts[idr].tmp;
-				parts[identity].temp = parts[i].temp + tempadd;
-				parts[idr].temp += tempadd;
-				parts[idr].tmp = 0;
-				parts[i].temp += tempadd;
-				if(RNG::Ref().chance(1, 3)){
-					identity = sim->create_part(-3, x, y, PT_GAMMA);
-					parts[identity].temp = tempadd;
-				}
+
+				//sim->pv[y/CELL][x/CELL] += 5.0f * CFDS * parts[i].tmp2 * 0.0000152587f; //Used to be 2, some people said nukes weren't powerful enough
+				Element_FIRE::update(UPDATE_FUNC_SUBCALL_ARGS);
 			}
-		
-			//sim->pv[y/CELL][x/CELL] += 5.0f * CFDS * parts[i].tmp2 * 0.0000152587f; //Used to be 2, some people said nukes weren't powerful enough
-			Element_FIRE::update(UPDATE_FUNC_SUBCALL_ARGS);
+		} else if(typr == PT_URAN || typr == PT_GASEOUS && parts[idr].ctype == PT_URAN || typr == PT_PLSM && parts[idr].ctype == PT_URAN || typr == PT_LAVA && parts[idr].ctype == PT_URAN){
+			//if (RNG::Ref().chance(parts[idr].tmp, 2621440) && (parts[idr].tmp > 0)) {
+			if(RNG::Ref().chance(1, 5) && (parts[idr].tmp > 0)){
+
+				if(parts[i].tmp2 < parts[idr].tmp){
+					identity = sim->create_part(-3, x, y, PT_NEUT);
+					tempadd = parts[identity].tmp2 = parts[i].tmp2;
+					parts[identity].temp = parts[i].temp + tempadd;
+					parts[idr].temp += tempadd;
+					parts[idr].tmp -= parts[i].tmp2;
+					parts[i].temp += tempadd;
+					if(RNG::Ref().chance(1, 5)){
+						identity = sim->create_part(-3, x, y, PT_GAMMA);
+						parts[identity].temp = tempadd;
+					}
+				} else{
+					identity = sim->create_part(-3, x, y, PT_NEUT);
+					tempadd = parts[identity].tmp2 = parts[idr].tmp;
+					parts[identity].temp = parts[i].temp + tempadd;
+					parts[idr].temp += tempadd;
+					parts[idr].tmp = 0;
+					parts[i].temp += tempadd;
+					if(RNG::Ref().chance(1, 5)){
+						identity = sim->create_part(-3, x, y, PT_GAMMA);
+						parts[identity].temp = tempadd;
+					}
+				}
+
+				//sim->pv[y / CELL][x / CELL] += 5.0f * CFDS * parts[i].tmp2 * 0.0000152587f; //Used to be 2, some people said nukes weren't powerful enough
+				Element_FIRE::update(UPDATE_FUNC_SUBCALL_ARGS);
+			}
 		}
-	}else if(typr == PT_URAN || typr == PT_GASEOUS && parts[idr].ctype == PT_URAN || typr == PT_PLSM && parts[idr].ctype == PT_URAN || typr == PT_LAVA && parts[idr].ctype == PT_URAN) {
-		//if (RNG::Ref().chance(parts[idr].tmp, 2621440) && (parts[idr].tmp > 0)) {
-		if(RNG::Ref().chance(1, 5) && (parts[idr].tmp > 0)){
-
-			if(parts[i].tmp2 < parts[idr].tmp){
-				identity = sim->create_part(-3, x, y, PT_NEUT);
-				tempadd = parts[identity].tmp2 = parts[i].tmp2;
-				parts[identity].temp = parts[i].temp + tempadd;
-				parts[idr].temp += tempadd;
-				parts[idr].tmp -= parts[i].tmp2;
-				parts[i].temp += tempadd;
-				if(RNG::Ref().chance(1, 5)){
-					identity = sim->create_part(-3, x, y, PT_GAMMA);
-					parts[identity].temp = tempadd;
-				}
-			} else{
-				identity = sim->create_part(-3, x, y, PT_NEUT);
-				tempadd = parts[identity].tmp2 = parts[idr].tmp;
-				parts[identity].temp = parts[i].temp + tempadd;
-				parts[idr].temp += tempadd;
-				parts[idr].tmp = 0;
-				parts[i].temp += tempadd;
-				if(RNG::Ref().chance(1, 5)){
-					identity = sim->create_part(-3, x, y, PT_GAMMA);
-					parts[identity].temp = tempadd;
-				}
-			}
-
-			//sim->pv[y / CELL][x / CELL] += 5.0f * CFDS * parts[i].tmp2 * 0.0000152587f; //Used to be 2, some people said nukes weren't powerful enough
-			Element_FIRE::update(UPDATE_FUNC_SUBCALL_ARGS);
+		if(sim->idpointer[ident][1] != ident){
+			ident = sim->idpointer[ident][1];
+		} else{
+			break;
 		}
 	}
+
+	idr = ID(r);
+	typr = TYP(r);
+
 	if(sim->IsValidElement(typr)){
 	
 		slowdown = sim->elements[typr].neutslowdown;

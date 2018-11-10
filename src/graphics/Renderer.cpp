@@ -1195,6 +1195,7 @@ void Renderer::render_parts()
 	float gradv, flicker;
 	float a = 1023, b = MAX_TEMP, invlnb = a * (1.f / log(b + 1.f));/// division and logarithm is expensive
 	int heatcolor[1024][3], isvalid;
+	bool pass, pass2, drawflat;
 	for (int i = 0, s = 0; s < 1024 && i < 3071; i += 3) {
 		heatcolor[s][0] = color_data[i];
 		heatcolor[s][1] = color_data[i + 1];
@@ -1240,7 +1241,26 @@ void Renderer::render_parts()
 #endif
 	foundElements = 0;
 	for(i = 0; i<=sim->parts_lastActiveIndex; i++) {
-		if (sim->parts[i].type && sim->parts[i].type >= 0 && sim->parts[i].type < PT_NUM && (!(sim->idpointer[i][2] > 3 && sim->truecurrentTick == sim->idpointer[i][0]))) { // só desenha, se a particula tem profundidade menor que 3;
+		////levels stacks particles
+		nx = (int)(sim->parts[i].x + 0.5f);
+		ny = (int)(sim->parts[i].y + 0.5f);
+		pass = false;
+		pass2 = false;
+
+		if(sim->lvl){
+			if(sim->idpointer[i][0] == sim->truecurrentTick){
+				pass = sim->idpointer[i][2] == (sim->lvl - 1);
+				if(i == sim->pmap2[ny][nx][2] && !pass){ // if is this last particle;
+					pass2 = sim->idpointer[i][2] == (sim->lvl - 2);
+				}
+			}
+		} else{
+		    //pass = sim->idpointer[i][2] >= (sim->pmap2[ny][nx][3] - 3) && sim->idpointer[i][2] <= sim->pmap2[ny][nx][3];
+			pass = true;
+			pass2 = false;
+		}
+
+		if (sim->parts[i].type && sim->parts[i].type >= 0 && sim->parts[i].type < PT_NUM && pass) { // só desenha, se a particula tem profundidade menor que 3;
 			
 			type3 = t = sim->parts[i].type;
 
@@ -1251,8 +1271,6 @@ void Renderer::render_parts()
 				type3 = type2;
     		}
 
-			nx = (int)(sim->parts[i].x+0.5f);
-			ny = (int)(sim->parts[i].y+0.5f);
 #ifdef OGLR
 			fnx = sim->parts[i].x;
 			fny = sim->parts[i].y;
@@ -1260,8 +1278,10 @@ void Renderer::render_parts()
 
 			if(nx >= XRES || nx < 0 || ny >= YRES || ny < 0)
 				continue;
-			if(TYP(sim->photons[ny][nx]) && !(sim->elements[t].Properties & TYPE_ENERGY) && t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH)
-				continue;
+			if(sim->lvl == 0){
+				if(TYP(sim->photons[ny][nx]) && !(sim->elements[t].Properties & TYPE_ENERGY) && t != PT_STKM && t != PT_STKM2 && t != PT_FIGH)
+					continue;
+			}
 
 			//Defaults
 			pixel_mode = 0 | PMODE_FLAT;
@@ -2116,7 +2136,9 @@ void Renderer::render_parts()
 #endif
 				}
 			}
-		}
+		} else if(pass2){
+			vid[ny*(VIDXRES)+nx] = PIXRGB(128, 128, 128);
+        }
 	}
 #ifdef OGLR
 
@@ -2677,8 +2699,11 @@ Renderer::Renderer(Graphics * g, Simulation * sim):
 	renderModePresets[10].ColourMode = COLOUR_LIFE;
 
 	//Prepare the graphics cache
-	graphicscache = (gcache_item *)malloc(sizeof(gcache_item)*PT_NUM);
-	memset(graphicscache, 0, sizeof(gcache_item)*PT_NUM);
+	//graphicscache = (gcache_item *)malloc(sizeof(gcache_item)*PT_NUM);
+	//memset(graphicscache, 0, sizeof(gcache_item)*PT_NUM);
+
+	graphicscache = new gcache_item[PT_NUM];
+	std::fill(&graphicscache[0], &graphicscache[PT_NUM], gcache_item());
 
 	int fireColoursCount = 4;
 	pixel fireColours[] = {PIXPACK(0xAF9F0F), PIXPACK(0xDFBF6F), PIXPACK(0x60300F), PIXPACK(0x000000)};
@@ -2989,7 +3014,8 @@ Renderer::~Renderer()
 	delete[] persistentVid;
 	delete[] warpVid;
 #endif
-	free(graphicscache);
+	//free(graphicscache);
+	delete[] graphicscache;
 	free(flm_data);
 	free(plasma_data);
 }

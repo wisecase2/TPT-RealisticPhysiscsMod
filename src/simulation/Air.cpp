@@ -183,6 +183,7 @@ void Air::update_air(void)
 					if(j < (XRES / CELL - 1)){
 						vy[j + 1][i] = 0.0f;
 					}
+					pv[j][i] = 0;
 				}
 			}
 		} 
@@ -358,6 +359,10 @@ void Air::update_air(void)
 					break;
 				case 4: //No Update
 					break;
+				}
+
+				if(bmap_blockair[y][x]){
+					dp = 0;
 				}
 
 				ovx[y][x] = dx;

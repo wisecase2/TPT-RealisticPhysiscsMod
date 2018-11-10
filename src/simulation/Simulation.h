@@ -59,6 +59,7 @@ public:
 	int debug_currentParticle;
 	int parts_lastActiveIndex;
 	int pfree;
+	int lvl = 0;
 	int NUM_PARTS;
 	bool elementRecount;
 	int elementCount[PT_NUM];
@@ -105,7 +106,9 @@ public:
 	float fvy[YRES/CELL][XRES/CELL];
 	//Particles
 	Particle parts[NPART]; // ~ 1 megabytes 
-	int idpointer[NPART][3]; // ~ 3 megabytes
+	int idpointer[NPART][4]; // ~ 3 megabytes
+	int viewpmap[YRES][XRES][2];
+	int drawviewpmap[YRES][XRES][2];
 	int blackhole[YRES][XRES][2];
 	int pmap[YRES][XRES]; // ~ 1 megabytes 
 	int pmap2[YRES][XRES][4]; // ~ 4 megabytes 
@@ -161,6 +164,7 @@ public:
 	bool part_change_type(int i, int x, int y, int t);
 	//int InCurrentBrush(int i, int j, int rx, int ry);
 	//int get_brush_flags();
+	void updateidpointer();
 	int create_part(int p, int x, int y, int t, int v = -1);
 	void delete_part(int x, int y);
 	void get_sign_pos(int i, int *x0, int *y0, int *w, int *h);

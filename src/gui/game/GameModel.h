@@ -174,6 +174,8 @@ public:
 	bool Getbrokenstate();
 	void SetAHeatEnable(bool aHeat);
 	void setbrokenstate(bool state);
+	void changeLVL(bool mode);
+	void resetlvl();
 	bool GetNewtonianGrvity();
 	void SetNewtonianGravity(bool newtonainGravity);
 	bool GetGravityGrid();
