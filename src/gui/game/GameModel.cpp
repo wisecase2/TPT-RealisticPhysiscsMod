@@ -985,6 +985,10 @@ void GameModel::resetlvl(){
 	UpdateQuickOptions();
 }
 
+void GameModel::increasetick(){ // solve bugs
+	sim->truecurrentTick++;
+}
+
 bool GameModel::GetAHeatEnable()
 {
 	return sim->aheat_enable;

@@ -2,7 +2,10 @@
 const char *const introTextData =
 	"\blThe Powder Toy - Version " MTOS(SAVE_VERSION) "." MTOS(MINOR_VERSION) " - http://powdertoy.co.uk, irc.freenode.net #powder\n"
 	"\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\n"
-	"\n"
+
+	"\boThe Realistic Physics mod - \btVersion " MTOS(3) "." MTOS(0) " \bo-\bg by Wisecase2 \bo- https://tpt.io/.306343 \n"
+	"\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\n"
+
 	"\bgControl+C/V/X are Copy, Paste and cut respectively.\n"
 	"\bgTo choose a material, hover over one of the icons on the right, it will show a selection of elements in that group.\n"
 	"\bgPick your material from the menu using mouse left/right buttons.\n"
@@ -18,6 +21,7 @@ const char *const introTextData =
 	"Use 'S' to save parts of the window as 'stamps'. 'L' loads the most recent stamp, 'K' shows a library of stamps you saved.\n"
 	"Use 'P' to take a screenshot and save it into the current directory.\n"
 	"Use 'H' to toggle the HUD. Use 'D' to toggle debug mode in the HUD.\n"
+	"Use 'F6' to decrease LVL. Use 'F7' to increase LVL. Use 'F8' to reset LVL.\n"
 	"\n"
 	"Contributors: \bgStanislaw K Skowronek (Designed the original Powder Toy),\n"
 	"\bgSimon Robertshaw, Skresanov Savely, cracker64, Catelite, Bryan Hoyle, Nathan Cousins, jacksonmj,\n"

@@ -233,6 +233,7 @@ GameController::~GameController()
 
 void GameController::HistoryRestore()
 {
+	gameModel->increasetick();
 	std::deque<Snapshot*> history = gameModel->GetHistory();
 	if (!history.size())
 		return;
@@ -257,11 +258,12 @@ void GameController::HistoryRestore()
 
 void GameController::HistorySnapshot()
 {
+	gameModel->increasetick();
 	std::deque<Snapshot*> history = gameModel->GetHistory();
 	unsigned int historyPosition = gameModel->GetHistoryPosition();
 	Snapshot * newSnap = gameModel->GetSimulation()->CreateSnapshot();
 	if (newSnap)
-	{
+	{	
 		newSnap->Authors = Client::Ref().GetAuthorInfo();
 		while (historyPosition < history.size())
 		{
@@ -287,6 +289,7 @@ void GameController::HistorySnapshot()
 
 void GameController::HistoryForward()
 {
+	gameModel->increasetick();
 	std::deque<Snapshot*> history = gameModel->GetHistory();
 	if (!history.size())
 		return;
@@ -1565,11 +1568,13 @@ void GameController::ReloadSim()
 {
 	if(gameModel->GetSave() && gameModel->GetSave()->GetGameSave())
 	{
+		gameModel->increasetick();
 		HistorySnapshot();
 		gameModel->SetSave(gameModel->GetSave());
 	}
 	else if(gameModel->GetSaveFile() && gameModel->GetSaveFile()->GetGameSave())
 	{
+		gameModel->increasetick();
 		HistorySnapshot();
 		gameModel->SetSaveFile(gameModel->GetSaveFile());
 	}

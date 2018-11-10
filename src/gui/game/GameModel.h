@@ -176,6 +176,7 @@ public:
 	void setbrokenstate(bool state);
 	void changeLVL(bool mode);
 	void resetlvl();
+	void increasetick();
 	bool GetNewtonianGrvity();
 	void SetNewtonianGravity(bool newtonainGravity);
 	bool GetGravityGrid();

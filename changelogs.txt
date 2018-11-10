@@ -24,3 +24,6 @@ v2.3:
  - Now NEUT slows down in the water (all states).
  - Fixed black hole shadow bug.
  - CONV now has a new mode, where you change the element type without affecting speed when your tmp2 equals 1.
+
+v3.0:
+ - Stack editing.

@@ -67,19 +67,23 @@ int Element_GAMMA::update(UPDATE_FUNC_ARGS)
 	if(valid1 && (typr == PT_LAVA || typr == PT_LIQUID || typr == PT_GASEOUS || typr == PT_PLSM || typr == PT_BRMT || typr == PT_SOLID)){
 		absorb = sim->elements[ctype1].radabsorb;
 		if(absorb > 0){
-			if(RNG::Ref().chance(absorb, 400)){
-				parts[idr].temp += parts[i].temp;
-				sim->kill_part(i);
-				return 0;
+			if(RNG::Ref().chance(absorb, 350)){
+				if(RNG::Ref().chance(MAX_TEMP - parts[idr].temp, MAX_TEMP)){
+					parts[idr].temp += parts[i].temp;
+					sim->kill_part(i);
+					return 0;
+				}
 			}
 		}
 	} else{
 		absorb = sim->elements[typr].radabsorb;
 		if(absorb > 0){
-			if(RNG::Ref().chance(absorb, 400)){
-				parts[idr].temp += parts[i].temp;
-				sim->kill_part(i);
-				return 0;
+			if(RNG::Ref().chance(absorb, 350)){
+				if(RNG::Ref().chance(MAX_TEMP - parts[idr].temp, MAX_TEMP)){
+					parts[idr].temp += parts[i].temp;
+					sim->kill_part(i);
+					return 0;
+				}
 			}
 		}
 	}

@@ -688,8 +688,8 @@ SimulationSample Simulation::GetSample(int x, int y)
 			sample.AirTemperature = hv[y / CELL][x / CELL];
 			sample.AirVelocityX = vx[y / CELL][x / CELL];
 			sample.AirVelocityY = vy[y / CELL][x / CELL];
-			if(pmap2[y][x][0] == truecurrentTick){
-				if(pmap2[y][x][1]){
+			if(pmap2[y][x][0] == truecurrentTick){ 
+				if(parts[pmap2[y][x][1]].type != PT_NONE){
 					sample.numpartxy = pmap2[y][x][3] + 1;
 				}
 			}
@@ -2177,6 +2177,8 @@ void Simulation::clear_sim(void)
 	memset(pmap, 0, sizeof(pmap));
 	memset(pmap2, 0, sizeof(pmap2));
 	memset(idpointer, 0, sizeof(idpointer));
+	memset(viewpmap, 0, sizeof(viewpmap)); 
+	memset(drawviewpmap, 0, sizeof(drawviewpmap));
 	memset(blackhole, 0, sizeof(blackhole));
 	memset(storepressure, 0, sizeof(storepressure));
 	memset(dthv, 0, sizeof(dthv));
@@ -3279,8 +3281,8 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 				return -1;
 			} else if(IsWallBlocking(x, y, t))
 				return -1;
-			if(photons[y][x] && (elements[t].Properties & TYPE_ENERGY))
-				return -1;
+			//if(photons[y][x] && (elements[t].Properties & TYPE_ENERGY))
+			//	return -1;
 			if(pfree == -1)
 				return -1;
 			
@@ -4001,7 +4003,7 @@ void Simulation::updateidpointer(){
 
 			////// store deep particles and check excessive stacking, with id pointer
 			if(pmap2[y][x][0] != truecurrentTick){
-				pmap2[y][x][0] = truecurrentTick;
+				pmap2[y][x][0] = truecurrentTick; 
 				pmap2[y][x][1] = i; //first particle  x,y
 				pmap2[y][x][2] = i; //last particle  x,y
 				pmap2[y][x][3] = 0; // reset deep x,y
@@ -6112,10 +6114,12 @@ Simulation::Simulation():
 	gravmap = grav->gravmap;
 
 	//fix memory error
+	/*// clear in clear_sim
 	for(int i = 0; i < NPART; i++){
 		idpointer[i][0] = 0;
 		idpointer[i][1] = 0;
 		idpointer[i][2] = 0;
+		idpointer[i][3] = 0;
 		storepressure[i] = 0;
 	}
 	for(int y = 0; y < YRES; y++){
@@ -6124,6 +6128,10 @@ Simulation::Simulation():
 			pmap2[y][x][1] = 0;
 			pmap2[y][x][2] = 0;
 			pmap2[y][x][3] = 0;
+			viewpmap[y][x][0] = 0;
+			viewpmap[y][x][1] = 0;
+			drawviewpmap[y][x][0] = 0;
+			drawviewpmap[y][x][1] = 0;
 			blackhole[y][x][0] = 0;
 			blackhole[y][x][1] = 0;
 		}
@@ -6132,7 +6140,8 @@ Simulation::Simulation():
 		for(int x = 0; x < XRES / CELL; x++){
 			dthv[y][x] = 0;
 		}
-	}
+	}*/
+	
 	//Create and attach air simulation
 	air = new Air(*this);
 	//Give air sim references to our data
