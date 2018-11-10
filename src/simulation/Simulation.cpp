@@ -689,7 +689,7 @@ SimulationSample Simulation::GetSample(int x, int y)
 			sample.AirVelocityX = vx[y / CELL][x / CELL];
 			sample.AirVelocityY = vy[y / CELL][x / CELL];
 			if(pmap2[y][x][0] == truecurrentTick){ 
-				if(parts[pmap2[y][x][1]].type != PT_NONE){
+				if(parts[pmap2[y][x][1]].type){
 					sample.numpartxy = pmap2[y][x][3] + 1;
 				}
 			}
@@ -714,7 +714,7 @@ SimulationSample Simulation::GetSample(int x, int y)
 			sample.AirVelocityY = vy[y / CELL][x / CELL];
 
 			if(pmap2[y][x][0] == truecurrentTick){
-				if(pmap2[y][x][1]){
+				if(parts[pmap2[y][x][1]].type){
 					sample.numpartxy = pmap2[y][x][3] + 1;
 				}
 			}
@@ -1821,7 +1821,7 @@ int Simulation::FloodParts(int x, int y, int fullc, int cm, int flags)
 	unsigned short (*coord_stack)[2];
 	int coord_stack_size = 0;
 	int created_something = 0;
-
+	
 	if (cm==-1)
 	{
 		//if initial flood point is out of bounds, do nothing
@@ -3240,14 +3240,14 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 				return -1;
 			if(photons[y][x] && (elements[t].Properties & TYPE_ENERGY))
 				return -1;
-			if(pfree == -1)
+			if(pfree == -1) 
 				return -1;
 			i = pfree;
 			pfree = parts[i].life;
 		} else{
-			if(viewpmap[y][x][1] == truecurrentTick && viewpmap[y][x][0]){ // set ctypes and draw particles
+			if(viewpmap[y][x][1] == truecurrentTick && parts[viewpmap[y][x][0]].type){ // set ctypes and draw particles
 	            //If an element has the PROP_DRAWONCTYPE property, and the element being drawn to it does not have PROP_NOCTYPEDRAW (Also some special cases), set the element's ctype
-				int drawOn = parts[viewpmap[y][x][0]].type;
+				int drawOn = parts[viewpmap[y][x][0]].type; 
 				if(drawOn == t)
 					return -1;
 				if(((elements[drawOn].Properties & PROP_DRAWONCTYPE) ||

@@ -58,7 +58,7 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 
 	////// joins the neutrons if you have more than 4 in the same position.
 	cont2 = 0;
-	if(parts[sim->pmap2[y][x][1]].type != PT_NONE){
+	if(parts[sim->pmap2[y][x][1]].type){ 
 		ident = sim->pmap2[y][x][2]; // last particle
 		for(int cont = 0; cont < 10 && cont <= sim->pmap2[y][x][3]; cont++){
 			if(parts[ident].type == PT_NEUT && ident != i){
@@ -125,7 +125,7 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 	}
 	
 	//// nuclear fission uranium and plutonium:
-	if(parts[sim->pmap2[y][x][1]].type != PT_NONE){
+	if(parts[sim->pmap2[y][x][1]].type){
 		ident = sim->pmap2[y][x][1]; // first particle
 		for(int cont = 0; cont < 2 && cont <= sim->pmap2[y][x][3]; cont++){ // cont <2, because a number greater than that the game gets very lag when fissioning these elements with many stacks due to the enormous production of neutrons.
 			idr = ident;
