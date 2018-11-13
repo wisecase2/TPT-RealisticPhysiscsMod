@@ -58,7 +58,7 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 
 	////// joins the neutrons if you have more than 4 in the same position.
 	cont2 = 0;
-	if(parts[sim->pmap2[y][x][1]].type){ 
+	if(parts[sim->pmap2[y][x][1]].type && sim->pmap2[y][x][0] == sim->truecurrentTick){
 		ident = sim->pmap2[y][x][2]; // last particle
 		for(int cont = 0; cont < 10 && cont <= sim->pmap2[y][x][3]; cont++){
 			if(parts[ident].type == PT_NEUT && ident != i){
@@ -125,9 +125,10 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 	}
 	
 	//// nuclear fission uranium and plutonium:
-	if(parts[sim->pmap2[y][x][1]].type){
-		ident = sim->pmap2[y][x][1]; // first particle
-		for(int cont = 0; cont < 2 && cont <= sim->pmap2[y][x][3]; cont++){ // cont <2, because a number greater than that the game gets very lag when fissioning these elements with many stacks due to the enormous production of neutrons.
+	cont2 = 0;
+	if(typr){
+		ident = idr;// sim->pmap2[y][x][1]; // first particle
+		for(int cont = 0; cont < 6 && cont <= sim->pmap2[y][x][3] && cont2 < 3; cont++){ // cont2 < 3, because a number greater than that the game gets very lag when fissioning these elements with many stacks due to the enormous production of neutrons.
 			idr = ident;
 			typr = parts[ident].type;
 			if(typr == PT_PLUT || typr == PT_GASEOUS && parts[idr].ctype == PT_PLUT || typr == PT_PLSM && parts[idr].ctype == PT_PLUT || typr == PT_LAVA && parts[idr].ctype == PT_PLUT){
@@ -161,6 +162,7 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 					//sim->pv[y/CELL][x/CELL] += 5.0f * CFDS * parts[i].tmp2 * 0.0000152587f; //Used to be 2, some people said nukes weren't powerful enough
 					Element_FIRE::update(UPDATE_FUNC_SUBCALL_ARGS);
 				}
+				cont2++;
 			} else if(typr == PT_URAN || typr == PT_GASEOUS && parts[idr].ctype == PT_URAN || typr == PT_PLSM && parts[idr].ctype == PT_URAN || typr == PT_LAVA && parts[idr].ctype == PT_URAN){
 				//if (RNG::Ref().chance(parts[idr].tmp, 2621440) && (parts[idr].tmp > 0)) {
 				if(RNG::Ref().chance(1, 5) && (parts[idr].tmp > 0)){
@@ -192,16 +194,15 @@ int Element_NEUT::update(UPDATE_FUNC_ARGS)
 					//sim->pv[y / CELL][x / CELL] += 5.0f * CFDS * parts[i].tmp2 * 0.0000152587f; //Used to be 2, some people said nukes weren't powerful enough
 					Element_FIRE::update(UPDATE_FUNC_SUBCALL_ARGS);
 				}
+				cont2++;
 			}
-			if(sim->idpointer[ident][1] != ident){ // next particle 
-				ident = sim->idpointer[ident][1];
+			if(sim->idpointer[ident][3] != ident){ // previous particle
+				ident = sim->idpointer[ident][3];
 			} else{
 				break;
 			}
 		}
 	}
-	idr = ID(r);
-	typr = TYP(r);
 
 	if(sim->IsValidElement(typr)){
 	

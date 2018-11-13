@@ -54,12 +54,18 @@ Element_COAL::Element_COAL()
 //#TPT-Directive ElementHeader Element_COAL static int update(UPDATE_FUNC_ARGS)
 int Element_COAL::update(UPDATE_FUNC_ARGS)
 {
+	int id;
+	
 	if (parts[i].life<=0) {
-		sim->create_part(i, x, y, PT_FIRE);
+		id = sim->create_part(i, x, y, PT_FIRE);
+		parts[id].temp = parts[i].temp + 0.0056401f*(1973 - parts[i].temp)*RNG::Ref().between(50, 100);
 		return 1;
-	} else if (parts[i].life < 100 && parts[i].temp > 723.15f) {
-		parts[i].life--;
-		sim->create_part(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), PT_FIRE);
+	} else if (parts[i].life < 100 && parts[i].temp > 500.f) {
+		if(RNG::Ref().chance(1, 10)){
+			parts[i].life--;
+		}
+		id = sim->create_part(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), PT_FIRE);
+		parts[id].temp = parts[i].temp + 0.0056401f*(1973 - parts[i].temp)*RNG::Ref().between(50, 100);
 	}
 	if (parts[i].type == PT_COAL)
 	{
