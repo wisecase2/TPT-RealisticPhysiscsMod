@@ -729,7 +729,7 @@ SimulationSample Simulation::GetSample(int x, int y)
 	}
 	else
 		sample.isMouseInSim = false;
-
+	sample.pfree = pfree;
 	sample.LVL = lvl;
 	sample.NumParts = NUM_PARTS;
 	return sample;
@@ -2343,7 +2343,7 @@ void Simulation::init_can_move()
 			|| destinationType == PT_ISOZ || destinationType == PT_ISZS || destinationType == PT_QRTZ || destinationType == PT_PQRT
 			|| destinationType == PT_H2 || destinationType == PT_BGLA || destinationType == PT_C5)
 			can_move[PT_PHOT][destinationType] = 2;
-		if (destinationType != PT_DMND && destinationType != PT_INSL && destinationType != PT_VOID && destinationType != PT_PVOD && destinationType != PT_VIBR && destinationType != PT_BVBR && destinationType != PT_PRTI && destinationType != PT_PRTO)
+		if (destinationType != PT_WALL && destinationType != PT_INSL && destinationType != PT_VOID && destinationType != PT_PVOD && destinationType != PT_VIBR && destinationType != PT_BVBR && destinationType != PT_PRTI && destinationType != PT_PRTO)
 		{
 			//can_move[PT_NEUT][destinationType] = 2;
 			can_move[PT_GRVT][destinationType] = 2;
@@ -2354,7 +2354,7 @@ void Simulation::init_can_move()
 	can_move[PT_GAMMA][PT_GOLD] = 2;
 	can_move[PT_GAMMA][PT_CNCT] = 2;
 	can_move[PT_NEUT][PT_CNCT] = 2;
-	can_move[PT_DEST][PT_DMND] = 0;
+	can_move[PT_DEST][PT_WALL] = 0;
 	can_move[PT_DEST][PT_CLNE] = 0;
 	can_move[PT_DEST][PT_PCLN] = 0;
 	can_move[PT_DEST][PT_BCLN] = 0;
@@ -3348,7 +3348,7 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	parts[i].temp = elements[t].Temperature;
 	parts[i].tmp = 0;
 	parts[i].tmp2 = 0;
-	if(elements[t].Properties&TYPE_SOLID && elements[t].pressureresistance > 0 && brokenstate){
+	if(elements[t].Properties&TYPE_SOLID && elements[t].pressureresistance > 0 && brokenstate && p == -2){
 		parts[i].tmp2 = 1000;
 	}
 	parts[i].dcolour = 0;
@@ -3437,6 +3437,9 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	case PT_COAL:
 		parts[i].life = 110;
 		parts[i].tmp = 50;
+		break;
+	case PT_DMND:
+		parts[i].life = 110;
 		break;
 	case PT_IGNT:
 		parts[i].life = 3;
@@ -3594,11 +3597,11 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	case PT_GAMMA:
 	{
 		float r = 4.f;
-		float a = RNG::Ref().between(0, 359) * 3.14159f / 180.0f;
+		float a = 360.f*RNG::Ref().uniform01() * M_PI/ 180.0f;
 		parts[i].life = RNG::Ref().between(480, 959);
 		parts[i].vx = r * cosf(a);
 		parts[i].vy = r * sinf(a);
-		parts[i].temp = 473.15;
+		parts[i].temp = 273.f*RNG::Ref().uniform01() + 200;
 		break;
 	}
 	case PT_PROT:
@@ -4067,6 +4070,24 @@ void Simulation::UpdateParticles(int start, int end)
 	float pGravX, pGravY, pGravD, beforelatent;
 	bool transitionOccurred, transitionchange;
 	
+	for(i = start; i <= end && i <= parts_lastActiveIndex; i++){
+		if(parts[i].type){
+
+			t = parts[i].type;
+			x = (int)(parts[i].x + 0.5f);
+			y = (int)(parts[i].y + 0.5f);
+
+			//update blockair
+			if(parts[i].tmp2 < 1000 && (elements[t].Properties&TYPE_SOLID) && !air->bmap_blockair[y][x] && elements[t].pressureblock){
+				blockcount[y / CELL][x / CELL] ++;
+				if(blockcount[y / CELL][x / CELL] >= 2){
+					air->bmap_blockair[y / CELL][x / CELL] = true;
+					pv[y / CELL][x / CELL] = 0;
+				}
+			}
+		}
+	}
+
 	//the main particle loop function, goes over all particles.
 	for (i = start; i <= end && i <= parts_lastActiveIndex; i++)
 
@@ -4662,7 +4683,7 @@ void Simulation::UpdateParticles(int start, int end)
 						goto transited;
 					}
 					////HOT GASEOUS transition
-					if (pt >= elements[t].GasTemperaturetransition && t != PT_LAVA && elements[t].GasTransition!=NT) {
+					if (pt >= elements[t].GasTemperaturetransition && ((t != PT_LAVA && t != PT_BRMT) || parts[i].ctype == PT_NONE) && elements[t].GasTransition!=NT) {
 						//pv[y / CELL][x / CELL] += 0.00512f*elements[t].GasTemperaturetransition;
 						addpressure(0.00512f*elements[t].GasTemperaturetransition, i, y / CELL, x / CELL);
 						//if(t != PT_BRMT){
@@ -4682,6 +4703,13 @@ void Simulation::UpdateParticles(int start, int end)
 						goto transited;
 					} else if(t==PT_LAVA && ctemph >=elements[parts[i].ctype].GasTemperaturetransition && elements[parts[i].ctype].GasTransition!=NT){
 						//pv[y / CELL][x / CELL] += 0.00512f*elements[parts[i].ctype].GasTemperaturetransition;
+						addpressure(0.00512f*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
+						parts[i].temp -= elements[parts[i].ctype].LiquidGaslatent;
+						t = parts[i].type = PT_GASEOUS;
+						parts[i].tmp = tmpp;
+						goto transited;
+					}else if(t == PT_BRMT && ctemph >= elements[parts[i].ctype].GasTemperaturetransition && elements[parts[i].ctype].GasTransition != NT){
+					   //pv[y / CELL][x / CELL] += 0.00512f*elements[parts[i].ctype].GasTemperaturetransition;
 						addpressure(0.00512f*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
 						parts[i].temp -= elements[parts[i].ctype].LiquidGaslatent;
 						t = parts[i].type = PT_GASEOUS;
@@ -4801,10 +4829,10 @@ void Simulation::UpdateParticles(int start, int end)
 			if ((elements[t].Explosive&2) && pv[y/CELL][x/CELL]>2.5f)
 			{
 				parts[i].life = RNG::Ref().between(180, 259);
-				parts[i].temp = restrict_flt(elements[PT_FIRE].Temperature + (elements[t].Flammable), MIN_TEMP, MAX_TEMP);
+				parts[i].temp = 0.5f*(RNG::Ref().uniform01() + 1.f)*restrict_flt(elements[PT_FIRE].Temperature + 2*(elements[t].Flammable), MIN_TEMP, MAX_TEMP);
 				t = PT_FIRE;
 				part_change_type(i,x,y,t);
-				pv[y/CELL][x/CELL] += 0.5f * CFDS;
+				pv[y/CELL][x/CELL] += (RNG::Ref().uniform01() + 1.5f) * CFDS * 0.0005f * parts[i].temp;
 			}
 
 
@@ -4860,6 +4888,10 @@ void Simulation::UpdateParticles(int start, int end)
 				transitionOccurred = true;
 			}
 
+			if(!bmap[y / CELL][x / CELL]){
+				pv[y / CELL][x / CELL] += storepressure[i];
+				storepressure[i] = 0;
+			}
 
             //update pressure resistance, and change to broken state, using tmp2 == 1000
 			if(parts[i].tmp2 < 1000 && elements[t].pressureresistance > 0 && elements[t].Properties&TYPE_SOLID){
@@ -4873,7 +4905,7 @@ void Simulation::UpdateParticles(int start, int end)
 					}
 				}
 				parts[i].tmp2 *= 0.222222f;
-				/*
+				
 				if(!bmap[y / CELL + 1][x / CELL]){
 					air1 = pv[y / CELL + 1][x / CELL];
 				} else{
@@ -4897,25 +4929,14 @@ void Simulation::UpdateParticles(int start, int end)
 					air2 = 0;
 				}
 				diffx = air1 - air2;
-				*/
-				diffy = pv[y / CELL + 1][x / CELL] - pv[y / CELL - 1][x / CELL]; 
-				diffx = pv[y / CELL][x / CELL + 1] - pv[y / CELL][x / CELL - 1];
+				
+				//diffy = pv[y / CELL + 1][x / CELL] - pv[y / CELL - 1][x / CELL]; 
+				//diffx = pv[y / CELL][x / CELL + 1] - pv[y / CELL][x / CELL - 1];
 				diffdt = gravtot + sqrt(diffy*diffy+diffx*diffx);
 
 				if(diffdt > parts[i].tmp2 && elements[t].defaultbreak){
 					parts[i].tmp2 = 1000;
 				}
-			}
-			//update blockair
-			if(parts[i].tmp2 < 1000 && (elements[t].Properties&TYPE_SOLID) && !air->bmap_blockair[y][x] && elements[t].pressureblock){
-				blockcount[y / CELL][x / CELL] ++;
-				if(blockcount[y / CELL][x / CELL] >= 2){
-					air->bmap_blockair[y / CELL][x / CELL] = true;
-				}
-			}
-			if(!bmap[y/CELL][x/CELL]){
-				pv[y / CELL][x / CELL] += storepressure[i];
-				storepressure[i] = 0;
 			}
 
 			// nuclear fusion
@@ -5843,7 +5864,7 @@ void Simulation::BeforeSim()
 {
 	int r, count;
 	//solve bugs
-	truecurrentTick++;
+	//truecurrentTick++;
 	
 	if (!sys_pause||framerender)
 	{
@@ -6086,6 +6107,7 @@ Simulation::Simulation():
 	gravityMode(0),
 	legacy_enable(0),
 	aheat_enable(0),
+	colision_enable(0),
 	water_equal_test(0),
 	sys_pause(0),
 	framerender(0),

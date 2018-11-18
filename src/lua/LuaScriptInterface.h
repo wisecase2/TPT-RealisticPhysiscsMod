@@ -4,6 +4,7 @@
 #include "LuaCompat.h"
 
 #include "CommandInterface.h"
+//#include "lua/LuaEvents.h"
 #include "simulation/Simulation.h"
 
 namespace ui
@@ -166,7 +167,12 @@ class LuaScriptInterface: public CommandInterface
 	static int platform_openLink(lua_State * l);
 	static int platform_clipboardCopy(lua_State * l);
 	static int platform_clipboardPaste(lua_State * l);
-
+    /*
+	void initEventAPI();
+	static int event_register(lua_State * l);
+	static int event_unregister(lua_State * l);
+	static int event_getmodifiers(lua_State * l);
+    */
 public:
 	int tpt_index(lua_State *l);
 	int tpt_newIndex(lua_State *l);
@@ -177,6 +183,7 @@ public:
 	ui::Window * Window;
 	lua_State *l;
 	LuaScriptInterface(GameController * c, GameModel * m);
+	
 	virtual bool OnActiveToolChanged(int toolSelection, Tool * tool);
 	virtual bool OnMouseMove(int x, int y, int dx, int dy);
 	virtual bool OnMouseDown(int x, int y, unsigned button);
@@ -185,7 +192,9 @@ public:
 	virtual bool OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt);
 	virtual bool OnKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt);
 	virtual bool OnMouseTick();
+	
 	virtual void OnTick();
+	//virtual bool HandleEvent(EventTypes eventType, Event * event);
 	virtual void Init();
 	virtual void SetWindow(ui::Window * window);
 	virtual int Command(String command);

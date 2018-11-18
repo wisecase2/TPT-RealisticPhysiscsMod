@@ -142,6 +142,8 @@ int Element_PBCN::update(UPDATE_FUNC_ARGS)
 				{
 					if (parts[i].ctype==PT_LAVA && parts[i].tmp>0 && parts[i].tmp<PT_NUM && sim->elements[parts[i].tmp].HighTemperatureTransition==PT_LAVA)
 						parts[np].ctype = parts[i].tmp;
+					else if(parts[i].tmp == 1 && parts[i].ctype != PT_LIFE && sim->elements[parts[i].ctype].defaultbreak)
+						parts[np].tmp2 = 1000;
 				}
 			}
 		}

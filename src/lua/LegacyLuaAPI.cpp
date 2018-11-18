@@ -450,6 +450,7 @@ String luacon_geterror()
 }
 
 //TPT Interface methods
+
 int luatpt_test(lua_State* l)
 {
 	int testint = 0;
@@ -457,6 +458,7 @@ int luatpt_test(lua_State* l)
 	printf("Test successful, got %d\n", testint);
 	return 0;
 }
+
 
 int luatpt_getelement(lua_State *l)
 {

@@ -1,12 +1,12 @@
 #include "simulation/Elements.h"
-//#TPT-Directive ElementClass Element_PLEX PT_PLEX 11
-Element_PLEX::Element_PLEX()
+//#TPT-Directive ElementClass Element_WALL PT_WALL 28
+Element_WALL::Element_WALL()
 {
-	Identifier = "DEFAULT_PT_PLEX";
-	Name = "C-4";
-	Colour = PIXPACK(0xD080E0);
+	Identifier = "DEFAULT_PT_WALL";
+	Name = "BLCK";
+	Colour = PIXPACK(0x808080);
 	MenuVisible = 1;
-	MenuSection = SC_EXPLOSIVE;
+	MenuSection = SC_SPECIAL;
 	Enabled = 1;
 
 	Advection = 0.0f;
@@ -19,19 +19,18 @@ Element_PLEX::Element_PLEX()
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
 
-	Flammable = 1500;
-	Explosive = 2;
-	Meltable = 50;
-	Hardness = 1;
-	PhotonReflectWavelengths = 0x1F00003E;
+	Flammable = 0;
+	Explosive = 0;
+	Meltable = 0;
+	Hardness = 0;
 
 	Weight = 100;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
-	HeatConduct = 88;
-	Description = "Solid pressure sensitive explosive.";
+	HeatConduct = 255;
+	Description = "BLCK. Indestructible.";
 
-	Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_GAMMAPASS;
+	Properties = TYPE_SOLID;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -39,14 +38,15 @@ Element_PLEX::Element_PLEX()
 	HighPressureTransition = NT;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
-	HighTemperature = 673.0f;
-	HighTemperatureTransition = PT_FIRE;
+	HighTemperature = ITH;
+	HighTemperatureTransition = NT;
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
-	radabsorb = 20;
+	pressureblock = true;
+	radabsorb = 1000;
 
 	Update = NULL;
 }
 
-Element_PLEX::~Element_PLEX() {}
+Element_WALL::~Element_WALL() {}

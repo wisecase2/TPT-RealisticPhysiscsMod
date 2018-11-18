@@ -32,7 +32,7 @@ Element_FWRK::Element_FWRK()
 	HeatConduct = 100;
 	Description = "Original version of fireworks, activated by heat/neutrons.";
 
-	Properties = TYPE_PART|PROP_LIFE_DEC;
+	Properties = TYPE_PART|PROP_LIFE_DEC|PROP_NEUTPASS;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;

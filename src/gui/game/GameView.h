@@ -204,6 +204,7 @@ public:
 	virtual void DoMouseDown(int x, int y, unsigned button);
 	virtual void DoMouseUp(int x, int y, unsigned button);
 	virtual void DoMouseWheel(int x, int y, int d);
+	//virtual void DoTextInput(String text);
 	virtual void DoKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt);
 	virtual void DoKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt);
 

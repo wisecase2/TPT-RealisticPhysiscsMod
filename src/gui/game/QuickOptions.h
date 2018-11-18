@@ -91,6 +91,19 @@ public:
 	}
 };
 
+class CollisionOption: public QuickOption{
+	public:
+	CollisionOption(GameModel * m):
+		QuickOption("Q", "\bo Realistic Collision \bg(not implemented yet)", m, Toggle){
+	}
+	virtual bool GetToggle(){
+		return m->GetColisionEnable();
+	}
+	virtual void perform(){
+		m->SetColisionEnable(!m->GetColisionEnable());
+	}
+};
+
 class ConsoleShowOption: public QuickOption
 {
 	GameController * c;

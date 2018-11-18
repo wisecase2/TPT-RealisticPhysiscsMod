@@ -222,6 +222,7 @@ void GameModel::BuildQuickOptionMenu(GameController * controller)
 	quickOptions.push_back(new DecorationsOption(this));
 	quickOptions.push_back(new NGravityOption(this));
 	quickOptions.push_back(new AHeatOption(this));
+	quickOptions.push_back(new CollisionOption(this));
 	quickOptions.push_back(new ConsoleShowOption(this, controller));
 
 	notifyQuickOptionsChanged();
@@ -957,6 +958,15 @@ void GameModel::SetAHeatEnable(bool aHeat)
 		SetInfoTip("Ambient Heat: Off");
 }
 
+void GameModel::SetColisionEnable(bool colision){
+	sim->colision_enable = colision;
+	UpdateQuickOptions();
+	if(colision)
+		SetInfoTip("Realistic Colision: On");
+	else
+		SetInfoTip("Realistic Colision: Off");
+}
+
 void GameModel::setbrokenstate(bool state){
 	sim->brokenstate = state;
 	UpdateQuickOptions();
@@ -992,6 +1002,10 @@ void GameModel::increasetick(){ // solve bugs
 bool GameModel::GetAHeatEnable()
 {
 	return sim->aheat_enable;
+}
+
+bool GameModel::GetColisionEnable(){
+	return sim->colision_enable;
 }
 
 bool GameModel::Getbrokenstate(){

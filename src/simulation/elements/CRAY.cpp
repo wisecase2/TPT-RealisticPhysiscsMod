@@ -121,7 +121,7 @@ int Element_CRAY::update(UPDATE_FUNC_ARGS)
 								parts[ID(r)].life = 4;
 							} else if (TYP(r) == PT_CRAY || nostop) {
 								docontinue = 1;
-							} else if(destroy && r && (TYP(r) != PT_DMND)) {
+							} else if(destroy && r && (TYP(r) != PT_WALL)) {
 								sim->kill_part(ID(r));
 								if(replace){
 									goto killed;

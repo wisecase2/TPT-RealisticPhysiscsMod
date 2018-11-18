@@ -114,7 +114,7 @@ int Element_SING::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if (TYP(r)!=PT_DMND&& RNG::Ref().chance(1, 3))
+				if (TYP(r)!=PT_WALL&& RNG::Ref().chance(1, 3))
 				{
 					if (TYP(r)==PT_SING && parts[ID(r)].life >10)
 					{

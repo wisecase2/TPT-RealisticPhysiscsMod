@@ -68,7 +68,7 @@ int Element_THDR::update(UPDATE_FUNC_ARGS)
 					parts[ID(r)].life = 4;
 					kill=true;
 				}
-				else if (rt!=PT_CLNE&&rt!=PT_THDR&&rt!=PT_SPRK&&rt!=PT_DMND&&rt!=PT_FIRE)
+				else if (rt!=PT_CLNE&&rt!=PT_THDR&&rt!=PT_SPRK&&rt!=PT_WALL&&rt!=PT_FIRE)
 				{
 					sim->pv[y/CELL][x/CELL] += 100.0f;
 					if (sim->legacy_enable && RNG::Ref().chance(1, 200))

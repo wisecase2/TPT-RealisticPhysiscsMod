@@ -63,7 +63,7 @@ int Element_RWASTE::update(UPDATE_FUNC_ARGS)
 	//radioactivity
 	if(RNG::Ref().chance(parts[i].tmp, 20000000) && (parts[i].tmp > 0)){
 		ident = sim->create_part(-3, x, y, PT_GAMMA);
-		parts[ident].temp = 10.f;
+		parts[ident].temp = 5.f*RNG::Ref().uniform01()+5.f;
 		parts[i].tmp -= 1;
 	}
 	return 0;

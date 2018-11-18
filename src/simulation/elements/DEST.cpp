@@ -57,7 +57,7 @@ int Element_DEST::update(UPDATE_FUNC_ARGS)
 	if (!r)
 		return 0;
 	int rt = TYP(r);
-	if (rt == PT_DEST || rt == PT_DMND || rt == PT_BCLN  || rt == PT_CLNE  || rt == PT_PCLN  || rt == PT_PBCN)
+	if (rt == PT_DEST || rt == PT_WALL || rt == PT_BCLN  || rt == PT_CLNE  || rt == PT_PCLN  || rt == PT_PBCN)
 		return 0;
 
 	if (parts[i].life<=0 || parts[i].life>37)

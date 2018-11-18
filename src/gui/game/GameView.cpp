@@ -711,6 +711,8 @@ void GameView::NotifyActiveToolsChanged(GameModel * sender)
 	}
 	//need to do this for all tools every time just in case it wasn't caught if you weren't in the menu a tool was changed to
 	c->ActiveToolChanged(0, sender->GetActiveTool(0));
+
+
 	if (sender->GetRenderer()->findingElement)
 	{
 		Tool *active = sender->GetActiveTool(0);
@@ -719,9 +721,11 @@ void GameView::NotifyActiveToolsChanged(GameModel * sender)
 		else
 			ren->findingElement = sender->GetActiveTool(0)->GetToolID()%256;
 	}
+	
 	c->ActiveToolChanged(1, sender->GetActiveTool(1));
 	c->ActiveToolChanged(2, sender->GetActiveTool(2));
 	c->ActiveToolChanged(3, sender->GetActiveTool(3));
+	
 }
 
 void GameView::NotifyLastToolChanged(GameModel * sender)
@@ -1861,6 +1865,12 @@ void GameView::DoMouseWheel(int x, int y, int d)
 	if(c->MouseWheel(x, y, d))
 		Window::DoMouseWheel(x, y, d);
 }
+/*
+void GameView::DoTextInput(String text){
+	if(c->TextInput(text))
+		Window::DoTextInput(text);
+}
+*/
 
 void GameView::DoKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
@@ -2348,7 +2358,11 @@ void GameView::OnDraw()
 					else
 						sampleInfo << " ()";
 				}
-				sampleInfo << ", Temp: " << (sample.particle.temp - 273.15f) << " C";
+				if(type == PT_GAMMA){
+					sampleInfo << ", Temp add: " << sample.particle.temp << " C";
+				} else{
+					sampleInfo << ", Temp: " << (sample.particle.temp - 273.15f) << " C";
+				}
 				sampleInfo << ", Life: " << sample.particle.life;
 				if (sample.particle.type != PT_RFRG && sample.particle.type != PT_RFGL)
 				{
@@ -2367,7 +2381,7 @@ void GameView::OnDraw()
 				}
 
 				// only elements that use .tmp2 show it in the debug HUD
-				if (type == PT_CRAY || type == PT_DRAY || type == PT_EXOT || type == PT_LIGH || type == PT_SOAP || type == PT_TRON || type == PT_VIBR || type == PT_VIRS || type == PT_WARP || type == PT_LCRY || type == PT_CBNW || type == PT_TSNS || type == PT_DTEC || type == PT_LSNS || type == PT_PSTN || type == PT_LDTC || type == PT_NEUT || type == PT_CONV)
+				if (type == PT_CRAY || type == PT_DRAY || type == PT_EXOT || type == PT_LIGH || type == PT_SOAP || type == PT_TRON || type == PT_VIBR || type == PT_VIRS || type == PT_WARP || type == PT_LCRY || type == PT_CBNW || type == PT_TSNS || type == PT_DTEC || type == PT_LSNS || type == PT_PSTN || type == PT_LDTC || type == PT_NEUT || type == PT_CONV || type == PT_COAL)
 					sampleInfo << ", Tmp2: " << sample.particle.tmp2;
 
 				sampleInfo << ", Pressure: " << sample.AirPressure;
@@ -2385,22 +2399,30 @@ void GameView::OnDraw()
 					sampleInfo << c->ElementResolve(type, ctype).FromAscii();
 				else
 					sampleInfo << c->ElementResolve(type, ctype).FromAscii();
-				sampleInfo << ", Temp: " << sample.particle.temp - 273.15f << " C";
+				if(type == PT_GAMMA){
+					sampleInfo << ", Temp add: " << sample.particle.temp << " C";
+				} else{
+					sampleInfo << ", Temp: " << sample.particle.temp - 273.15f << " C";
+				}
 				sampleInfo << ", Pressure: " << sample.AirPressure;
 			}
 		}
 		else if (sample.WallType)
 		{
 			sampleInfo << c->WallName(sample.WallType);
+			sampleInfo << ", create id: " << sample.pfree;
 			sampleInfo << ", Pressure: " << sample.AirPressure;
 		}
 		else if (sample.isMouseInSim)
 		{
-			sampleInfo << "Empty, Pressure: " << sample.AirPressure;
+			sampleInfo << "Empty";
+			sampleInfo << ", create id: " << sample.pfree;
+			sampleInfo << ", Pressure: " << sample.AirPressure;
 		}
 		else
 		{
 			sampleInfo << "Empty";
+			sampleInfo << ", create id: " << sample.pfree;
 		}
 
 		int textWidth = Graphics::textwidth(sampleInfo.Build());

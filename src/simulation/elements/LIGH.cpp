@@ -110,7 +110,7 @@ int Element_LIGH::update(UPDATE_FUNC_ARGS)
 					continue;
 				case PT_CLNE:
 				case PT_THDR:
-				case PT_DMND:
+				case PT_WALL:
 				case PT_FIRE:
 					parts[ID(r)].temp = restrict_flt(parts[ID(r)].temp+powderful/10, MIN_TEMP, MAX_TEMP);
 					continue;

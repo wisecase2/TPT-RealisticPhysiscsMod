@@ -88,9 +88,8 @@ int Element_BANG::update(UPDATE_FUNC_ARGS)
 	{
 		float otemp = parts[i].temp-273.15f;
 		//Explode!!
-		sim->pv[y/CELL][x/CELL] += 0.5f;
 		parts[i].tmp = 0;
-		if (RNG::Ref().chance(1, 3))
+		if (RNG::Ref().chance(1, 2))
 		{
 			if (RNG::Ref().chance(1, 2))
 			{
@@ -101,11 +100,11 @@ int Element_BANG::update(UPDATE_FUNC_ARGS)
 				sim->create_part(i, x, y, PT_SMKE);
 				parts[i].life = RNG::Ref().between(500, 549);
 			}
-			parts[i].temp = restrict_flt((0.025f*MAX_TEMP)+otemp, MIN_TEMP, MAX_TEMP);
+			parts[i].temp = restrict_flt((0.0333f*MAX_TEMP)+otemp, MIN_TEMP, MAX_TEMP);
 		}
 		else
 		{
-			if (RNG::Ref().chance(1, 15))
+			if (RNG::Ref().chance(1, 10))
 			{
 				sim->create_part(i, x, y, PT_EMBR);
 				parts[i].tmp = 0;
@@ -117,8 +116,10 @@ int Element_BANG::update(UPDATE_FUNC_ARGS)
 			else
 			{
 				sim->kill_part(i);
+				return 1;
 			}
 		}
+		sim->pv[y / CELL][x / CELL] += (RNG::Ref().uniform01() + 1.5f) * CFDS * 0.0005f * parts[i].temp;
 		return 1;
 	}
 	return 0;

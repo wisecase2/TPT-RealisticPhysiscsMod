@@ -78,20 +78,16 @@ int Element_CLNE::update(UPDATE_FUNC_ARGS)
 	else
 	{
 		if (parts[i].ctype==PT_LIFE) sim->create_part(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), PT_LIFE, parts[i].tmp);
-		/*else if(parts[i].ctype == PT_GAMMA){
-			np = sim->create_part(-3, x, y, PT_GAMMA);
-			if(np >= 0){
-				parts[np].temp = parts[i].tmp;
-				parts[i].vx = 6.28f * cosf(0.017444f*parts[i].tmp2);
-				parts[i].vy = 6.28f * sinf(0.017444f*parts[i].tmp2);
-			}*/
+
 		else if (parts[i].ctype!=PT_LIGH || RNG::Ref().chance(1, 30))
 		{
 			int np = sim->create_part(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), TYP(parts[i].ctype));
 			if (np>=0)
 			{
-				if (parts[i].ctype==PT_LAVA && parts[i].tmp>0 && parts[i].tmp<PT_NUM && sim->elements[parts[i].tmp].HighTemperatureTransition==PT_LAVA)
+				if(parts[i].ctype == PT_LAVA && parts[i].tmp > 0 && parts[i].tmp < PT_NUM && sim->elements[parts[i].tmp].HighTemperatureTransition == PT_LAVA)
 					parts[np].ctype = parts[i].tmp;
+				else if(parts[i].tmp == 1 && parts[i].ctype != PT_LIFE && sim->elements[parts[i].ctype].defaultbreak)
+					parts[np].tmp2 = 1000;
 			}
 		}
 	}

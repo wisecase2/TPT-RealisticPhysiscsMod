@@ -121,6 +121,7 @@ public:
 	int gravityMode;
 	int legacy_enable;
 	int aheat_enable;
+	int colision_enable;
 	int water_equal_test;
 	int sys_pause;
 	int framerender;

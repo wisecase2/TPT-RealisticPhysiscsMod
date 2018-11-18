@@ -1180,6 +1180,11 @@ void GameSave::readOPS(char * data, int dataLength)
 								particles[newIndex].tmp = 524288;
 							}
 							break;
+						case PT_DMND:
+							if(particles[newIndex].life == 0){
+								particles[newIndex].life = 110;
+							}
+							break;
 					}
 					
 					

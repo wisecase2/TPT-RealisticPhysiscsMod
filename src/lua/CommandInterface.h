@@ -1,10 +1,12 @@
 #ifndef COMMANDINTERFACE_H_
 #define COMMANDINTERFACE_H_
 
+//#include "lua/LuaEvents.h"
 #include "common/String.h"
 #include "gui/interface/Engine.h"
 //#include "game/GameModel.h"
 
+//class Event;
 class GameModel;
 class GameController;
 class Tool;
@@ -20,6 +22,7 @@ public:
 	int GetPropertyOffset(ByteString key, FormatType & format);
 	void Log(LogType type, String message);
 	//void AttachGameModel(GameModel * m);
+	
 	virtual bool OnActiveToolChanged(int toolSelection, Tool * tool) {return true;}
 	virtual bool OnMouseMove(int x, int y, int dx, int dy) {return true;}
 	virtual bool OnMouseDown(int x, int y, unsigned button) {return true;}
@@ -28,7 +31,10 @@ public:
 	virtual bool OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) {return true;}
 	virtual bool OnKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) {return true;}
 	virtual bool OnMouseTick() { return true; }
+	
 	virtual void OnTick() { }
+	//virtual bool HandleEvent(EventTypes eventType, Event * event){ return true; }
+
 	virtual int Command(String command);
 	virtual String FormatCommand(String command);
 	String GetLastError();

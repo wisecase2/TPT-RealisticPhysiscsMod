@@ -74,7 +74,7 @@ int Element_URAN::update(UPDATE_FUNC_ARGS){
 	//radioactivity
 	if(RNG::Ref().chance(5000+(524288-parts[i].tmp), 20000000) && (parts[i].tmp > 0)){
 		ident = sim->create_part(-3, x, y, PT_GAMMA);
-		parts[ident].temp = 5.f;
+		parts[ident].temp = 2.5f*RNG::Ref().uniform01() + 2.5f;
 		parts[i].tmp -= 1;
 	}
 

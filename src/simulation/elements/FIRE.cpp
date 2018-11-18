@@ -28,7 +28,7 @@ Element_FIRE::Element_FIRE()
 
 	Weight = 2;
 
-	Temperature = R_TEMP+400.0f+273.15f;
+	Temperature = R_TEMP+750.0f+273.15f;
 	HeatConduct = 88;
 	Description = "Ignites flammable materials. Heats air.";
 
@@ -164,11 +164,11 @@ int Element_FIRE::update(UPDATE_FUNC_ARGS)
 				    (rt != PT_SPNG || parts[ID(r)].life == 0))
 				{
 					sim->part_change_type(ID(r), x+rx, y+ry, PT_FIRE);
-					parts[ID(r)].temp = restrict_flt(sim->elements[PT_FIRE].Temperature + (sim->elements[rt].Flammable/2), MIN_TEMP, MAX_TEMP);
+					parts[ID(r)].temp = 0.5f*(RNG::Ref().uniform01() + 1.f)*restrict_flt(sim->elements[PT_FIRE].Temperature + 2*(sim->elements[rt].Flammable), MIN_TEMP, MAX_TEMP);
 					parts[ID(r)].life = RNG::Ref().between(180, 259);
 					parts[ID(r)].tmp = parts[ID(r)].ctype = 0;
 					if (sim->elements[rt].Explosive)
-						sim->pv[y/CELL][x/CELL] += 0.25f * CFDS;
+						sim->pv[y/CELL][x/CELL] += (RNG::Ref().uniform01() + 1.5f) * CFDS * 0.0005f * parts[ID(r)].temp;
 				}
 			}
 	if (sim->legacy_enable && t!=PT_SPRK) // SPRK has no legacy reactions

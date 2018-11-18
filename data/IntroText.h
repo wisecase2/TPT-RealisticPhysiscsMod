@@ -3,7 +3,7 @@ const char *const introTextData =
 	"\blThe Powder Toy - Version " MTOS(SAVE_VERSION) "." MTOS(MINOR_VERSION) " - http://powdertoy.co.uk, irc.freenode.net #powder\n"
 	"\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\n"
 
-	"\boThe Realistic Physics mod - \btVersion " MTOS(3) "." MTOS(0) " \bo-\bg by Wisecase2 \bo- https://tpt.io/.306343 \n"
+	"\boThe Realistic Physics mod - \btVersion " MTOS(4) "." MTOS(0) " \bo-\bg by Wisecase2 \bo- https://tpt.io/.306343 \n"
 	"\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F\n"
 
 	"\bgControl+C/V/X are Copy, Paste and cut respectively.\n"

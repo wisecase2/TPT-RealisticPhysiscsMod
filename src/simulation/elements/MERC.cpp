@@ -46,7 +46,7 @@ Element_MERC::Element_MERC()
 	PlsmTemperaturetransition = 9999.f;
 
 
-	radabsorb = 120;
+	radabsorb = 130;
 
 	Update = &Element_MERC::update;
 }

@@ -62,7 +62,7 @@ int Element_AMTR::update(UPDATE_FUNC_ARGS)
 				if (!r)
 					continue;
 				rt = TYP(r);
-				if (rt!=PT_AMTR && rt!=PT_DMND && rt!=PT_CLNE && rt!=PT_PCLN && rt!=PT_VOID && rt!=PT_BHOL && rt!=PT_NBHL && rt!=PT_PRTI && rt!=PT_PRTO && rt!= PT_GAMMA && rt!=PT_PHOT)
+				if (rt!=PT_AMTR && rt!=PT_WALL && rt!=PT_CLNE && rt!=PT_PCLN && rt!=PT_VOID && rt!=PT_BHOL && rt!=PT_NBHL && rt!=PT_PRTI && rt!=PT_PRTO && rt!= PT_GAMMA && rt!=PT_PHOT)
 				{
 					for(int i = 0; i < 64; i++){
 						identy = sim->create_part(-3, x + rx, y + ry, PT_GAMMA);

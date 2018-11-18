@@ -171,8 +171,10 @@ public:
 	bool GetDecoration();
 	void SetDecoration(bool decorationState);
 	bool GetAHeatEnable();
+	bool GetColisionEnable();
 	bool Getbrokenstate();
 	void SetAHeatEnable(bool aHeat);
+	void SetColisionEnable(bool colision);
 	void setbrokenstate(bool state);
 	void changeLVL(bool mode);
 	void resetlvl();

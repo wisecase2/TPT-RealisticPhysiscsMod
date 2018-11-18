@@ -42,7 +42,7 @@ Element_COAL::Element_COAL()
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
 	GasTemperaturetransition = 4600.f;
-	GasTransition = PT_LAVA;
+	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
 	radabsorb = 30;
 	neutslowdown = 0.99f;
@@ -54,18 +54,26 @@ Element_COAL::Element_COAL()
 //#TPT-Directive ElementHeader Element_COAL static int update(UPDATE_FUNC_ARGS)
 int Element_COAL::update(UPDATE_FUNC_ARGS)
 {
-	int id;
+	int id, probability;
+
+	probability = restrict_flt(sim->pv[y / CELL][x / CELL] * parts[i].temp, 0 , 1000000);
+
+	if(probability > 50000 && RNG::Ref().chance(probability, 500000000)){
+		sim->part_change_type(i, x, y, PT_DMND);
+		parts[i].tmp2 = 0;
+		return 1;
+	}
 	
 	if (parts[i].life<=0) {
 		id = sim->create_part(i, x, y, PT_FIRE);
-		parts[id].temp = parts[i].temp + 0.0056401f*(1973 - parts[i].temp)*RNG::Ref().between(50, 100);
+		parts[id].temp = parts[i].temp + restrict_flt(0.0056401f*(1973 - parts[i].temp)*RNG::Ref().between(50, 100), 50, 2000);
 		return 1;
 	} else if (parts[i].life < 100 && parts[i].temp > 500.f) {
-		if(RNG::Ref().chance(1, 10)){
-			parts[i].life--;
-		}
 		id = sim->create_part(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), PT_FIRE);
-		parts[id].temp = parts[i].temp + 0.0056401f*(1973 - parts[i].temp)*RNG::Ref().between(50, 100);
+		if(id > -1){
+			parts[id].temp = parts[i].temp + restrict_flt(0.0056401f*(1973 - parts[i].temp)*RNG::Ref().between(50, 100), 50, 2000);
+			parts[i].life -= RNG::Ref().between(1, 4);
+		}
 	}
 	if (parts[i].type == PT_COAL)
 	{
@@ -80,6 +88,13 @@ int Element_COAL::update(UPDATE_FUNC_ARGS)
 	}
 	if(parts[i].temp > parts[i].tmp2)
 		parts[i].tmp2 = parts[i].temp;
+	if(parts[i].temp > 895.15f && parts[i].life > 99){
+		id = sim->create_part(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), PT_FIRE); // auto-ignition
+		if(id > -1){
+			parts[i].life = 99;
+		}
+	}
+
 	return 0;
 }
 
