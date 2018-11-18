@@ -11,15 +11,15 @@ Element_PLNT::Element_PLNT()
 	MenuSection = SC_SOLIDS;
 	Enabled = 1;
 
-	Advection = 0.0f;
-	AirDrag = 0.00f * CFDS;
-	AirLoss = 0.95f;
-	Loss = 0.00f;
-	Collision = 0.0f;
-	Gravity = 0.0f;
+	Advection = 0.4f;
+	AirDrag = 0.04f * CFDS;
+	AirLoss = 0.94f;
+	Loss = 0.95f;
+	Collision = -0.1f;
+	Gravity = 0.3f;
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
-	Falldown = 0;
+	Falldown = 1;
 
 	Flammable = 20;
 	Explosive = 0;
@@ -27,7 +27,7 @@ Element_PLNT::Element_PLNT()
 	Hardness = 10;
 	PhotonReflectWavelengths = 0x0007C000;
 
-	Weight = 100;
+	Weight = 10;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 65;
