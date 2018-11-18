@@ -709,8 +709,6 @@ void GameView::NotifyActiveToolsChanged(GameModel * sender)
 			toolButtons[i]->SetSelectionState(-1);
 		}
 	}
-	//need to do this for all tools every time just in case it wasn't caught if you weren't in the menu a tool was changed to
-	c->ActiveToolChanged(0, sender->GetActiveTool(0));
 
 
 	if (sender->GetRenderer()->findingElement)
@@ -721,10 +719,6 @@ void GameView::NotifyActiveToolsChanged(GameModel * sender)
 		else
 			ren->findingElement = sender->GetActiveTool(0)->GetToolID()%256;
 	}
-	
-	c->ActiveToolChanged(1, sender->GetActiveTool(1));
-	c->ActiveToolChanged(2, sender->GetActiveTool(2));
-	c->ActiveToolChanged(3, sender->GetActiveTool(3));
 	
 }
 
@@ -1865,12 +1859,12 @@ void GameView::DoMouseWheel(int x, int y, int d)
 	if(c->MouseWheel(x, y, d))
 		Window::DoMouseWheel(x, y, d);
 }
-/*
+
 void GameView::DoTextInput(String text){
 	if(c->TextInput(text))
 		Window::DoTextInput(text);
 }
-*/
+
 
 void GameView::DoKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
@@ -1884,17 +1878,12 @@ void GameView::DoKeyRelease(int key, int scan, bool repeat, bool shift, bool ctr
 		Window::DoKeyRelease(key, scan, repeat, shift, ctrl, alt);
 }
 
-void GameView::DoTick(float dt)
+void GameView::DoExit()
 {
-	//mouse events trigger every frame when mouse is held down, needs to happen here (before things are drawn) so it can clear the point queue if false is returned from a lua mouse event
-	if (!c->MouseTick())
-	{
-		isMouseDown = false;
-		selectMode = SelectNone;
-		drawMode = DrawPoints;
-	}
-	Window::DoTick(dt);
+	Window::DoExit();
+	c->Exit();
 }
+
 
 void GameView::DoDraw()
 {

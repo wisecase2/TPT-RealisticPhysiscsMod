@@ -3,7 +3,7 @@
 
 #include "common/String.h"
 
-class lua_State;
+struct lua_State;
 class LuaScriptInterface;
 
 class Event
@@ -98,23 +98,30 @@ public:
 	int PushToStack(lua_State *l) override { return 0; }
 };
 
-enum EventTypes {
-	keypress,
-	keyrelease,
-	textinput,
-	mousedown,
-	mouseup,
-	mousemove,
-	mousewheel,
-	tick
+class CloseEvent: public Event
+{
+public:
+	int PushToStack(lua_State *l) override { return 0; }
 };
 
 class LuaEvents
 {
 public:
-	static int RegisterEventHook(lua_State* l, ByteString eventName);
-	static int UnregisterEventHook(lua_State* l, ByteString eventName);
-	static bool HandleEvent(LuaScriptInterface * luacon_ci, Event * event, ByteString eventName);
+	enum EventTypes {
+		keypress,
+		keyrelease,
+		textinput,
+		mousedown,
+		mouseup,
+		mousemove,
+		mousewheel,
+		tick,
+		close
+	};
+
+	static int RegisterEventHook(lua_State *l, ByteString eventName);
+	static int UnregisterEventHook(lua_State *l, ByteString eventName);
+	static bool HandleEvent(LuaScriptInterface *luacon_ci, Event *event, ByteString eventName);
 
 	static String luacon_geterror(LuaScriptInterface *luacon_ci);
 };

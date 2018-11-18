@@ -28,20 +28,14 @@
 #include "PowderToy.h"
 
 #include "LuaBit.h"
-
-#include "LuaWindow.h"
 #include "LuaButton.h"
-#include "LuaLabel.h"
-#include "LuaTextbox.h"
 #include "LuaCheckbox.h"
-#include "LuaSlider.h"
-//#include "LuaEvents.h"
-//#include "LuaLabel.h"
+#include "LuaEvents.h"
+#include "LuaLabel.h"
 #include "LuaProgressBar.h"
-
-//#include "LuaSlider.h"
-//#include "LuaTextbox.h"
-//#include "LuaWindow.h"
+#include "LuaSlider.h"
+#include "LuaTextbox.h"
+#include "LuaWindow.h"
 
 #ifndef WIN
 #include <unistd.h>
@@ -142,12 +136,11 @@ LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 	initGraphicsAPI();
 	initFileSystemAPI();
 	initPlatformAPI();
-	//initEventAPI();
+	initEventAPI();
 
 	//Old TPT API
 	int currentElementMeta, currentElement;
 	const static struct luaL_Reg tptluaapi [] = {
-		{"test", &luatpt_test},
 		{"drawtext", &luatpt_drawtext},
 		{"create", &luatpt_create},
 		{"set_pause", &luatpt_setpause},
@@ -171,20 +164,7 @@ LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 		{"drawline", &luatpt_drawline},
 		{"textwidth", &luatpt_textwidth},
 		{"get_name", &luatpt_get_name},
-		{"set_shortcuts", &luatpt_set_shortcuts},
 		{"delete", &luatpt_delete},
-		
-		{"register_step", &luatpt_register_step},
-		{"unregister_step", &luatpt_unregister_step},
-		{"register_mouseclick", &luatpt_register_mouseclick},
-		{"unregister_mouseclick", &luatpt_unregister_mouseclick},
-		{"register_keypress", &luatpt_register_keypress},
-		{"unregister_keypress", &luatpt_unregister_keypress},
-		{"register_mouseevent", &luatpt_register_mouseclick},
-		{"unregister_mouseevent", &luatpt_unregister_mouseclick},
-		{"register_keyevent", &luatpt_register_keypress},
-		{"unregister_keyevent", &luatpt_unregister_keypress},
-		
 		{"input", &luatpt_input},
 		{"message_box", &luatpt_message_box},
 		{"confirm", &luatpt_confirm},
@@ -234,12 +214,7 @@ LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 	luaL_register(l, "tpt", tptluaapi);
 
 	tptProperties = lua_gettop(l);
-    
-	lua_pushinteger(l, 0);
-	lua_setfield(l, tptProperties, "mousex");
-	lua_pushinteger(l, 0);
-	lua_setfield(l, tptProperties, "mousey");
-    
+
 	lua_newtable(l);
 	tptPropertiesVersion = lua_gettop(l);
 	lua_pushinteger(l, SAVE_VERSION);
@@ -360,6 +335,9 @@ tpt.partsdata = nil");
 	lua_setmetatable(l, -2);
 
 	initLegacyProps();
+
+	ui::Engine::Ref().LastTick(Platform::GetTime());
+	luaopen_eventcompat(l);
 }
 
 void LuaScriptInterface::Init()
@@ -382,23 +360,6 @@ void LuaScriptInterface::SetWindow(ui::Window * window)
 int LuaScriptInterface::tpt_index(lua_State *l)
 {
 	ByteString key = luaL_checkstring(l, 2);
-	
-	if (!key.compare("selectedl"))
-		return lua_pushstring(l, luacon_selectedl.c_str()), 1;
-	if (!key.compare("selectedr"))
-		return lua_pushstring(l, luacon_selectedr.c_str()), 1;
-	if (!key.compare("selecteda"))
-		return lua_pushstring(l, luacon_selectedalt.c_str()), 1;
-	if (!key.compare("selectedreplace"))
-		return lua_pushstring(l, luacon_selectedreplace.c_str()), 1;
-	if (!key.compare("brushx"))
-		return lua_pushnumber(l, m->GetBrush()->GetRadius().X), 1;
-	if (!key.compare("brushy"))
-		return lua_pushnumber(l, m->GetBrush()->GetRadius().Y), 1;
-	if (!key.compare("brushID"))
-		return lua_pushnumber(l, m->GetBrushID()), 1;
-		
-	/*	
 	if (!key.compare("mousex"))
 		return lua_pushnumber(l, c->GetView()->GetMousePosition().X), 1;
 	else if (!key.compare("mousey"))
@@ -412,12 +373,12 @@ int LuaScriptInterface::tpt_index(lua_State *l)
 	else if (!key.compare("selectedreplace"))
 		return lua_pushstring(l, m->GetActiveTool(3)->GetIdentifier().c_str()), 1;
 	else if (!key.compare("brushx"))
-	    return lua_pushnumber(l, m->GetBrush()->GetRadius().X), 1;
+		return lua_pushnumber(l, m->GetBrush()->GetRadius().X), 1;
 	else if (!key.compare("brushy"))
-	    return lua_pushnumber(l, m->GetBrush()->GetRadius().Y), 1;
+		return lua_pushnumber(l, m->GetBrush()->GetRadius().Y), 1;
 	else if (!key.compare("brushID"))
-		return lua_pushnumber(l, m->GetBrushID()), 1;	
-    */
+		return lua_pushnumber(l, m->GetBrushID()), 1;
+
 	//if not a special key, return the value in the table
 	return lua_rawget(l, 1), 1;
 }
@@ -3329,75 +3290,11 @@ int LuaScriptInterface::platform_clipboardPaste(lua_State * l)
 	return 0;
 }
 
-bool LuaScriptInterface::OnActiveToolChanged(int toolSelection, Tool * tool)
+
+//// Begin Event API
+
+void LuaScriptInterface::initEventAPI()
 {
-	ByteString identifier;
-	if (tool)
-		identifier = tool->GetIdentifier();
-	else
-		identifier = "";
-	if (toolSelection == 0)
-		luacon_selectedl = identifier;
-	else if (toolSelection == 1)
-		luacon_selectedr = identifier;
-	else if (toolSelection == 2)
-		luacon_selectedalt = identifier;
-	else if (toolSelection == 3)
-		luacon_selectedreplace = identifier;
-	return true;
-}
-
-bool LuaScriptInterface::OnMouseMove(int x, int y, int dx, int dy)
-{
-	luacon_mousex = x;
-	luacon_mousey = y;
-	return true;
-}
-
-bool LuaScriptInterface::OnMouseDown(int x, int y, unsigned button)
-{
-	if (button == 3)
-		button = 4;
-	luacon_mousedown = true;
-	luacon_mousebutton = button;
-	luacon_mousex = x;
-	luacon_mousey = y;
-	return luacon_mouseevent(x, y, button, LUACON_MDOWN, 0);
-}
-
-
-bool LuaScriptInterface::OnMouseUp(int x, int y, unsigned button, char type){
-
-	luacon_mousebutton = 0;
-	if (type != 1)
-	{
-		luacon_mousex = x;
-		luacon_mousey = y;
-	}
-	if (button == 3)
-		button = 4;
-
-	// mouse was never down, probably due to fake mouse event
-	if (!luacon_mousedown)
-	{
-		return true;
-	}
-
-	// fake mouseup event, triggered when mouse drawing is canceled due to moving in / out of the zoom window
-	if (type == 2)
-		return luacon_mouseevent(x, y, button, LUACON_MUPZOOM, 0);
-   
-    luacon_mousedown = false;
-	
-	// fake mouseup event, triggered when user enters another interface while the mouse is down
-	
-	if (type == 1)
-		return luacon_mouseevent(x, y, button, LUACON_MUPALT, 0);
-	else
-		return luacon_mouseevent(x, y, button, LUACON_MUP, 0);	
-}
-/*
-void LuaScriptInterface::initEventAPI(){
 	struct luaL_Reg eventAPIMethods [] = {
 		{"register", event_register},
 		{"unregister", event_unregister},
@@ -3405,27 +3302,21 @@ void LuaScriptInterface::initEventAPI(){
 		{NULL, NULL}
 	};
 	luaL_register(l, "event", eventAPIMethods);
-   
-   	lua_getglobal(l, "event");
+
+	lua_getglobal(l, "event");
 	lua_setglobal(l, "evt");
-	
-	lua_pushinteger(l, EventTypes::keypress); lua_setfield(l, -2, "keypress");
-	lua_pushinteger(l, EventTypes::keyrelease); lua_setfield(l, -2, "keyrelease");
-	lua_pushinteger(l, EventTypes::textinput); lua_setfield(l, -2, "textinput");
-	lua_pushinteger(l, EventTypes::mousedown); lua_setfield(l, -2, "mousedown");
-	lua_pushinteger(l, EventTypes::mouseup); lua_setfield(l, -2, "mouseup");
-	lua_pushinteger(l, EventTypes::mousemove); lua_setfield(l, -2, "mousemove");
-	lua_pushinteger(l, EventTypes::mousewheel); lua_setfield(l, -2, "mousewheel");
-	lua_pushinteger(l, EventTypes::tick); lua_setfield(l, -2, "tick");	
-}
-*/
 
-
-bool LuaScriptInterface::OnMouseWheel(int x, int y, int d)
-{
-	return luacon_mouseevent(x, y, luacon_mousedown?luacon_mousebutton:0, 0, d);
+	lua_pushinteger(l, LuaEvents::keypress); lua_setfield(l, -2, "keypress");
+	lua_pushinteger(l, LuaEvents::keyrelease); lua_setfield(l, -2, "keyrelease");
+	lua_pushinteger(l, LuaEvents::textinput); lua_setfield(l, -2, "textinput");
+	lua_pushinteger(l, LuaEvents::mousedown); lua_setfield(l, -2, "mousedown");
+	lua_pushinteger(l, LuaEvents::mouseup); lua_setfield(l, -2, "mouseup");
+	lua_pushinteger(l, LuaEvents::mousemove); lua_setfield(l, -2, "mousemove");
+	lua_pushinteger(l, LuaEvents::mousewheel); lua_setfield(l, -2, "mousewheel");
+	lua_pushinteger(l, LuaEvents::tick); lua_setfield(l, -2, "tick");
+	lua_pushinteger(l, LuaEvents::close); lua_setfield(l, -2, "close");
 }
-/*
+
 int LuaScriptInterface::event_register(lua_State * l)
 {
 	//ByteString eventname = luaL_checkstring(l, 1);
@@ -3433,14 +3324,7 @@ int LuaScriptInterface::event_register(lua_State * l)
 	luaL_checktype(l, 2, LUA_TFUNCTION);
 	return LuaEvents::RegisterEventHook(l, ByteString::Build("tptevents-", eventName));
 }
-*/
 
-bool LuaScriptInterface::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
-{
-	return luacon_keyevent(key, scan, GetModifiers(), LUACON_KDOWN);
-}
-
-/*
 int LuaScriptInterface::event_unregister(lua_State * l)
 {
 	//ByteString eventname = luaL_checkstring(l, 1);
@@ -3448,36 +3332,18 @@ int LuaScriptInterface::event_unregister(lua_State * l)
 	luaL_checktype(l, 2, LUA_TFUNCTION);
 	return LuaEvents::UnregisterEventHook(l, ByteString::Build("tptevents-", eventName));
 }
-*/
 
-bool LuaScriptInterface::OnKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
+int LuaScriptInterface::event_getmodifiers(lua_State * l)
 {
-	int modifiers = 0;
-	if(shift)
-		modifiers |= 0x001;
-	if(ctrl)
-		modifiers |= 0x040;
-	if(alt)
-		modifiers |= 0x100;
-	return luacon_keyevent(key, key < 256 ? key : 0, modifiers, LUACON_KUP);
-}
-/*
-int LuaScriptInterface::event_getmodifiers(lua_State * l){
 	lua_pushnumber(l, GetModifiers());
 	return 1;
 }
-*/
-bool LuaScriptInterface::OnMouseTick()
+
+bool LuaScriptInterface::HandleEvent(LuaEvents::EventTypes eventType, Event * event)
 {
-	if (luacon_mousedown)
-		return luacon_mouseevent(luacon_mousex, luacon_mousey, luacon_mousebutton, LUACON_MPRESS, 0);
-	return true;
-}
-/*
-bool LuaScriptInterface::HandleEvent(EventTypes eventType, Event * event){
 	return LuaEvents::HandleEvent(this, event, ByteString::Build("tptevents-", eventType));
 }
-*/
+
 void LuaScriptInterface::OnTick()
 {
 	lua_getglobal(l, "simulation");
@@ -3487,8 +3353,8 @@ void LuaScriptInterface::OnTick()
 		lua_setfield(l, -2, "NUM_PARTS");
 	}
 	lua_pop(l, 1);
-	luacon_step(luacon_mousex, luacon_mousey);
-	//HandleEvent(EventTypes::tick, new TickEvent());
+	TickEvent ev;
+	HandleEvent(LuaEvents::tick, &ev);
 }
 
 int LuaScriptInterface::Command(String command)

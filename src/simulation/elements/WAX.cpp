@@ -44,7 +44,8 @@ Element_WAX::Element_WAX()
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
 	radabsorb = 15;
-
+	defaultbreak = true;
+	pressureresistance = 7.5f;
 	Update = NULL;
 }
 

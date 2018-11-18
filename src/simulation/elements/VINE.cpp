@@ -45,6 +45,8 @@ Element_VINE::Element_VINE()
 	GasTemperaturetransition = ITH;
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
+	defaultbreak = true;
+	pressureresistance = 5.f;
 
 	Update = &Element_VINE::update;
 }

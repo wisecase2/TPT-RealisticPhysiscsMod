@@ -19,7 +19,6 @@ void lua_pushglobaltable(lua_State *L)
 #endif
 
 // Useful helper function, mainly used for logging
-/*
 int luaL_tostring(lua_State *L, int n)
 {
 	luaL_checkany(L, n);
@@ -43,4 +42,3 @@ int luaL_tostring(lua_State *L, int n)
 	}
 	return 1;
 }
-*/

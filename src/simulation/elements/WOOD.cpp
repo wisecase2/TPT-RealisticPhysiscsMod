@@ -46,7 +46,8 @@ Element_WOOD::Element_WOOD()
 	GasTransition = NT;
 	PlsmTemperaturetransition = -1;
 	radabsorb = 20;
-
+	defaultbreak = true;
+	pressureresistance = 7.5f;
 	neutslowdown = 0.99f;
 
 	Update = &Element_WOOD::update;
