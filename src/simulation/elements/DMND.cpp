@@ -2,7 +2,7 @@
 //#TPT-Directive ElementClass Element_DMND PT_DMND 193
 Element_DMND::Element_DMND()
 {
-	Identifier = "DEFAULT_PT_DMND";
+	Identifier = "28_is_not_DMND"; // fix replace type 28 "blck" to 193 "DMND"
 	Name = "DMND";
 	Colour = PIXPACK(0xCCFFFF);
 	MenuVisible = 1;
