@@ -28,7 +28,7 @@ v2.3:
 v3.0:
  - Stack editing.
 
-v4.0
+v4.0:
  - Added BLCK, indestructible, replaces DMND.
  - DMND is now destructible, with similar properties to COAL, but with much greater resistance. It can be made with COAL or BCOL with high pressure and temperature.
  - Improvements in explosives.
