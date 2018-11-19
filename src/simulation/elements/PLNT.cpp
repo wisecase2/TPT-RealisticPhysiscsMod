@@ -27,7 +27,7 @@ Element_PLNT::Element_PLNT()
 	Hardness = 10;
 	PhotonReflectWavelengths = 0x0007C000;
 
-	Weight = 10;
+	Weight = 3;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 65;

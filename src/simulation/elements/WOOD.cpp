@@ -26,7 +26,7 @@ Element_WOOD::Element_WOOD()
 	Meltable = 0;
 	Hardness = 15;
 
-	Weight = 10;
+	Weight = 4;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 164;

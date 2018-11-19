@@ -24,7 +24,7 @@ Element_WAX::Element_WAX()
 	Meltable = 0;
 	Hardness = 10;
 
-	Weight = 10;
+	Weight = 3;
 
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 44;
