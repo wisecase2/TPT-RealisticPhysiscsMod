@@ -317,7 +317,6 @@ void EventProcess(SDL_Event event)
 	switch (event.type)
 	{
 	case SDL_QUIT:
-	    engine->onClose();
 		if (engine->GetFastQuit() || engine->CloseWindow())
 			engine->Exit();
 		break;

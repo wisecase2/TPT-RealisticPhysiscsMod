@@ -76,7 +76,7 @@ int Simulation::Load(int fullX, int fullY, GameSave * save, bool includePressure
 				// if this is a custom element, set the ID to the ID we found when comparing identifiers in the palette map
 				// set type to 0 if we couldn't find an element with that identifier present when loading,
 				//  unless this is a default element, in which case keep the current ID, because otherwise when an element is renamed it wouldn't show up anymore in older saves
-				if (myId != 0 || !pi.first.BeginsWith("DEFAULT_PT_"))
+				if ((myId != 0 || !pi.first.BeginsWith("DEFAULT_PT_")))
 					partMap[pi.second] = myId;
 			}
 		}
@@ -4078,11 +4078,10 @@ void Simulation::UpdateParticles(int start, int end)
 			y = (int)(parts[i].y + 0.5f);
 
 			//update blockair
-			if(parts[i].tmp2 < 1000 && (elements[t].Properties&TYPE_SOLID) && !air->bmap_blockair[y][x] && elements[t].pressureblock){
+			if((parts[i].tmp2 < 1000 && elements[t].defaultbreak || !elements[t].defaultbreak) && (elements[t].Properties&TYPE_SOLID) && !air->bmap_blockair[y][x] && elements[t].pressureblock){
 				blockcount[y / CELL][x / CELL] ++;
 				if(blockcount[y / CELL][x / CELL] >= 2){
 					air->bmap_blockair[y / CELL][x / CELL] = true;
-					pv[y / CELL][x / CELL] = 0;
 				}
 			}
 		}

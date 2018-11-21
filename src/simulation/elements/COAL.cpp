@@ -58,7 +58,7 @@ int Element_COAL::update(UPDATE_FUNC_ARGS)
 
 	probability = restrict_flt(sim->pv[y / CELL][x / CELL] * parts[i].temp, 0 , 1000000);
 
-	if(probability > 50000 && RNG::Ref().chance(probability, 500000000)){
+	if(probability > 50000 && RNG::Ref().chance(probability, 1000000000)){
 		sim->part_change_type(i, x, y, PT_DMND);
 		parts[i].tmp2 = 0;
 		return 1;

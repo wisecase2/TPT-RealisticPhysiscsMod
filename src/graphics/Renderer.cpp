@@ -2409,6 +2409,8 @@ void Renderer::draw_air()
 	float (*hv)[XRES/CELL] = sim->air->hv;
 	float (*vx)[XRES/CELL] = sim->air->vx;
 	float (*vy)[XRES/CELL] = sim->air->vy;
+	float angle, hue, vv, ss, norm, absvx, absvy;
+	int red, green, blue;
 	float a = 1023, b = MAX_TEMP, invlnb = a*(1.f / log(b + 1.f));/// division and logarithm is expensive
 	pixel c = 0;
 	int heatcolor[1024][3];
@@ -2431,9 +2433,35 @@ void Renderer::draw_air()
 			}
 			else if (display_mode & DISPLAY_AIRV)
 			{
-				c  = PIXRGB(clamp_flt(fabsf(vx[y][x]), 0.0f, 8.0f),//vx adds red
+				absvx = abs(vx[y][x]); absvy = abs(vy[y][x]);
+				if (absvy < 0.001f && absvx < 0.001f){
+					hue = 0;
+					ss = 0;
+					vv = 0;
+				} else {
+					norm = sqrt(vy[y][x] * vy[y][x] + vx[y][x] * vx[y][x]);
+					vv = 255.f - 255.f / (1.f + 0.07238241f * norm);
+					ss = 255.f / (1.f + 0.004342944f * norm);
+
+					if (absvx < 0.001f && vy[y][x] > 0) {angle = 4.71238898f;}
+					else if (absvx < 0.001f && vy[y][x] < 0) {angle = 1.57079632f;}
+					else if (absvy < 0.001f && vx[y][x] > 0) {angle = 0;}
+					else if (absvy < 0.001f && vx[y][x] < 0) {angle = M_PI; }
+					else {
+						angle = atan2(vy[y][x], vx[y][x]);
+						if (angle >= 0) { angle = 6.2831853f - angle; }else{ angle = abs(angle); }
+					}
+
+					hue = angle * 57.29577951f;
+				}
+
+				HSL_to_RGB(hue, ss, vv, &red, &green, &blue);
+
+				c = PIXRGB(red, green, blue);
+
+				/*c  = PIXRGB(clamp_flt(fabsf(vx[y][x]), 0.0f, 8.0f),//vx adds red
 					clamp_flt(pv[y][x], 0.0f, 8.0f),//pressure adds green
-					clamp_flt(fabsf(vy[y][x]), 0.0f, 8.0f));//vy adds blue
+					clamp_flt(fabsf(vy[y][x]), 0.0f, 8.0f));//vy adds blue */
 			}
 			else if (display_mode & DISPLAY_AIRH)
 			{

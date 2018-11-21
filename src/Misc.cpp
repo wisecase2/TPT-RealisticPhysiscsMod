@@ -204,55 +204,69 @@ vector2d v2d_new(float x, float y)
 
 void HSV_to_RGB(int h,int s,int v,int *r,int *g,int *b)//convert 0-255(0-360 for H) HSV values to 0-255 RGB
 {
-	float hh, ss, vv, c, x;
-	int m;
-	hh = h/60.0f;//normalize values
-	ss = s/255.0f;
-	vv = v/255.0f;
+	float hh, ss, vv, c, x, m, rgb[3];
+	hh = h * 0.016666667f;//normalize values
+	ss = s * 0.003921568f;
+	vv = v * 0.003921568f;
 	c = vv * ss;
 	x = c * ( 1 - fabs(fmod(hh,2.0f) -1) );
-	if(hh<1){
-		*r = (int)(c*255.0);
-		*g = (int)(x*255.0);
-		*b = 0;
+
+	switch (int(hh)) {
+	case 0: rgb[0] = c; rgb[1] = x; rgb[2] = 0; break;
+	case 1: rgb[0] = x; rgb[1] = c; rgb[2] = 0; break;
+	case 2: rgb[0] = 0; rgb[1] = c; rgb[2] = x; break;
+	case 3: rgb[0] = 0; rgb[1] = x; rgb[2] = c; break;
+	case 4: rgb[0] = x; rgb[1] = 0; rgb[2] = c; break;
+	case 5: rgb[0] = c; rgb[1] = 0; rgb[2] = x; break;
 	}
-	else if(hh<2){
-		*r = (int)(x*255.0);
-		*g = (int)(c*255.0);
-		*b = 0;
+
+	m = vv-c;
+	*r = (rgb[0]+m)*255;
+	*g = (rgb[1]+m)*255;
+	*b = (rgb[2]+m)*255;
+	
+	if (*r > 255) *r = 255; else if (*r < 0) *r = 0;
+	if (*g > 255) *g = 255; else if (*g < 0) *g = 0;
+	if (*b > 255) *b = 255; else if (*b < 0) *b = 0;
+
+}
+
+void HSL_to_RGB(int h, int s, int v, int *r, int *g, int *b)//convert 0-255(0-360 for H) HSL values to 0-255 RGB
+{
+	float hh, ss, vv, c, x, m, rgb[3];
+
+	hh = h * 0.016666667f;//normalize values
+	ss = s * 0.003921568f;
+	vv = v * 0.003921568f;
+
+	c = (1.f - fabs(2.f*vv - 1.f))*ss;
+	x = c * (1.f - fabs(fmod((hh), 2.f) - 1.f));
+	m = vv - 0.5f*c;
+
+	switch (int(hh)) {
+	case 0: rgb[0] = c; rgb[1] = x; rgb[2] = 0; break;
+	case 1: rgb[0] = x; rgb[1] = c; rgb[2] = 0; break;
+	case 2: rgb[0] = 0; rgb[1] = c; rgb[2] = x; break;
+	case 3: rgb[0] = 0; rgb[1] = x; rgb[2] = c; break;
+	case 4: rgb[0] = x; rgb[1] = 0; rgb[2] = c; break;
+	case 5: rgb[0] = c; rgb[1] = 0; rgb[2] = x; break;
 	}
-	else if(hh<3){
-		*r = 0;
-		*g = (int)(c*255.0);
-		*b = (int)(x*255.0);
-	}
-	else if(hh<4){
-		*r = 0;
-		*g = (int)(x*255.0);
-		*b = (int)(c*255.0);
-	}
-	else if(hh<5){
-		*r = (int)(x*255.0);
-		*g = 0;
-		*b = (int)(c*255.0);
-	}
-	else if(hh<6){
-		*r = (int)(c*255.0);
-		*g = 0;
-		*b = (int)(x*255.0);
-	}
-	m = (int)((vv-c)*255.0);
-	*r += m;
-	*g += m;
-	*b += m;
+
+	*r = (rgb[0] + m) * 255;
+	*g = (rgb[1] + m) * 255;
+	*b = (rgb[2] + m) * 255;
+
+	if (*r > 255) *r = 255; else if (*r < 0) *r = 0;
+	if (*g > 255) *g = 255; else if (*g < 0) *g = 0;
+	if (*b > 255) *b = 255; else if (*b < 0) *b = 0;
 }
 
 void RGB_to_HSV(int r,int g,int b,int *h,int *s,int *v)//convert 0-255 RGB values to 0-255(0-360 for H) HSV
 {
 	float rr, gg, bb, a,x,c,d;
-	rr = r/255.0f;//normalize values
-	gg = g/255.0f;
-	bb = b/255.0f;
+	rr = r * 0.003921568f;//normalize values
+	gg = g * 0.003921568f;
+	bb = b * 0.003921568f;
 	a = std::min(rr,gg);
 	a = std::min(a,bb);
 	x = std::max(rr,gg);

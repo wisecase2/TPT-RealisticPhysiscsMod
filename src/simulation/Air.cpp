@@ -139,7 +139,7 @@ void Air::update_air(void)
 	int x = 0, y = 0, i = 0, j = 0;
 	float dp = 0.0f, dx = 0.0f, dy = 0.0f, f = 0.0f, tx = 0.0f, ty = 0.0f, vv = 0.0f;
 	const float advDistanceMult = 0.7f;
-	float stepX, stepY;
+	float stepX, stepY, norm;
 	int stepLimit, step;
 
 	if (airMode != 4) { //airMode 4 is no air/pressure update
@@ -148,19 +148,41 @@ void Air::update_air(void)
 		{
 			pv[i][0] = 0.8f*pv[i][0];
 			pv[i][XRES/CELL-1] = 0.8f*pv[i][XRES / CELL - 1];
-			vx[i][0] = 0.8f*vx[i][0];
-			vx[i][XRES / CELL - 1] = 0.8f*vx[i][XRES / CELL - 1];
-			vy[i][0] = 0.8f*vy[i][0];
-			vy[i][XRES / CELL - 1] = 0.8f*vy[i][XRES / CELL - 1];
+
+			vx[i][0] = 0.9f*vx[i][0];
+			vx[i][XRES / CELL - 1] = 0.9f*vx[i][XRES / CELL - 1];
+			vy[i][0] = 0.9f*vy[i][0];
+			vy[i][XRES / CELL - 1] = 0.9f*vy[i][XRES / CELL - 1];
+			// reduce reflect
+			
+			pv[i][1] = 0.9f*pv[i][1];
+			pv[i][XRES / CELL - 2] = 0.9f*pv[i][XRES / CELL - 2];
+			
+			vx[i][1] = 0.95f*vx[i][1];
+			vx[i][XRES / CELL - 2] = 0.95f*vx[i][XRES / CELL - 2];
+			vy[i][1] = 0.95f*vy[i][1];
+			vy[i][XRES / CELL - 2] = 0.95f*vy[i][XRES / CELL - 2];
+			
 		}
 		for (i=0; i<XRES/CELL; i++) //reduces pressure/velocity on the edges every frame
 		{
 			pv[0][i] = 0.8f*pv[0][i];
 			pv[YRES / CELL - 1][i] = 0.8f*pv[YRES / CELL - 1][i];
-			vx[0][i] = 0.8f*vx[0][i];
-			vx[YRES / CELL - 1][i] = 0.8f*vx[YRES / CELL - 1][i];
-			vy[0][i] = 0.8f*vy[0][i];
-			vy[YRES / CELL - 1][i] = 0.8f*vy[YRES / CELL - 1][i];
+
+			vx[0][i] = 0.9f*vx[0][i];
+			vx[YRES / CELL - 1][i] = 0.9f*vx[YRES / CELL - 1][i];
+			vy[0][i] = 0.9f*vy[0][i];
+			vy[YRES / CELL - 1][i] = 0.9f*vy[YRES / CELL - 1][i];
+			// reduce reflect
+			
+			pv[1][i] = 0.9f*pv[1][i];
+			pv[YRES / CELL - 2][i] = 0.9f*pv[YRES / CELL - 2][i];
+			
+			vx[1][i] = 0.95f*vx[1][i];
+			vx[YRES / CELL - 2][i] = 0.95f*vx[YRES / CELL - 2][i];
+			vy[1][i] = 0.95f*vy[1][i];
+			vy[YRES / CELL - 2][i] = 0.95f*vy[YRES / CELL - 2][i];
+            		
 		}
 
 		for (j=0; j<YRES/CELL; j++) //clear some velocities near walls
@@ -334,11 +356,19 @@ void Air::update_air(void)
 				// pressure/velocity caps
 				if (dp > 256.0f) dp = 256.0f;
 				if (dp < -256.0f) dp = -256.0f;
+				/*
 				if (dx > 256.0f) dx = 256.0f;
 				if (dx < -256.0f) dx = -256.0f;
 				if (dy > 256.0f) dy = 256.0f;
 				if (dy < -256.0f) dy = -256.0f;
-
+				*/
+				//limit radius 256;
+				norm = sqrt(dx*dx + dy * dy);
+				norm = 256.f / norm;
+				if (norm < 1) {
+					dx *= norm;
+					dy *= norm;
+				}
 
 				switch (airMode)
 				{

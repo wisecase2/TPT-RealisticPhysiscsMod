@@ -1864,7 +1864,7 @@ void GameSave::readPSv(char * saveDataChar, int dataLength)
 				x = (int)(particles[i-1].x+0.5f);
 				y = (int)(particles[i-1].y+0.5f);
 				particles[i-1].dcolour = 0xFF000000;
-				particles[i-1].type = PT_DMND;
+				particles[i-1].type = PT_WALL;
 			}
 			if(ver<51 && ((ty>=78 && ty<=89) || (ty>=134 && ty<=146 && ty!=141))){
 				//Replace old GOL

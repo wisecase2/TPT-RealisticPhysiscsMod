@@ -41,8 +41,8 @@ Element_BCOL::Element_BCOL()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	GasTemperaturetransition = ITH;
-	GasTransition = NT;
+	GasTemperaturetransition = 4600.f;
+	GasTransition = PT_GASEOUS;
 	PlsmTemperaturetransition = 9999.f;
 	radabsorb = 30;
 

@@ -151,6 +151,7 @@ public:
 	String WallName(int type);
 	int Record(bool record);
 	int istypeproperties(int type, int type2);
+	bool isdefaultbreak(int type);
 
 	void ResetAir();
 	void ResetSpark();

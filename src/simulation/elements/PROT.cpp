@@ -9,7 +9,7 @@ Element_PROT::Element_PROT()
 	MenuSection = SC_NUCLEAR;
 	Enabled = 1;
 
-	Advection = 0.02f;
+	Advection = 0.f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 1.00f;
 	Loss = 1.00f;
@@ -77,7 +77,7 @@ int Element_PROT::update(UPDATE_FUNC_ARGS)
 					break;
 				}
 				case PT_DEUT:
-					if (RNG::Ref().chance(1 + (parts[uID].life / 100), 1000))
+					if (RNG::Ref().chance(-((int)sim->pv[y / CELL][x / CELL] - 4) + (parts[uID].life / 100), 1000))
 					{
 						DeutImplosion(sim, parts[uID].life, x + rx, y + ry, restrict_flt(parts[uID].temp + parts[uID].life * 500, MIN_TEMP, MAX_TEMP), PT_PROT);
 						sim->kill_part(uID);

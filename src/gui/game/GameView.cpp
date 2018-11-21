@@ -2118,6 +2118,7 @@ void GameView::SetSaveButtonTooltips()
 void GameView::OnDraw()
 {
 	Graphics * g = GetGraphics();
+
 	if (ren)
 	{
 		ren->clearScreen(1.0f);
@@ -2316,7 +2317,7 @@ void GameView::OnDraw()
 			{
 				if (type == PT_LAVA && c->IsValidElement(ctype))
 					sampleInfo << "Molten " << c->ElementResolve(ctype, -1).FromAscii();
-				else if(c->istypeproperties(type, TYPE_SOLID) && sample.particle.tmp2 == 1000){
+				else if(c->istypeproperties(type, TYPE_SOLID) && sample.particle.tmp2 == 1000 && c->isdefaultbreak(type)){
 					sampleInfo << "Broken " << c->ElementResolve(type, ctype).FromAscii();
 					if(c->IsValidElement(ctype)){
 						sampleInfo << " (" << c->ElementResolve(ctype, -1).FromAscii() << ")";
@@ -2481,6 +2482,17 @@ void GameView::OnDraw()
 			textWidth = Graphics::textwidth(sampleInfo.Build());
 			g->fillrect(XRES-20-textWidth, 27, textWidth+8, 14, 0, 0, 0, alpha*0.5f);
 			g->drawtext(XRES-16-textWidth, 30, sampleInfo.Build(), 255, 255, 255, alpha*0.75f);
+
+			/*
+			StringBuilder sampleInfo2;
+			sampleInfo << Format::Precision(4);
+
+			sampleInfo2 << "VX: " << sample.AirVelocityX << " VY: " << sample.AirVelocityY;
+
+			textWidth = Graphics::textwidth(sampleInfo2.Build());
+			g->fillrect(XRES - 20 - textWidth, 39, textWidth + 8, 14, 0, 0, 0, alpha*0.5f);
+			g->drawtext(XRES - 16 - textWidth, 42, sampleInfo2.Build(), 255, 255, 255, alpha*0.75f);
+			*/
 		}
 	}
 

@@ -908,7 +908,18 @@ void GameController::ResetSpark()
 
 int GameController::istypeproperties(int type, int type2){
 	Simulation * sim = gameModel->GetSimulation();
-	return sim->elements[type].Properties & type2;
+	if (type > 0 && type2 > 0 && type < PT_NUM && type2 < PT_NUM) {
+		return sim->elements[type].Properties & type2;
+	}
+	return 0;
+}
+
+bool GameController::isdefaultbreak(int type) {
+	Simulation * sim = gameModel->GetSimulation();
+	if (type > 0 && type < PT_NUM) {
+		return sim->elements[type].defaultbreak;
+	}
+	return false;
 }
 
 void GameController::SwitchGravity()
