@@ -56,7 +56,7 @@ Element_GAMMA::Element_GAMMA()
 int Element_GAMMA::update(UPDATE_FUNC_ARGS)
 {
 	int r, idr, typr, absorb, ctype1;
-	float multiplier;
+	float multiplier, prob;
 	bool valid1 = false;
 	r = pmap[y][x];
 	idr = ID(r);
@@ -79,7 +79,9 @@ int Element_GAMMA::update(UPDATE_FUNC_ARGS)
 		absorb = sim->elements[typr].radabsorb;
 		if(absorb > 0){
 			if(RNG::Ref().chance(absorb, 350)){
-				if(RNG::Ref().chance(MAX_TEMP - parts[idr].temp, MAX_TEMP)){
+				prob = parts[idr].temp*1.0000100001e-5f; // temp/MAX_TEMP
+				prob = MAX_TEMP - MAX_TEMP * (2.f*prob - prob*prob);
+				if(RNG::Ref().chance(prob, MAX_TEMP)){
 					parts[idr].temp += parts[i].temp;
 					sim->kill_part(i);
 					return 0;

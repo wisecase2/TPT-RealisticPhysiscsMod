@@ -15,7 +15,6 @@
 #include "simulation/Elements.h"
 #include "simulation/ElementGraphics.h"
 #include "simulation/Air.h"
-#include <thread>
 #ifdef LUACONSOLE
 #include "lua/LuaScriptInterface.h"
 #include "lua/LuaScriptHelper.h"
@@ -1189,69 +1188,98 @@ void Renderer::prepare_alpha(int size, float intensity){
 #endif
 }
 
-#ifdef RPMT //render parts multithreading 
-void Renderer::render_parts_thread(int start, int end){
+void Renderer::render_parts()
+{
 	int deca, decr, decg, decb, cola, colr, colg, colb, firea, firer, fireg, fireb, pixel_mode, q, i, t, nx, ny, x, y, caddress;
-	int orbd[4] = { 0, 0, 0, 0 }, orbl[4] = { 0, 0, 0, 0 }, type2, type3;
+	int orbd[4] = {0, 0, 0, 0}, orbl[4] = {0, 0, 0, 0}, type2, type3;
 	float gradv, flicker;
 	float a = 1023, b = MAX_TEMP, invlnb = a * (1.f / log(b + 1.f));/// division and logarithm is expensive
-	//int heatcolor[1024][3], isvalid;
-	int isvalid;
+	int heatcolor[1024][3], isvalid;
 	bool pass, pass2, drawflat;
-	/*for (int i = 0, s = 0; s < 1024 && i < 3071; i += 3) {
+	for (int i = 0, s = 0; s < 1024 && i < 3071; i += 3) {
 		heatcolor[s][0] = color_data[i];
 		heatcolor[s][1] = color_data[i + 1];
 		heatcolor[s][2] = color_data[i + 2];
 		s++;
-	}*/
+	}
 	Particle * parts;
 	Element *elements;
-
+	if(!sim)
+		return;
 	parts = sim->parts;
 	elements = sim->elements;
+#ifdef OGLR
+	float fnx, fny;
+	int cfireV = 0, cfireC = 0, cfire = 0;
+	int csmokeV = 0, csmokeC = 0, csmoke = 0;
+	int cblobV = 0, cblobC = 0, cblob = 0;
+	int cblurV = 0, cblurC = 0, cblur = 0;
+	int cglowV = 0, cglowC = 0, cglow = 0;
+	int cflatV = 0, cflatC = 0, cflat = 0;
+	int caddV = 0, caddC = 0, cadd = 0;
+	int clineV = 0, clineC = 0, cline = 0;
+	GLint origBlendSrc, origBlendDst, prevFbo;
 
+	glGetIntegerv(GL_BLEND_SRC, &origBlendSrc);
+	glGetIntegerv(GL_BLEND_DST, &origBlendDst);
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFbo);
+	//Render to the particle FBO
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, partsFbo);
+	glTranslated(0, MENUSIZE, 0);
+#else
+	if (gridSize)//draws the grid
+	{
+		for (ny=0; ny<YRES; ny++)
+			for (nx=0; nx<XRES; nx++)
+			{
+				if (ny%(4*gridSize) == 0)
+					blendpixel(nx, ny, 100, 100, 100, 80);
+				if (nx%(4*gridSize) == 0 && ny%(4*gridSize) != 0)
+					blendpixel(nx, ny, 100, 100, 100, 80);
+			}
+	}
+#endif
 	foundElements = 0;
-	for (i = start; i <= end; i++) {
+	for(i = 0; i<=sim->parts_lastActiveIndex; i++) {
 		////levels stacks particles
 		nx = (int)(sim->parts[i].x + 0.5f);
 		ny = (int)(sim->parts[i].y + 0.5f);
 		pass = false;
 		pass2 = false;
 
-		if (sim->lvl) {
-			if (sim->idpointer[i][0] == sim->truecurrentTick) {
+		if(sim->lvl){
+			if(sim->idpointer[i][0] == sim->truecurrentTick){
 				pass = sim->idpointer[i][2] == (sim->lvl - 1);
-				if (i == sim->pmap2[ny][nx][2] && !pass) { // if is this last particle;
+				if(i == sim->pmap2[ny][nx][2] && !pass){ // if is this last particle;
 					pass2 = sim->idpointer[i][2] == (sim->lvl - 2);
 				}
 			}
-		}
-		else {
-			//pass = sim->idpointer[i][2] >= (sim->pmap2[ny][nx][3] - 3) && sim->idpointer[i][2] <= sim->pmap2[ny][nx][3];
+		} else{
+		    //pass = sim->idpointer[i][2] >= (sim->pmap2[ny][nx][3] - 3) && sim->idpointer[i][2] <= sim->pmap2[ny][nx][3];
 			pass = true;
 			pass2 = false;
 		}
 
 		if (sim->parts[i].type && sim->parts[i].type >= 0 && sim->parts[i].type < PT_NUM && pass) { // só desenha, se a particula tem profundidade menor que 3;
-
+			
 			type3 = t = sim->parts[i].type;
 
 			isvalid = type2 = sim->parts[i].ctype;
 			isvalid = (isvalid >= 0 && isvalid < PT_NUM && sim->elements[isvalid].Enabled);
-			if ((t == PT_PLSM || t == PT_GASEOUS || t == PT_LIQUID || t == PT_SOLID)
-				&& isvalid && type2 != PT_NONE) {
+			if((t == PT_PLSM || t == PT_GASEOUS || t == PT_LIQUID || t == PT_SOLID)
+				&& isvalid && type2 != PT_NONE){
 				type3 = type2;
-			}
+    		}
 
 #ifdef OGLR
 			fnx = sim->parts[i].x;
 			fny = sim->parts[i].y;
 #endif
 
-			if (nx >= XRES || nx < 0 || ny >= YRES || ny < 0)
+			if(nx >= XRES || nx < 0 || ny >= YRES || ny < 0)
 				continue;
-			if (sim->lvl == 0) {
-				if (TYP(sim->photons[ny][nx]) && !(sim->elements[t].Properties & TYPE_ENERGY) && t != PT_STKM && t != PT_STKM2 && t != PT_FIGH)
+			if(sim->lvl == 0){
+				if(TYP(sim->photons[ny][nx]) && !(sim->elements[t].Properties & TYPE_ENERGY) && t != PT_STKM && t != PT_STKM2 && t != PT_FIGH)
 					continue;
 			}
 
@@ -1270,9 +1298,9 @@ void Renderer::render_parts_thread(int start, int end){
 			decg = (sim->parts[i].dcolour >> 8) & 0xFF;
 			decb = (sim->parts[i].dcolour) & 0xFF;
 
-			if (decorations_enable && blackDecorations)
+			if(decorations_enable && blackDecorations)
 			{
-				if (deca < 250 || decr > 5 || decg > 5 || decb > 5)
+				if(deca < 250 || decr > 5 || decg > 5 || decb > 5)
 					deca = 0;
 				else
 				{
@@ -1294,7 +1322,7 @@ void Renderer::render_parts_thread(int start, int end){
 					fireg = graphicscache[t].fireg;
 					fireb = graphicscache[t].fireb;
 				}
-				else if (!(colour_mode & COLOUR_BASC))
+				else if(!(colour_mode & COLOUR_BASC))
 				{
 					if (elements[t].Graphics)
 					{
@@ -1347,22 +1375,22 @@ void Renderer::render_parts_thread(int start, int end){
 					}
 				}
 
-				if ((elements[t].Properties & PROP_HOT_GLOW) && sim->parts[i].temp > (elements[t].HighTemperature - 800.0f))
+				if((elements[t].Properties & PROP_HOT_GLOW) && sim->parts[i].temp>(elements[t].HighTemperature-800.0f))
 				{
-					gradv = 3.1415 / (2 * elements[t].HighTemperature - (elements[t].HighTemperature - 800.0f));
-					caddress = (sim->parts[i].temp > elements[t].HighTemperature) ? elements[t].HighTemperature - (elements[t].HighTemperature - 800.0f) : sim->parts[i].temp - (elements[t].HighTemperature - 800.0f);
+					gradv = 3.1415/(2*elements[t].HighTemperature-(elements[t].HighTemperature-800.0f));
+					caddress = (sim->parts[i].temp>elements[t].HighTemperature)?elements[t].HighTemperature-(elements[t].HighTemperature-800.0f):sim->parts[i].temp-(elements[t].HighTemperature-800.0f);
 					colr += sin(gradv*caddress) * 226;;
-					colg += sin(gradv*caddress*4.55 + 3.14) * 34;
-					colb += sin(gradv*caddress*2.22 + 3.14) * 64;
+					colg += sin(gradv*caddress*4.55 +3.14) * 34;
+					colb += sin(gradv*caddress*2.22 +3.14) * 64;
 				}
 
-				if ((pixel_mode & FIRE_ADD) && !(render_mode & FIRE_ADD))
+				if((pixel_mode & FIRE_ADD) && !(render_mode & FIRE_ADD))
 					pixel_mode |= PMODE_GLOW;
-				if ((pixel_mode & FIRE_BLEND) && !(render_mode & FIRE_BLEND))
+				if((pixel_mode & FIRE_BLEND) && !(render_mode & FIRE_BLEND))
 					pixel_mode |= PMODE_BLUR;
-				if ((pixel_mode & PMODE_BLUR) && !(render_mode & PMODE_BLUR))
+				if((pixel_mode & PMODE_BLUR) && !(render_mode & PMODE_BLUR))
 					pixel_mode |= PMODE_FLAT;
-				if ((pixel_mode & PMODE_GLOW) && !(render_mode & PMODE_GLOW))
+				if((pixel_mode & PMODE_GLOW) && !(render_mode & PMODE_GLOW))
 					pixel_mode |= PMODE_BLEND;
 				if (render_mode & PMODE_BLOB)
 					pixel_mode |= PMODE_BLOB;
@@ -1370,7 +1398,7 @@ void Renderer::render_parts_thread(int start, int end){
 				pixel_mode &= render_mode;
 				/////
 				//Alter colour based on display mode
-				if (colour_mode & COLOUR_HEAT)
+				if(colour_mode & COLOUR_HEAT)
 				{
 					//caddress = restrict_flt((int)( restrict_flt((float)(sim->parts[i].temp+(-MIN_TEMP)), 0.0f, MAX_TEMP+(-MIN_TEMP)) / ((MAX_TEMP+(-MIN_TEMP))/1024) ) *3, 0.0f, (1024.0f*3)-3);
 					caddress = restrict_flt((2.5466622703f*invlnb*log(1.f + restrict_flt(sim->parts[i].temp, 0.f, MAX_TEMP) * 0.00090909090909f)), 0.0f, a); // escala logaritmica
@@ -1379,30 +1407,30 @@ void Renderer::render_parts_thread(int start, int end){
 					fireg = colg = heatcolor[caddress][1];
 					fireb = colb = heatcolor[caddress][2];
 					cola = 255;
-					if (pixel_mode & (FIREMODE | PMODE_GLOW))
-						pixel_mode = (pixel_mode & ~(FIREMODE | PMODE_GLOW)) | PMODE_BLUR;
+					if(pixel_mode & (FIREMODE | PMODE_GLOW))
+						pixel_mode = (pixel_mode & ~(FIREMODE|PMODE_GLOW)) | PMODE_BLUR;
 					else if ((pixel_mode & (PMODE_BLEND | PMODE_ADD)) == (PMODE_BLEND | PMODE_ADD))
-						pixel_mode = (pixel_mode & ~(PMODE_BLEND | PMODE_ADD)) | PMODE_FLAT;
+						pixel_mode = (pixel_mode & ~(PMODE_BLEND|PMODE_ADD)) | PMODE_FLAT;
 					else if (!pixel_mode)
 						pixel_mode |= PMODE_FLAT;
 				}
-				else if (colour_mode & COLOUR_LIFE)
+				else if(colour_mode & COLOUR_LIFE)
 				{
 					gradv = 0.4f;
-					if (!(sim->parts[i].life < 5))
+					if (!(sim->parts[i].life<5))
 						q = sqrt((float)sim->parts[i].life);
 					else
 						q = sim->parts[i].life;
 					colr = colg = colb = sin(gradv*q) * 100 + 128;
 					cola = 255;
-					if (pixel_mode & (FIREMODE | PMODE_GLOW))
-						pixel_mode = (pixel_mode & ~(FIREMODE | PMODE_GLOW)) | PMODE_BLUR;
+					if(pixel_mode & (FIREMODE | PMODE_GLOW))
+						pixel_mode = (pixel_mode & ~(FIREMODE|PMODE_GLOW)) | PMODE_BLUR;
 					else if ((pixel_mode & (PMODE_BLEND | PMODE_ADD)) == (PMODE_BLEND | PMODE_ADD))
-						pixel_mode = (pixel_mode & ~(PMODE_BLEND | PMODE_ADD)) | PMODE_FLAT;
+						pixel_mode = (pixel_mode & ~(PMODE_BLEND|PMODE_ADD)) | PMODE_FLAT;
 					else if (!pixel_mode)
 						pixel_mode |= PMODE_FLAT;
 				}
-				else if (colour_mode & COLOUR_BASC)
+				else if(colour_mode & COLOUR_BASC)
 				{
 					colr = PIXR(elements[t].Colour);
 					colg = PIXG(elements[t].Colour);
@@ -1411,21 +1439,21 @@ void Renderer::render_parts_thread(int start, int end){
 				}
 
 				//Apply decoration colour
-				if (!(colour_mode & ~COLOUR_GRAD) && decorations_enable && deca)
+				if(!(colour_mode & ~COLOUR_GRAD) && decorations_enable && deca)
 				{
 					deca++;
-					if (!(pixel_mode & NO_DECO))
+					if(!(pixel_mode & NO_DECO))
 					{
-						colr = (deca*decr + (256 - deca)*colr) >> 8;
-						colg = (deca*decg + (256 - deca)*colg) >> 8;
-						colb = (deca*decb + (256 - deca)*colb) >> 8;
+						colr = (deca*decr + (256-deca)*colr) >> 8;
+						colg = (deca*decg + (256-deca)*colg) >> 8;
+						colb = (deca*decb + (256-deca)*colb) >> 8;
 					}
 
-					if (pixel_mode & DECO_FIRE)
+					if(pixel_mode & DECO_FIRE)
 					{
-						firer = (deca*decr + (256 - deca)*firer) >> 8;
-						fireg = (deca*decg + (256 - deca)*fireg) >> 8;
-						fireb = (deca*decb + (256 - deca)*fireb) >> 8;
+						firer = (deca*decr + (256-deca)*firer) >> 8;
+						fireg = (deca*decg + (256-deca)*fireg) >> 8;
+						fireb = (deca*decb + (256-deca)*fireb) >> 8;
 					}
 				}
 
@@ -1451,60 +1479,60 @@ void Renderer::render_parts_thread(int start, int end){
 				if (colour_mode & COLOUR_GRAD)
 				{
 					float frequency = 0.05;
-					int q = sim->parts[i].temp - 40;
+					int q = sim->parts[i].temp-40;
 					colr = sin(frequency*q) * 16 + colr;
 					colg = sin(frequency*q) * 16 + colg;
 					colb = sin(frequency*q) * 16 + colb;
-					if (pixel_mode & (FIREMODE | PMODE_GLOW)) pixel_mode = (pixel_mode & ~(FIREMODE | PMODE_GLOW)) | PMODE_BLUR;
+					if(pixel_mode & (FIREMODE | PMODE_GLOW)) pixel_mode = (pixel_mode & ~(FIREMODE|PMODE_GLOW)) | PMODE_BLUR;
 				}
 
-#ifndef OGLR
+	#ifndef OGLR
 				//All colours are now set, check ranges
-				if (colr > 255) colr = 255;
-				else if (colr < 0) colr = 0;
-				if (colg > 255) colg = 255;
-				else if (colg < 0) colg = 0;
-				if (colb > 255) colb = 255;
-				else if (colb < 0) colb = 0;
-				if (cola > 255) cola = 255;
-				else if (cola < 0) cola = 0;
+				if(colr>255) colr = 255;
+				else if(colr<0) colr = 0;
+				if(colg>255) colg = 255;
+				else if(colg<0) colg = 0;
+				if(colb>255) colb = 255;
+				else if(colb<0) colb = 0;
+				if(cola>255) cola = 255;
+				else if(cola<0) cola = 0;
 
-				if (firer > 255) firer = 255;
-				else if (firer < 0) firer = 0;
-				if (fireg > 255) fireg = 255;
-				else if (fireg < 0) fireg = 0;
-				if (fireb > 255) fireb = 255;
-				else if (fireb < 0) fireb = 0;
-				if (firea > 255) firea = 255;
-				else if (firea < 0) firea = 0;
-#endif
+				if(firer>255) firer = 255;
+				else if(firer<0) firer = 0;
+				if(fireg>255) fireg = 255;
+				else if(fireg<0) fireg = 0;
+				if(fireb>255) fireb = 255;
+				else if(fireb<0) fireb = 0;
+				if(firea>255) firea = 255;
+				else if(firea<0) firea = 0;
+	#endif
 
 				//Pixel rendering
 				if (pixel_mode & EFFECT_LINES)
 				{
-					if (t == PT_SOAP)
+					if (t==PT_SOAP)
 					{
-						if ((parts[i].ctype & 3) == 3 && parts[i].tmp >= 0 && parts[i].tmp < NPART)
-							draw_line(nx, ny, (int)(parts[parts[i].tmp].x + 0.5f), (int)(parts[parts[i].tmp].y + 0.5f), colr, colg, colb, cola);
+						if ((parts[i].ctype&3) == 3 && parts[i].tmp >= 0 && parts[i].tmp < NPART)
+							draw_line(nx, ny, (int)(parts[parts[i].tmp].x+0.5f), (int)(parts[parts[i].tmp].y+0.5f), colr, colg, colb, cola);
 					}
 				}
-				if (pixel_mode & PSPEC_STICKMAN)
+				if(pixel_mode & PSPEC_STICKMAN)
 				{
 					int legr, legg, legb;
 					playerst *cplayer;
-					if (t == PT_STKM)
+					if(t==PT_STKM)
 						cplayer = &sim->player;
-					else if (t == PT_STKM2)
+					else if(t==PT_STKM2)
 						cplayer = &sim->player2;
-					else if (t == PT_FIGH && sim->parts[i].tmp >= 0 && sim->parts[i].tmp < MAX_FIGHTERS)
+					else if (t==PT_FIGH && sim->parts[i].tmp >= 0 && sim->parts[i].tmp < MAX_FIGHTERS)
 						cplayer = &sim->fighters[(unsigned char)sim->parts[i].tmp];
 					else
 						continue;
 
-					if (mousePos.X > (nx - 3) && mousePos.X < (nx + 3) && mousePos.Y<(ny + 3) && mousePos.Y>(ny - 3)) //If mouse is in the head
+					if (mousePos.X>(nx-3) && mousePos.X<(nx+3) && mousePos.Y<(ny+3) && mousePos.Y>(ny-3)) //If mouse is in the head
 					{
 						String hp = String::Build(Format::Width(sim->parts[i].life, 3));
-						drawtext(mousePos.X - 8 - 2 * (sim->parts[i].life < 100) - 2 * (sim->parts[i].life < 10), mousePos.Y - 12, hp, 255, 255, 255, 255);
+						drawtext(mousePos.X-8-2*(sim->parts[i].life<100)-2*(sim->parts[i].life<10), mousePos.Y-12, hp, 255, 255, 255, 255);
 					}
 
 					if (findingElement == t)
@@ -1535,42 +1563,42 @@ void Renderer::render_parts_thread(int start, int end){
 					}
 
 #ifdef OGLR
-					glColor4f(((float)colr) / 255.0f, ((float)colg) / 255.0f, ((float)colb) / 255.0f, 1.0f);
+					glColor4f(((float)colr)/255.0f, ((float)colg)/255.0f, ((float)colb)/255.0f, 1.0f);
 					glBegin(GL_LINE_STRIP);
-					if (t == PT_FIGH)
+					if(t==PT_FIGH)
 					{
-						glVertex2f(fnx, fny + 2);
-						glVertex2f(fnx + 2, fny);
-						glVertex2f(fnx, fny - 2);
-						glVertex2f(fnx - 2, fny);
-						glVertex2f(fnx, fny + 2);
+						glVertex2f(fnx, fny+2);
+						glVertex2f(fnx+2, fny);
+						glVertex2f(fnx, fny-2);
+						glVertex2f(fnx-2, fny);
+						glVertex2f(fnx, fny+2);
 					}
 					else
 					{
-						glVertex2f(fnx - 2, fny - 2);
-						glVertex2f(fnx + 2, fny - 2);
-						glVertex2f(fnx + 2, fny + 2);
-						glVertex2f(fnx - 2, fny + 2);
-						glVertex2f(fnx - 2, fny - 2);
+						glVertex2f(fnx-2, fny-2);
+						glVertex2f(fnx+2, fny-2);
+						glVertex2f(fnx+2, fny+2);
+						glVertex2f(fnx-2, fny+2);
+						glVertex2f(fnx-2, fny-2);
 					}
 					glEnd();
 					glBegin(GL_LINES);
 
-					if (colour_mode != COLOUR_HEAT)
+					if (colour_mode!=COLOUR_HEAT)
 					{
-						if (t == PT_STKM2)
-							glColor4f(100.0f / 255.0f, 100.0f / 255.0f, 1.0f, 1.0f);
+						if (t==PT_STKM2)
+							glColor4f(100.0f/255.0f, 100.0f/255.0f, 1.0f, 1.0f);
 						else
 							glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 					}
 
-					glVertex2f(nx, ny + 3);
+					glVertex2f(nx, ny+3);
 					glVertex2f(cplayer->legs[0], cplayer->legs[1]);
 
 					glVertex2f(cplayer->legs[0], cplayer->legs[1]);
 					glVertex2f(cplayer->legs[4], cplayer->legs[5]);
 
-					glVertex2f(nx, ny + 3);
+					glVertex2f(nx, ny+3);
 					glVertex2f(cplayer->legs[8], cplayer->legs[9]);
 
 					glVertex2f(cplayer->legs[8], cplayer->legs[9]);
@@ -1582,13 +1610,13 @@ void Renderer::render_parts_thread(int start, int end){
 						legr = 255;
 						legg = legb = 0;
 					}
-					else if (colour_mode == COLOUR_HEAT)
+					else if (colour_mode==COLOUR_HEAT)
 					{
 						legr = colr;
 						legg = colg;
 						legb = colb;
 					}
-					else if (t == PT_STKM2)
+					else if (t==PT_STKM2)
 					{
 						legr = 100;
 						legg = 100;
@@ -1612,380 +1640,380 @@ void Renderer::render_parts_thread(int start, int end){
 					}
 
 					//head
-					if (t == PT_FIGH)
+					if(t==PT_FIGH)
 					{
-						draw_line(nx, ny + 2, nx + 2, ny, colr, colg, colb, 255);
-						draw_line(nx + 2, ny, nx, ny - 2, colr, colg, colb, 255);
-						draw_line(nx, ny - 2, nx - 2, ny, colr, colg, colb, 255);
-						draw_line(nx - 2, ny, nx, ny + 2, colr, colg, colb, 255);
+						draw_line(nx, ny+2, nx+2, ny, colr, colg, colb, 255);
+						draw_line(nx+2, ny, nx, ny-2, colr, colg, colb, 255);
+						draw_line(nx, ny-2, nx-2, ny, colr, colg, colb, 255);
+						draw_line(nx-2, ny, nx, ny+2, colr, colg, colb, 255);
 					}
 					else
 					{
-						draw_line(nx - 2, ny + 2, nx + 2, ny + 2, colr, colg, colb, 255);
-						draw_line(nx - 2, ny - 2, nx + 2, ny - 2, colr, colg, colb, 255);
-						draw_line(nx - 2, ny - 2, nx - 2, ny + 2, colr, colg, colb, 255);
-						draw_line(nx + 2, ny - 2, nx + 2, ny + 2, colr, colg, colb, 255);
+						draw_line(nx-2, ny+2, nx+2, ny+2, colr, colg, colb, 255);
+						draw_line(nx-2, ny-2, nx+2, ny-2, colr, colg, colb, 255);
+						draw_line(nx-2, ny-2, nx-2, ny+2, colr, colg, colb, 255);
+						draw_line(nx+2, ny-2, nx+2, ny+2, colr, colg, colb, 255);
 					}
 					//legs
-					draw_line(nx, ny + 3, cplayer->legs[0], cplayer->legs[1], legr, legg, legb, 255);
+					draw_line(nx, ny+3, cplayer->legs[0], cplayer->legs[1], legr, legg, legb, 255);
 					draw_line(cplayer->legs[0], cplayer->legs[1], cplayer->legs[4], cplayer->legs[5], legr, legg, legb, 255);
-					draw_line(nx, ny + 3, cplayer->legs[8], cplayer->legs[9], legr, legg, legb, 255);
+					draw_line(nx, ny+3, cplayer->legs[8], cplayer->legs[9], legr, legg, legb, 255);
 					draw_line(cplayer->legs[8], cplayer->legs[9], cplayer->legs[12], cplayer->legs[13], legr, legg, legb, 255);
 					if (cplayer->rocketBoots)
 					{
-						for (int leg = 0; leg < 2; leg++)
+						for (int leg=0; leg<2; leg++)
 						{
-							int nx = cplayer->legs[leg * 8 + 4], ny = cplayer->legs[leg * 8 + 5];
+							int nx = cplayer->legs[leg*8+4], ny = cplayer->legs[leg*8+5];
 							int colr = 255, colg = 0, colb = 255;
-							if (((int)(cplayer->comm) & 0x04) == 0x04 || (((int)(cplayer->comm) & 0x01) == 0x01 && leg == 0) || (((int)(cplayer->comm) & 0x02) == 0x02 && leg == 1))
+							if (((int)(cplayer->comm)&0x04) == 0x04 || (((int)(cplayer->comm)&0x01) == 0x01 && leg==0) || (((int)(cplayer->comm)&0x02) == 0x02 && leg==1))
 								blendpixel(nx, ny, 0, 255, 0, 255);
 							else
 								blendpixel(nx, ny, 255, 0, 0, 255);
-							blendpixel(nx + 1, ny, colr, colg, colb, 223);
-							blendpixel(nx - 1, ny, colr, colg, colb, 223);
-							blendpixel(nx, ny + 1, colr, colg, colb, 223);
-							blendpixel(nx, ny - 1, colr, colg, colb, 223);
+							blendpixel(nx+1, ny, colr, colg, colb, 223);
+							blendpixel(nx-1, ny, colr, colg, colb, 223);
+							blendpixel(nx, ny+1, colr, colg, colb, 223);
+							blendpixel(nx, ny-1, colr, colg, colb, 223);
 
-							blendpixel(nx + 1, ny - 1, colr, colg, colb, 112);
-							blendpixel(nx - 1, ny - 1, colr, colg, colb, 112);
-							blendpixel(nx + 1, ny + 1, colr, colg, colb, 112);
-							blendpixel(nx - 1, ny + 1, colr, colg, colb, 112);
+							blendpixel(nx+1, ny-1, colr, colg, colb, 112);
+							blendpixel(nx-1, ny-1, colr, colg, colb, 112);
+							blendpixel(nx+1, ny+1, colr, colg, colb, 112);
+							blendpixel(nx-1, ny+1, colr, colg, colb, 112);
 						}
 					}
 #endif
 				}
-				if (pixel_mode & PMODE_FLAT)
+				if(pixel_mode & PMODE_FLAT)
 				{
 #ifdef OGLR
 					flatV[cflatV++] = nx;
 					flatV[cflatV++] = ny;
-					flatC[cflatC++] = ((float)colr) / 255.0f;
-					flatC[cflatC++] = ((float)colg) / 255.0f;
-					flatC[cflatC++] = ((float)colb) / 255.0f;
+					flatC[cflatC++] = ((float)colr)/255.0f;
+					flatC[cflatC++] = ((float)colg)/255.0f;
+					flatC[cflatC++] = ((float)colb)/255.0f;
 					flatC[cflatC++] = 1.0f;
 					cflat++;
 #else
-					vid[ny*(VIDXRES)+nx] = PIXRGB(colr, colg, colb);
+					vid[ny*(VIDXRES)+nx] = PIXRGB(colr,colg,colb);
 #endif
 				}
-				if (pixel_mode & PMODE_BLEND)
+				if(pixel_mode & PMODE_BLEND)
 				{
 #ifdef OGLR
 					flatV[cflatV++] = nx;
 					flatV[cflatV++] = ny;
-					flatC[cflatC++] = ((float)colr) / 255.0f;
-					flatC[cflatC++] = ((float)colg) / 255.0f;
-					flatC[cflatC++] = ((float)colb) / 255.0f;
-					flatC[cflatC++] = ((float)cola) / 255.0f;
+					flatC[cflatC++] = ((float)colr)/255.0f;
+					flatC[cflatC++] = ((float)colg)/255.0f;
+					flatC[cflatC++] = ((float)colb)/255.0f;
+					flatC[cflatC++] = ((float)cola)/255.0f;
 					cflat++;
 #else
 					blendpixel(nx, ny, colr, colg, colb, cola);
 #endif
 				}
-				if (pixel_mode & PMODE_ADD)
+				if(pixel_mode & PMODE_ADD)
 				{
 #ifdef OGLR
 					addV[caddV++] = nx;
 					addV[caddV++] = ny;
-					addC[caddC++] = ((float)colr) / 255.0f;
-					addC[caddC++] = ((float)colg) / 255.0f;
-					addC[caddC++] = ((float)colb) / 255.0f;
-					addC[caddC++] = ((float)cola) / 255.0f;
+					addC[caddC++] = ((float)colr)/255.0f;
+					addC[caddC++] = ((float)colg)/255.0f;
+					addC[caddC++] = ((float)colb)/255.0f;
+					addC[caddC++] = ((float)cola)/255.0f;
 					cadd++;
 #else
 					addpixel(nx, ny, colr, colg, colb, cola);
 #endif
 				}
-				if (pixel_mode & PMODE_BLOB)
+				if(pixel_mode & PMODE_BLOB)
 				{
 #ifdef OGLR
 					blobV[cblobV++] = nx;
 					blobV[cblobV++] = ny;
-					blobC[cblobC++] = ((float)colr) / 255.0f;
-					blobC[cblobC++] = ((float)colg) / 255.0f;
-					blobC[cblobC++] = ((float)colb) / 255.0f;
+					blobC[cblobC++] = ((float)colr)/255.0f;
+					blobC[cblobC++] = ((float)colg)/255.0f;
+					blobC[cblobC++] = ((float)colb)/255.0f;
 					blobC[cblobC++] = 1.0f;
 					cblob++;
 #else
-					vid[ny*(VIDXRES)+nx] = PIXRGB(colr, colg, colb);
+					vid[ny*(VIDXRES)+nx] = PIXRGB(colr,colg,colb);
 
-					blendpixel(nx + 1, ny, colr, colg, colb, 223);
-					blendpixel(nx - 1, ny, colr, colg, colb, 223);
-					blendpixel(nx, ny + 1, colr, colg, colb, 223);
-					blendpixel(nx, ny - 1, colr, colg, colb, 223);
+					blendpixel(nx+1, ny, colr, colg, colb, 223);
+					blendpixel(nx-1, ny, colr, colg, colb, 223);
+					blendpixel(nx, ny+1, colr, colg, colb, 223);
+					blendpixel(nx, ny-1, colr, colg, colb, 223);
 
-					blendpixel(nx + 1, ny - 1, colr, colg, colb, 112);
-					blendpixel(nx - 1, ny - 1, colr, colg, colb, 112);
-					blendpixel(nx + 1, ny + 1, colr, colg, colb, 112);
-					blendpixel(nx - 1, ny + 1, colr, colg, colb, 112);
+					blendpixel(nx+1, ny-1, colr, colg, colb, 112);
+					blendpixel(nx-1, ny-1, colr, colg, colb, 112);
+					blendpixel(nx+1, ny+1, colr, colg, colb, 112);
+					blendpixel(nx-1, ny+1, colr, colg, colb, 112);
 #endif
 				}
-				if (pixel_mode & PMODE_GLOW)
+				if(pixel_mode & PMODE_GLOW)
 				{
-					int cola1 = (5 * cola) / 255;
+					int cola1 = (5*cola)/255;
 #ifdef OGLR
 					glowV[cglowV++] = nx;
 					glowV[cglowV++] = ny;
-					glowC[cglowC++] = ((float)colr) / 255.0f;
-					glowC[cglowC++] = ((float)colg) / 255.0f;
-					glowC[cglowC++] = ((float)colb) / 255.0f;
+					glowC[cglowC++] = ((float)colr)/255.0f;
+					glowC[cglowC++] = ((float)colg)/255.0f;
+					glowC[cglowC++] = ((float)colb)/255.0f;
 					glowC[cglowC++] = 1.0f;
 					cglow++;
 #else
-					addpixel(nx, ny, colr, colg, colb, (192 * cola) / 255);
-					addpixel(nx + 1, ny, colr, colg, colb, (96 * cola) / 255);
-					addpixel(nx - 1, ny, colr, colg, colb, (96 * cola) / 255);
-					addpixel(nx, ny + 1, colr, colg, colb, (96 * cola) / 255);
-					addpixel(nx, ny - 1, colr, colg, colb, (96 * cola) / 255);
+					addpixel(nx, ny, colr, colg, colb, (192*cola)/255);
+					addpixel(nx+1, ny, colr, colg, colb, (96*cola)/255);
+					addpixel(nx-1, ny, colr, colg, colb, (96*cola)/255);
+					addpixel(nx, ny+1, colr, colg, colb, (96*cola)/255);
+					addpixel(nx, ny-1, colr, colg, colb, (96*cola)/255);
 
-					for (x = 1; x < 4; x++) {
-						addpixel(nx, ny - x, colr, colg, colb, cola1);
-						addpixel(nx, ny + x, colr, colg, colb, cola1);
-						addpixel(nx - x, ny, colr, colg, colb, cola1);
-						addpixel(nx + x, ny, colr, colg, colb, cola1);
-						for (y = 1; y < 4; y++) {
-							if (x + y > 5)
+					for (x = 1; x < 6; x++) {
+						addpixel(nx, ny-x, colr, colg, colb, cola1);
+						addpixel(nx, ny+x, colr, colg, colb, cola1);
+						addpixel(nx-x, ny, colr, colg, colb, cola1);
+						addpixel(nx+x, ny, colr, colg, colb, cola1);
+						for (y = 1; y < 6; y++) {
+							if(x + y > 7)
 								continue;
-							addpixel(nx + x, ny - y, colr, colg, colb, cola1);
-							addpixel(nx - x, ny + y, colr, colg, colb, cola1);
-							addpixel(nx + x, ny + y, colr, colg, colb, cola1);
-							addpixel(nx - x, ny - y, colr, colg, colb, cola1);
+							addpixel(nx+x, ny-y, colr, colg, colb, cola1);
+							addpixel(nx-x, ny+y, colr, colg, colb, cola1);
+							addpixel(nx+x, ny+y, colr, colg, colb, cola1);
+							addpixel(nx-x, ny-y, colr, colg, colb, cola1);
 						}
 					}
 #endif
 				}
-				if (pixel_mode & PMODE_BLUR)
+				if(pixel_mode & PMODE_BLUR)
 				{
 #ifdef OGLR
 					blurV[cblurV++] = nx;
 					blurV[cblurV++] = ny;
-					blurC[cblurC++] = ((float)colr) / 255.0f;
-					blurC[cblurC++] = ((float)colg) / 255.0f;
-					blurC[cblurC++] = ((float)colb) / 255.0f;
+					blurC[cblurC++] = ((float)colr)/255.0f;
+					blurC[cblurC++] = ((float)colg)/255.0f;
+					blurC[cblurC++] = ((float)colb)/255.0f;
 					blurC[cblurC++] = 1.0f;
 					cblur++;
 #else
-					for (x = -3; x < 4; x++)
+					for (x=-3; x<4; x++)
 					{
-						for (y = -3; y < 4; y++)
+						for (y=-3; y<4; y++)
 						{
-							if (abs(x) + abs(y) < 2 && !(abs(x) == 2 || abs(y) == 2))
-								blendpixel(x + nx, y + ny, colr, colg, colb, 30);
-							if (abs(x) + abs(y) <= 3 && abs(x) + abs(y))
-								blendpixel(x + nx, y + ny, colr, colg, colb, 20);
-							if (abs(x) + abs(y) == 2)
-								blendpixel(x + nx, y + ny, colr, colg, colb, 10);
+							if (abs(x)+abs(y) <2 && !(abs(x)==2||abs(y)==2))
+								blendpixel(x+nx, y+ny, colr, colg, colb, 30);
+							if (abs(x)+abs(y) <=3 && abs(x)+abs(y))
+								blendpixel(x+nx, y+ny, colr, colg, colb, 20);
+							if (abs(x)+abs(y) == 2)
+								blendpixel(x+nx, y+ny, colr, colg, colb, 10);
 						}
 					}
 #endif
 				}
-				if (pixel_mode & PMODE_SPARK)
+				if(pixel_mode & PMODE_SPARK)
 				{
-					flicker = random_gen() % 20;
+					flicker = random_gen()%20;
 #ifdef OGLR
 					//Oh god, this is awful
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx - 5;
+					lineV[clineV++] = fnx-5;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 30;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
+					lineC[clineC++] = 1.0f - ((float)flicker)/30;
 					lineV[clineV++] = fnx;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx + 5;
+					lineV[clineV++] = fnx+5;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
 					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny - 5;
+					lineV[clineV++] = fny-5;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 30;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
+					lineC[clineC++] = 1.0f - ((float)flicker)/30;
 					lineV[clineV++] = fnx;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
 					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny + 5;
+					lineV[clineV++] = fny+5;
 					cline++;
 #else
-					gradv = 4 * sim->parts[i].life + flicker;
-					for (x = 0; gradv > 0.5; x++) {
-						addpixel(nx + x, ny, colr, colg, colb, gradv);
-						addpixel(nx - x, ny, colr, colg, colb, gradv);
+					gradv = 4*sim->parts[i].life + flicker;
+					for (x = 0; gradv>0.5; x++) {
+						addpixel(nx+x, ny, colr, colg, colb, gradv);
+						addpixel(nx-x, ny, colr, colg, colb, gradv);
 
-						addpixel(nx, ny + x, colr, colg, colb, gradv);
-						addpixel(nx, ny - x, colr, colg, colb, gradv);
-						gradv = gradv / 1.5f;
+						addpixel(nx, ny+x, colr, colg, colb, gradv);
+						addpixel(nx, ny-x, colr, colg, colb, gradv);
+						gradv = gradv/1.5f;
 					}
 #endif
 				}
-				if (pixel_mode & PMODE_FLARE)
+				if(pixel_mode & PMODE_FLARE)
 				{
-					flicker = random_gen() % 20;
+					flicker = random_gen()%20;
 #ifdef OGLR
 					//Oh god, this is awful
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx - 10;
+					lineV[clineV++] = fnx-10;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 40;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
+					lineC[clineC++] = 1.0f - ((float)flicker)/40;
 					lineV[clineV++] = fnx;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx + 10;
+					lineV[clineV++] = fnx+10;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
 					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny - 10;
+					lineV[clineV++] = fny-10;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 30;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
+					lineC[clineC++] = 1.0f - ((float)flicker)/30;
 					lineV[clineV++] = fnx;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
 					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny + 10;
+					lineV[clineV++] = fny+10;
 					cline++;
 #else
-					gradv = flicker + fabs(parts[i].vx) * 17 + fabs(sim->parts[i].vy) * 17;
-					blendpixel(nx, ny, colr, colg, colb, (gradv * 4) > 255 ? 255 : (gradv * 4));
-					blendpixel(nx + 1, ny, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx - 1, ny, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx, ny + 1, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx, ny - 1, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					if (gradv > 255) gradv = 255;
-					blendpixel(nx + 1, ny - 1, colr, colg, colb, gradv);
-					blendpixel(nx - 1, ny - 1, colr, colg, colb, gradv);
-					blendpixel(nx + 1, ny + 1, colr, colg, colb, gradv);
-					blendpixel(nx - 1, ny + 1, colr, colg, colb, gradv);
-					for (x = 1; gradv > 0.5; x++) {
-						addpixel(nx + x, ny, colr, colg, colb, gradv);
-						addpixel(nx - x, ny, colr, colg, colb, gradv);
-						addpixel(nx, ny + x, colr, colg, colb, gradv);
-						addpixel(nx, ny - x, colr, colg, colb, gradv);
-						gradv = gradv / 1.2f;
+					gradv = flicker + fabs(parts[i].vx)*17 + fabs(sim->parts[i].vy)*17;
+					blendpixel(nx, ny, colr, colg, colb, (gradv*4)>255?255:(gradv*4) );
+					blendpixel(nx+1, ny, colr, colg, colb, (gradv*2)>255?255:(gradv*2) );
+					blendpixel(nx-1, ny, colr, colg, colb, (gradv*2)>255?255:(gradv*2) );
+					blendpixel(nx, ny+1, colr, colg, colb, (gradv*2)>255?255:(gradv*2) );
+					blendpixel(nx, ny-1, colr, colg, colb, (gradv*2)>255?255:(gradv*2) );
+					if (gradv>255) gradv=255;
+					blendpixel(nx+1, ny-1, colr, colg, colb, gradv);
+					blendpixel(nx-1, ny-1, colr, colg, colb, gradv);
+					blendpixel(nx+1, ny+1, colr, colg, colb, gradv);
+					blendpixel(nx-1, ny+1, colr, colg, colb, gradv);
+					for (x = 1; gradv>0.5; x++) {
+						addpixel(nx+x, ny, colr, colg, colb, gradv);
+						addpixel(nx-x, ny, colr, colg, colb, gradv);
+						addpixel(nx, ny+x, colr, colg, colb, gradv);
+						addpixel(nx, ny-x, colr, colg, colb, gradv);
+						gradv = gradv/1.2f;
 					}
 #endif
 				}
-				if (pixel_mode & PMODE_LFLARE)
+				if(pixel_mode & PMODE_LFLARE)
 				{
-					flicker = random_gen() % 20;
+					flicker = random_gen()%20;
 #ifdef OGLR
 					//Oh god, this is awful
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx - 70;
+					lineV[clineV++] = fnx-70;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 30;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
+					lineC[clineC++] = 1.0f - ((float)flicker)/30;
 					lineV[clineV++] = fnx;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx + 70;
+					lineV[clineV++] = fnx+70;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
 					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny - 70;
+					lineV[clineV++] = fny-70;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 50;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
+					lineC[clineC++] = 1.0f - ((float)flicker)/50;
 					lineV[clineV++] = fnx;
 					lineV[clineV++] = fny;
 					cline++;
 
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
+					lineC[clineC++] = ((float)colr)/255.0f;
+					lineC[clineC++] = ((float)colg)/255.0f;
+					lineC[clineC++] = ((float)colb)/255.0f;
 					lineC[clineC++] = 0.0f;
 					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny + 70;
+					lineV[clineV++] = fny+70;
 					cline++;
 #else
-					gradv = flicker + fabs(parts[i].vx) * 17 + fabs(parts[i].vy) * 17;
-					blendpixel(nx, ny, colr, colg, colb, (gradv * 4) > 255 ? 255 : (gradv * 4));
-					blendpixel(nx + 1, ny, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx - 1, ny, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx, ny + 1, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx, ny - 1, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					if (gradv > 255) gradv = 255;
-					blendpixel(nx + 1, ny - 1, colr, colg, colb, gradv);
-					blendpixel(nx - 1, ny - 1, colr, colg, colb, gradv);
-					blendpixel(nx + 1, ny + 1, colr, colg, colb, gradv);
-					blendpixel(nx - 1, ny + 1, colr, colg, colb, gradv);
-					for (x = 1; gradv > 0.5; x++) {
-						addpixel(nx + x, ny, colr, colg, colb, gradv);
-						addpixel(nx - x, ny, colr, colg, colb, gradv);
-						addpixel(nx, ny + x, colr, colg, colb, gradv);
-						addpixel(nx, ny - x, colr, colg, colb, gradv);
-						gradv = gradv / 1.01f;
+					gradv = flicker + fabs(parts[i].vx)*17 + fabs(parts[i].vy)*17;
+					blendpixel(nx, ny, colr, colg, colb, (gradv*4)>255?255:(gradv*4) );
+					blendpixel(nx+1, ny, colr, colg, colb, (gradv*2)>255?255:(gradv*2) );
+					blendpixel(nx-1, ny, colr, colg, colb, (gradv*2)>255?255:(gradv*2) );
+					blendpixel(nx, ny+1, colr, colg, colb, (gradv*2)>255?255:(gradv*2) );
+					blendpixel(nx, ny-1, colr, colg, colb, (gradv*2)>255?255:(gradv*2) );
+					if (gradv>255) gradv=255;
+					blendpixel(nx+1, ny-1, colr, colg, colb, gradv);
+					blendpixel(nx-1, ny-1, colr, colg, colb, gradv);
+					blendpixel(nx+1, ny+1, colr, colg, colb, gradv);
+					blendpixel(nx-1, ny+1, colr, colg, colb, gradv);
+					for (x = 1; gradv>0.5; x++) {
+						addpixel(nx+x, ny, colr, colg, colb, gradv);
+						addpixel(nx-x, ny, colr, colg, colb, gradv);
+						addpixel(nx, ny+x, colr, colg, colb, gradv);
+						addpixel(nx, ny-x, colr, colg, colb, gradv);
+						gradv = gradv/1.01f;
 					}
 #endif
 				}
@@ -1998,12 +2026,12 @@ void Renderer::render_parts_thread(int start, int end){
 					float ddist = 0.0f;
 					sim->orbitalparts_get(parts[i].life, parts[i].ctype, orbd, orbl);
 					for (r = 0; r < 4; r++) {
-						ddist = ((float)orbd[r]) / 16.0f;
+						ddist = ((float)orbd[r])/16.0f;
 						drad = (M_PI * ((float)orbl[r]) / 180.0f)*1.41f;
 						nxo = (int)(ddist*cos(drad));
 						nyo = (int)(ddist*sin(drad));
-						if (ny + nyo > 0 && ny + nyo < YRES && nx + nxo>0 && nx + nxo < XRES && TYP(sim->pmap[ny + nyo][nx + nxo]) != PT_PRTI)
-							addpixel(nx + nxo, ny + nyo, colr, colg, colb, 255 - orbd[r]);
+						if (ny+nyo>0 && ny+nyo<YRES && nx+nxo>0 && nx+nxo<XRES && TYP(sim->pmap[ny+nyo][nx+nxo]) != PT_PRTI)
+							addpixel(nx+nxo, ny+nyo, colr, colg, colb, 255-orbd[r]);
 					}
 				}
 				if (pixel_mode & EFFECT_GRAVOUT)
@@ -2015,12 +2043,12 @@ void Renderer::render_parts_thread(int start, int end){
 					float ddist = 0.0f;
 					sim->orbitalparts_get(parts[i].life, parts[i].ctype, orbd, orbl);
 					for (r = 0; r < 4; r++) {
-						ddist = ((float)orbd[r]) / 16.0f;
+						ddist = ((float)orbd[r])/16.0f;
 						drad = (M_PI * ((float)orbl[r]) / 180.0f)*1.41f;
 						nxo = (int)(ddist*cos(drad));
 						nyo = (int)(ddist*sin(drad));
-						if (ny + nyo > 0 && ny + nyo < YRES && nx + nxo>0 && nx + nxo < XRES && TYP(sim->pmap[ny + nyo][nx + nxo]) != PT_PRTO)
-							addpixel(nx + nxo, ny + nyo, colr, colg, colb, 255 - orbd[r]);
+						if (ny+nyo>0 && ny+nyo<YRES && nx+nxo>0 && nx+nxo<XRES && TYP(sim->pmap[ny+nyo][nx+nxo]) != PT_PRTO)
+							addpixel(nx+nxo, ny+nyo, colr, colg, colb, 255-orbd[r]);
 					}
 				}
 				if (pixel_mode & EFFECT_DBGLINES && !(display_mode&DISPLAY_PERS))
@@ -2028,7 +2056,7 @@ void Renderer::render_parts_thread(int start, int end){
 					// draw lines connecting wifi/portal channels
 					if (mousePos.X == nx && mousePos.Y == ny && i == ID(sim->pmap[ny][nx]) && debugLines)
 					{
-						int type = parts[i].type, tmp = (int)((parts[i].temp - 73.15f) / 100 + 1), othertmp;
+						int type = parts[i].type, tmp = (int)((parts[i].temp-73.15f)/100+1), othertmp;
 						if (type == PT_PRTI)
 							type = PT_PRTO;
 						else if (type == PT_PRTO)
@@ -2037,1452 +2065,262 @@ void Renderer::render_parts_thread(int start, int end){
 						{
 							if (parts[z].type == type && (!(sim->idpointer[z][2] > 3 && sim->truecurrentTick == sim->idpointer[z][0])))
 							{
-								othertmp = (int)((parts[z].temp - 73.15f) / 100 + 1);
+								othertmp = (int)((parts[z].temp-73.15f)/100+1);
 								if (tmp == othertmp)
-									xor_line(nx, ny, (int)(parts[z].x + 0.5f), (int)(parts[z].y + 0.5f));
+									xor_line(nx,ny,(int)(parts[z].x+0.5f),(int)(parts[z].y+0.5f));
 							}
 						}
 					}
 				}
 				//Fire effects
-				if (firea && (pixel_mode & FIRE_BLEND))
+				if(firea && (pixel_mode & FIRE_BLEND))
 				{
 #ifdef OGLR
 					smokeV[csmokeV++] = nx;
 					smokeV[csmokeV++] = ny;
-					smokeC[csmokeC++] = ((float)firer) / 255.0f;
-					smokeC[csmokeC++] = ((float)fireg) / 255.0f;
-					smokeC[csmokeC++] = ((float)fireb) / 255.0f;
-					smokeC[csmokeC++] = ((float)firea) / 255.0f;
+					smokeC[csmokeC++] = ((float)firer)/255.0f;
+					smokeC[csmokeC++] = ((float)fireg)/255.0f;
+					smokeC[csmokeC++] = ((float)fireb)/255.0f;
+					smokeC[csmokeC++] = ((float)firea)/255.0f;
 					csmoke++;
 #else
 					firea /= 2;
-					fire_r[ny / CELL][nx / CELL] = (firea*firer + (255 - firea)*fire_r[ny / CELL][nx / CELL]) >> 8;
-					fire_g[ny / CELL][nx / CELL] = (firea*fireg + (255 - firea)*fire_g[ny / CELL][nx / CELL]) >> 8;
-					fire_b[ny / CELL][nx / CELL] = (firea*fireb + (255 - firea)*fire_b[ny / CELL][nx / CELL]) >> 8;
+					fire_r[ny/CELL][nx/CELL] = (firea*firer + (255-firea)*fire_r[ny/CELL][nx/CELL]) >> 8;
+					fire_g[ny/CELL][nx/CELL] = (firea*fireg + (255-firea)*fire_g[ny/CELL][nx/CELL]) >> 8;
+					fire_b[ny/CELL][nx/CELL] = (firea*fireb + (255-firea)*fire_b[ny/CELL][nx/CELL]) >> 8;
 #endif
 				}
-				if (firea && (pixel_mode & FIRE_ADD))
+				if(firea && (pixel_mode & FIRE_ADD))
 				{
 #ifdef OGLR
 					fireV[cfireV++] = nx;
 					fireV[cfireV++] = ny;
-					fireC[cfireC++] = ((float)firer) / 255.0f;
-					fireC[cfireC++] = ((float)fireg) / 255.0f;
-					fireC[cfireC++] = ((float)fireb) / 255.0f;
-					fireC[cfireC++] = ((float)firea) / 255.0f;
+					fireC[cfireC++] = ((float)firer)/255.0f;
+					fireC[cfireC++] = ((float)fireg)/255.0f;
+					fireC[cfireC++] = ((float)fireb)/255.0f;
+					fireC[cfireC++] = ((float)firea)/255.0f;
 					cfire++;
 #else
 					firea /= 8;
-					firer = ((firea*firer) >> 8) + fire_r[ny / CELL][nx / CELL];
-					fireg = ((firea*fireg) >> 8) + fire_g[ny / CELL][nx / CELL];
-					fireb = ((firea*fireb) >> 8) + fire_b[ny / CELL][nx / CELL];
+					firer = ((firea*firer) >> 8) + fire_r[ny/CELL][nx/CELL];
+					fireg = ((firea*fireg) >> 8) + fire_g[ny/CELL][nx/CELL];
+					fireb = ((firea*fireb) >> 8) + fire_b[ny/CELL][nx/CELL];
 
-					if (firer > 255)
+					if(firer>255)
 						firer = 255;
-					if (fireg > 255)
+					if(fireg>255)
 						fireg = 255;
-					if (fireb > 255)
+					if(fireb>255)
 						fireb = 255;
 
-					fire_r[ny / CELL][nx / CELL] = firer;
-					fire_g[ny / CELL][nx / CELL] = fireg;
-					fire_b[ny / CELL][nx / CELL] = fireb;
+					fire_r[ny/CELL][nx/CELL] = firer;
+					fire_g[ny/CELL][nx/CELL] = fireg;
+					fire_b[ny/CELL][nx/CELL] = fireb;
 #endif
 				}
-				if (firea && (pixel_mode & FIRE_SPARK))
+				if(firea && (pixel_mode & FIRE_SPARK))
 				{
 #ifdef OGLR
 					smokeV[csmokeV++] = nx;
 					smokeV[csmokeV++] = ny;
-					smokeC[csmokeC++] = ((float)firer) / 255.0f;
-					smokeC[csmokeC++] = ((float)fireg) / 255.0f;
-					smokeC[csmokeC++] = ((float)fireb) / 255.0f;
-					smokeC[csmokeC++] = ((float)firea) / 255.0f;
+					smokeC[csmokeC++] = ((float)firer)/255.0f;
+					smokeC[csmokeC++] = ((float)fireg)/255.0f;
+					smokeC[csmokeC++] = ((float)fireb)/255.0f;
+					smokeC[csmokeC++] = ((float)firea)/255.0f;
 					csmoke++;
 #else
 					firea /= 4;
-					fire_r[ny / CELL][nx / CELL] = (firea*firer + (255 - firea)*fire_r[ny / CELL][nx / CELL]) >> 8;
-					fire_g[ny / CELL][nx / CELL] = (firea*fireg + (255 - firea)*fire_g[ny / CELL][nx / CELL]) >> 8;
-					fire_b[ny / CELL][nx / CELL] = (firea*fireb + (255 - firea)*fire_b[ny / CELL][nx / CELL]) >> 8;
+					fire_r[ny/CELL][nx/CELL] = (firea*firer + (255-firea)*fire_r[ny/CELL][nx/CELL]) >> 8;
+					fire_g[ny/CELL][nx/CELL] = (firea*fireg + (255-firea)*fire_g[ny/CELL][nx/CELL]) >> 8;
+					fire_b[ny/CELL][nx/CELL] = (firea*fireb + (255-firea)*fire_b[ny/CELL][nx/CELL]) >> 8;
 #endif
 				}
 			}
-		}
-		else if (pass2) {
+		} else if(pass2){
 			vid[ny*(VIDXRES)+nx] = PIXRGB(128, 128, 128);
-		}
+        }
 	}
-}
-
-std::thread Renderer::render_partsThread(int arg1, int arg2) {
-	return std::thread([=] {render_parts_thread(arg1, arg2); });
-}
-
-void Renderer::render_parts()
-{
-	int nx, ny;
-
-	if (!sim)
-		return;
-
 #ifdef OGLR
-	float fnx, fny;
-	int cfireV = 0, cfireC = 0, cfire = 0;
-	int csmokeV = 0, csmokeC = 0, csmoke = 0;
-	int cblobV = 0, cblobC = 0, cblob = 0;
-	int cblurV = 0, cblurC = 0, cblur = 0;
-	int cglowV = 0, cglowC = 0, cglow = 0;
-	int cflatV = 0, cflatC = 0, cflat = 0;
-	int caddV = 0, caddC = 0, cadd = 0;
-	int clineV = 0, clineC = 0, cline = 0;
-	GLint origBlendSrc, origBlendDst, prevFbo;
 
-	glGetIntegerv(GL_BLEND_SRC, &origBlendSrc);
-	glGetIntegerv(GL_BLEND_DST, &origBlendDst);
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFbo);
-	//Render to the particle FBO
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, partsFbo);
-	glTranslated(0, MENUSIZE, 0);
-#else
-	if (gridSize)//draws the grid
-	{
-		for (ny = 0; ny < YRES; ny++)
-			for (nx = 0; nx < XRES; nx++)
+		//Go into array mode
+		glEnableClientState(GL_COLOR_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		if(cflat)
+		{
+			// -- BEGIN FLAT -- //
+			//Set point size (size of fire texture)
+			glPointSize(1.0f);
+
+			glColorPointer(4, GL_FLOAT, 0, &flatC[0]);
+			glVertexPointer(2, GL_INT, 0, &flatV[0]);
+
+			glDrawArrays(GL_POINTS, 0, cflat);
+
+			//Clear some stuff we set
+			// -- END FLAT -- //
+		}
+
+		if(cblob)
+		{
+			// -- BEGIN BLOB -- //
+			glEnable( GL_POINT_SMOOTH ); //Blobs!
+			glPointSize(2.5f);
+
+			glColorPointer(4, GL_FLOAT, 0, &blobC[0]);
+			glVertexPointer(2, GL_INT, 0, &blobV[0]);
+
+			glDrawArrays(GL_POINTS, 0, cblob);
+
+			//Clear some stuff we set
+			glDisable( GL_POINT_SMOOTH );
+			// -- END BLOB -- //
+		}
+
+		if(cglow || cblur)
+		{
+			// -- BEGIN GLOW -- //
+			//Start and prepare fire program
+			glEnable(GL_TEXTURE_2D);
+			glUseProgram(fireProg);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, glowAlpha);
+			glUniform1i(glGetUniformLocation(fireProg, "fireAlpha"), 0);
+
+			glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_LOWER_LEFT);
+
+			//Make sure we can use texture coords on points
+			glEnable(GL_POINT_SPRITE);
+			glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+			glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+
+			//Set point size (size of fire texture)
+			glPointSize(11.0f);
+
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+			if(cglow)
 			{
-				if (ny % (4 * gridSize) == 0)
-					blendpixel(nx, ny, 100, 100, 100, 80);
-				if (nx % (4 * gridSize) == 0 && ny % (4 * gridSize) != 0)
-					blendpixel(nx, ny, 100, 100, 100, 80);
+				glColorPointer(4, GL_FLOAT, 0, &glowC[0]);
+				glVertexPointer(2, GL_INT, 0, &glowV[0]);
+
+				glDrawArrays(GL_POINTS, 0, cglow);
 			}
-	}
-#endif
 
-	int middle = sim->parts_lastActiveIndex / 2;
+			glPointSize(7.0f);
 
-	//render_parts_thread(0, sim->parts_lastActiveIndex);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	std::thread pt1 = this->render_partsThread(0, middle);
-	std::thread pt2 = this->render_partsThread(middle + 1, sim->parts_lastActiveIndex);
+			if(cblur)
+			{
+				glBindTexture(GL_TEXTURE_2D, blurAlpha);
 
-	pt1.join();
-	pt2.join();
+				glColorPointer(4, GL_FLOAT, 0, &blurC[0]);
+				glVertexPointer(2, GL_INT, 0, &blurV[0]);
 
-	//for (i = 0; i <= sim->parts_lastActiveIndex; i++) {
+				glDrawArrays(GL_POINTS, 0, cblur);
+			}
 
-#ifdef OGLR
-
-	//Go into array mode
-	glEnableClientState(GL_COLOR_ARRAY);
-	glEnableClientState(GL_VERTEX_ARRAY);
-
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	if (cflat)
-	{
-		// -- BEGIN FLAT -- //
-		//Set point size (size of fire texture)
-		glPointSize(1.0f);
-
-		glColorPointer(4, GL_FLOAT, 0, &flatC[0]);
-		glVertexPointer(2, GL_INT, 0, &flatV[0]);
-
-		glDrawArrays(GL_POINTS, 0, cflat);
-
-		//Clear some stuff we set
-		// -- END FLAT -- //
-	}
-
-	if (cblob)
-	{
-		// -- BEGIN BLOB -- //
-		glEnable(GL_POINT_SMOOTH); //Blobs!
-		glPointSize(2.5f);
-
-		glColorPointer(4, GL_FLOAT, 0, &blobC[0]);
-		glVertexPointer(2, GL_INT, 0, &blobV[0]);
-
-		glDrawArrays(GL_POINTS, 0, cblob);
-
-		//Clear some stuff we set
-		glDisable(GL_POINT_SMOOTH);
-		// -- END BLOB -- //
-	}
-
-	if (cglow || cblur)
-	{
-		// -- BEGIN GLOW -- //
-		//Start and prepare fire program
-		glEnable(GL_TEXTURE_2D);
-		glUseProgram(fireProg);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, glowAlpha);
-		glUniform1i(glGetUniformLocation(fireProg, "fireAlpha"), 0);
-
-		glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_LOWER_LEFT);
-
-		//Make sure we can use texture coords on points
-		glEnable(GL_POINT_SPRITE);
-		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-		glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-
-		//Set point size (size of fire texture)
-		glPointSize(11.0f);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-		if (cglow)
-		{
-			glColorPointer(4, GL_FLOAT, 0, &glowC[0]);
-			glVertexPointer(2, GL_INT, 0, &glowV[0]);
-
-			glDrawArrays(GL_POINTS, 0, cglow);
+			//Clear some stuff we set
+			glDisable(GL_POINT_SPRITE);
+			glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+			glUseProgram(0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisable(GL_TEXTURE_2D);
+			// -- END GLOW -- //
 		}
 
-		glPointSize(7.0f);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		if (cblur)
+		if(cadd)
 		{
-			glBindTexture(GL_TEXTURE_2D, blurAlpha);
+			// -- BEGIN ADD -- //
+			//Set point size (size of fire texture)
+			glPointSize(1.0f);
 
-			glColorPointer(4, GL_FLOAT, 0, &blurC[0]);
-			glVertexPointer(2, GL_INT, 0, &blurV[0]);
+			glColorPointer(4, GL_FLOAT, 0, &addC[0]);
+			glVertexPointer(2, GL_INT, 0, &addV[0]);
 
-			glDrawArrays(GL_POINTS, 0, cblur);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+			glDrawArrays(GL_POINTS, 0, cadd);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			//Clear some stuff we set
+			// -- END ADD -- //
 		}
 
-		//Clear some stuff we set
-		glDisable(GL_POINT_SPRITE);
-		glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
-		glUseProgram(0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glDisable(GL_TEXTURE_2D);
-		// -- END GLOW -- //
-	}
-
-	if (cadd)
-	{
-		// -- BEGIN ADD -- //
-		//Set point size (size of fire texture)
-		glPointSize(1.0f);
-
-		glColorPointer(4, GL_FLOAT, 0, &addC[0]);
-		glVertexPointer(2, GL_INT, 0, &addV[0]);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glDrawArrays(GL_POINTS, 0, cadd);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		//Clear some stuff we set
-		// -- END ADD -- //
-	}
-
-	if (cline)
-	{
-		// -- BEGIN LINES -- //
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glEnable(GL_LINE_SMOOTH);
-		glColorPointer(4, GL_FLOAT, 0, &lineC[0]);
-		glVertexPointer(2, GL_FLOAT, 0, &lineV[0]);
-
-		glDrawArrays(GL_LINE_STRIP, 0, cline);
-
-		//Clear some stuff we set
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_LINE_SMOOTH);
-		// -- END LINES -- //
-	}
-
-	if (cfire || csmoke)
-	{
-		// -- BEGIN FIRE -- //
-		//Start and prepare fire program
-		glEnable(GL_TEXTURE_2D);
-		glUseProgram(fireProg);
-		//glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, fireAlpha);
-		glUniform1i(glGetUniformLocation(fireProg, "fireAlpha"), 0);
-
-		//Make sure we can use texture coords on points
-		glEnable(GL_POINT_SPRITE);
-		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-		glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-
-		//Set point size (size of fire texture)
-		glPointSize(CELL * 3);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-		if (cfire)
+		if(cline)
 		{
-			glColorPointer(4, GL_FLOAT, 0, &fireC[0]);
-			glVertexPointer(2, GL_INT, 0, &fireV[0]);
+			// -- BEGIN LINES -- //
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+			glEnable( GL_LINE_SMOOTH );
+			glColorPointer(4, GL_FLOAT, 0, &lineC[0]);
+			glVertexPointer(2, GL_FLOAT, 0, &lineV[0]);
 
-			glDrawArrays(GL_POINTS, 0, cfire);
+			glDrawArrays(GL_LINE_STRIP, 0, cline);
+
+			//Clear some stuff we set
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glDisable(GL_LINE_SMOOTH);
+			// -- END LINES -- //
 		}
 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		if (csmoke)
+		if(cfire || csmoke)
 		{
-			glColorPointer(4, GL_FLOAT, 0, &smokeC[0]);
-			glVertexPointer(2, GL_INT, 0, &smokeV[0]);
+			// -- BEGIN FIRE -- //
+			//Start and prepare fire program
+			glEnable(GL_TEXTURE_2D);
+			glUseProgram(fireProg);
+			//glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, fireAlpha);
+			glUniform1i(glGetUniformLocation(fireProg, "fireAlpha"), 0);
 
-			glDrawArrays(GL_POINTS, 0, csmoke);
+			//Make sure we can use texture coords on points
+			glEnable(GL_POINT_SPRITE);
+			glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+			glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+
+			//Set point size (size of fire texture)
+			glPointSize(CELL*3);
+
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+			if(cfire)
+			{
+				glColorPointer(4, GL_FLOAT, 0, &fireC[0]);
+				glVertexPointer(2, GL_INT, 0, &fireV[0]);
+
+				glDrawArrays(GL_POINTS, 0, cfire);
+			}
+
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+			if(csmoke)
+			{
+				glColorPointer(4, GL_FLOAT, 0, &smokeC[0]);
+				glVertexPointer(2, GL_INT, 0, &smokeV[0]);
+
+				glDrawArrays(GL_POINTS, 0, csmoke);
+			}
+
+			//Clear some stuff we set
+			glDisable(GL_POINT_SPRITE);
+			glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+			glUseProgram(0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisable(GL_TEXTURE_2D);
+			// -- END FIRE -- //
 		}
 
-		//Clear some stuff we set
-		glDisable(GL_POINT_SPRITE);
-		glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
-		glUseProgram(0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glDisable(GL_TEXTURE_2D);
-		// -- END FIRE -- //
-	}
+		glDisableClientState(GL_COLOR_ARRAY);
+		glDisableClientState(GL_VERTEX_ARRAY);
 
-	glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
+		//Reset FBO
+		glTranslated(0, -MENUSIZE, 0);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevFbo);
 
-	//Reset FBO
-	glTranslated(0, -MENUSIZE, 0);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevFbo);
-
-	glBlendFunc(origBlendSrc, origBlendDst);
+		glBlendFunc(origBlendSrc, origBlendDst);
 #endif
 }
-#else
-void Renderer::render_parts()
-{
-	int deca, decr, decg, decb, cola, colr, colg, colb, firea, firer, fireg, fireb, pixel_mode, q, i, t, nx, ny, x, y, caddress;
-	int orbd[4] = { 0, 0, 0, 0 }, orbl[4] = { 0, 0, 0, 0 }, type2, type3;
-	float gradv, flicker;
-	float a = 1023, b = MAX_TEMP, invlnb = a * (1.f / log(b + 1.f));/// division and logarithm is expensive
-	int isvalid;
-	bool pass, pass2, drawflat;
-	Particle * parts;
-	Element *elements;
-	if (!sim)
-		return;
-	parts = sim->parts;
-	elements = sim->elements;
-#ifdef OGLR
-	float fnx, fny;
-	int cfireV = 0, cfireC = 0, cfire = 0;
-	int csmokeV = 0, csmokeC = 0, csmoke = 0;
-	int cblobV = 0, cblobC = 0, cblob = 0;
-	int cblurV = 0, cblurC = 0, cblur = 0;
-	int cglowV = 0, cglowC = 0, cglow = 0;
-	int cflatV = 0, cflatC = 0, cflat = 0;
-	int caddV = 0, caddC = 0, cadd = 0;
-	int clineV = 0, clineC = 0, cline = 0;
-	GLint origBlendSrc, origBlendDst, prevFbo;
-
-	glGetIntegerv(GL_BLEND_SRC, &origBlendSrc);
-	glGetIntegerv(GL_BLEND_DST, &origBlendDst);
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFbo);
-	//Render to the particle FBO
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, partsFbo);
-	glTranslated(0, MENUSIZE, 0);
-#else
-	if (gridSize)//draws the grid
-	{
-		for (ny = 0; ny < YRES; ny++)
-			for (nx = 0; nx < XRES; nx++)
-			{
-				if (ny % (4 * gridSize) == 0)
-					blendpixel(nx, ny, 100, 100, 100, 80);
-				if (nx % (4 * gridSize) == 0 && ny % (4 * gridSize) != 0)
-					blendpixel(nx, ny, 100, 100, 100, 80);
-			}
-	}
-#endif
-	foundElements = 0;
-	for (i = 0; i <= sim->parts_lastActiveIndex; i++) {
-		////levels stacks particles
-		nx = (int)(sim->parts[i].x + 0.5f);
-		ny = (int)(sim->parts[i].y + 0.5f);
-		pass = false;
-		pass2 = false;
-
-		if (sim->lvl) {
-			if (sim->idpointer[i][0] == sim->truecurrentTick) {
-				pass = sim->idpointer[i][2] == (sim->lvl - 1);
-				if (i == sim->pmap2[ny][nx][2] && !pass) { // if is this last particle;
-					pass2 = sim->idpointer[i][2] == (sim->lvl - 2);
-				}
-			}
-		}
-		else {
-			//pass = sim->idpointer[i][2] >= (sim->pmap2[ny][nx][3] - 3) && sim->idpointer[i][2] <= sim->pmap2[ny][nx][3];
-			pass = true;
-			pass2 = false;
-		}
-
-		if (sim->parts[i].type && sim->parts[i].type >= 0 && sim->parts[i].type < PT_NUM && pass) { // só desenha, se a particula tem profundidade menor que 3;
-
-			type3 = t = sim->parts[i].type;
-
-			isvalid = type2 = sim->parts[i].ctype;
-			isvalid = (isvalid >= 0 && isvalid < PT_NUM && sim->elements[isvalid].Enabled);
-			if ((t == PT_PLSM || t == PT_GASEOUS || t == PT_LIQUID || t == PT_SOLID)
-				&& isvalid && type2 != PT_NONE) {
-				type3 = type2;
-			}
-
-#ifdef OGLR
-			fnx = sim->parts[i].x;
-			fny = sim->parts[i].y;
-#endif
-
-			if (nx >= XRES || nx < 0 || ny >= YRES || ny < 0)
-				continue;
-			if (sim->lvl == 0) {
-				if (TYP(sim->photons[ny][nx]) && !(sim->elements[t].Properties & TYPE_ENERGY) && t != PT_STKM && t != PT_STKM2 && t != PT_FIGH)
-					continue;
-			}
-
-			//Defaults
-			pixel_mode = 0 | PMODE_FLAT;
-			cola = 255;
-
-			colr = PIXR(elements[type3].Colour);
-			colg = PIXG(elements[type3].Colour);
-			colb = PIXB(elements[type3].Colour);
-
-			firer = fireg = fireb = firea = 0;
-
-			deca = (sim->parts[i].dcolour >> 24) & 0xFF;
-			decr = (sim->parts[i].dcolour >> 16) & 0xFF;
-			decg = (sim->parts[i].dcolour >> 8) & 0xFF;
-			decb = (sim->parts[i].dcolour) & 0xFF;
-
-			if (decorations_enable && blackDecorations)
-			{
-				if (deca < 250 || decr > 5 || decg > 5 || decb > 5)
-					deca = 0;
-				else
-				{
-					deca = 255;
-					decr = decg = decb = 0;
-				}
-			}
-
-			{
-				if (graphicscache[t].isready)
-				{
-					pixel_mode = graphicscache[t].pixel_mode;
-					cola = graphicscache[t].cola;
-					colr = graphicscache[type3].colr;
-					colg = graphicscache[type3].colg;
-					colb = graphicscache[type3].colb;
-					firea = graphicscache[t].firea;
-					firer = graphicscache[t].firer;
-					fireg = graphicscache[t].fireg;
-					fireb = graphicscache[t].fireb;
-				}
-				else if (!(colour_mode & COLOUR_BASC))
-				{
-					if (elements[t].Graphics)
-					{
-#if !defined(RENDERER) && defined(LUACONSOLE)
-						if (lua_gr_func[t])
-						{
-							if (luacon_graphicsReplacement(this, &(sim->parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb, i))
-							{
-								graphicscache[t].isready = 1;
-								graphicscache[t].pixel_mode = pixel_mode;
-								graphicscache[t].cola = cola;
-								graphicscache[type3].colr = colr;
-								graphicscache[type3].colg = colg;
-								graphicscache[type3].colb = colb;
-								graphicscache[t].firea = firea;
-								graphicscache[t].firer = firer;
-								graphicscache[t].fireg = fireg;
-								graphicscache[t].fireb = fireb;
-							}
-						}
-						else if ((*(elements[t].Graphics))(this, &(sim->parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb)) //That's a lot of args, a struct might be better
-#else
-						if ((*(elements[t].Graphics))(this, &(sim->parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb)) //That's a lot of args, a struct might be better
-#endif
-						{
-							graphicscache[t].isready = 1;
-							graphicscache[t].pixel_mode = pixel_mode;
-							graphicscache[t].cola = cola;
-							graphicscache[type3].colr = colr;
-							graphicscache[type3].colg = colg;
-							graphicscache[type3].colb = colb;
-							graphicscache[t].firea = firea;
-							graphicscache[t].firer = firer;
-							graphicscache[t].fireg = fireg;
-							graphicscache[t].fireb = fireb;
-						}
-					}
-					else
-					{
-						graphicscache[t].isready = 1;
-						graphicscache[t].pixel_mode = pixel_mode;
-						graphicscache[t].cola = cola;
-						graphicscache[type3].colr = colr;
-						graphicscache[type3].colg = colg;
-						graphicscache[type3].colb = colb;
-						graphicscache[t].firea = firea;
-						graphicscache[t].firer = firer;
-						graphicscache[t].fireg = fireg;
-						graphicscache[t].fireb = fireb;
-					}
-				}
-
-				if ((elements[t].Properties & PROP_HOT_GLOW) && sim->parts[i].temp > (elements[t].HighTemperature - 800.0f))
-				{
-					gradv = 3.1415 / (2 * elements[t].HighTemperature - (elements[t].HighTemperature - 800.0f));
-					caddress = (sim->parts[i].temp > elements[t].HighTemperature) ? elements[t].HighTemperature - (elements[t].HighTemperature - 800.0f) : sim->parts[i].temp - (elements[t].HighTemperature - 800.0f);
-					colr += sin(gradv*caddress) * 226;;
-					colg += sin(gradv*caddress*4.55 + 3.14) * 34;
-					colb += sin(gradv*caddress*2.22 + 3.14) * 64;
-				}
-
-				if ((pixel_mode & FIRE_ADD) && !(render_mode & FIRE_ADD))
-					pixel_mode |= PMODE_GLOW;
-				if ((pixel_mode & FIRE_BLEND) && !(render_mode & FIRE_BLEND))
-					pixel_mode |= PMODE_BLUR;
-				if ((pixel_mode & PMODE_BLUR) && !(render_mode & PMODE_BLUR))
-					pixel_mode |= PMODE_FLAT;
-				if ((pixel_mode & PMODE_GLOW) && !(render_mode & PMODE_GLOW))
-					pixel_mode |= PMODE_BLEND;
-				if (render_mode & PMODE_BLOB)
-					pixel_mode |= PMODE_BLOB;
-
-				pixel_mode &= render_mode;
-				/////
-				//Alter colour based on display mode
-				if (colour_mode & COLOUR_HEAT)
-				{
-					//caddress = restrict_flt((int)( restrict_flt((float)(sim->parts[i].temp+(-MIN_TEMP)), 0.0f, MAX_TEMP+(-MIN_TEMP)) / ((MAX_TEMP+(-MIN_TEMP))/1024) ) *3, 0.0f, (1024.0f*3)-3);
-					caddress = restrict_flt((2.5466622703f*invlnb*log(1.f + restrict_flt(sim->parts[i].temp, 0.f, MAX_TEMP) * 0.00090909090909f)), 0.0f, a); // escala logaritmica
-					firea = 255;
-					firer = colr = heatcolor[caddress][0];
-					fireg = colg = heatcolor[caddress][1];
-					fireb = colb = heatcolor[caddress][2];
-					cola = 255;
-					if (pixel_mode & (FIREMODE | PMODE_GLOW))
-						pixel_mode = (pixel_mode & ~(FIREMODE | PMODE_GLOW)) | PMODE_BLUR;
-					else if ((pixel_mode & (PMODE_BLEND | PMODE_ADD)) == (PMODE_BLEND | PMODE_ADD))
-						pixel_mode = (pixel_mode & ~(PMODE_BLEND | PMODE_ADD)) | PMODE_FLAT;
-					else if (!pixel_mode)
-						pixel_mode |= PMODE_FLAT;
-				}
-				else if (colour_mode & COLOUR_LIFE)
-				{
-					gradv = 0.4f;
-					if (!(sim->parts[i].life < 5))
-						q = sqrt((float)sim->parts[i].life);
-					else
-						q = sim->parts[i].life;
-					colr = colg = colb = sin(gradv*q) * 100 + 128;
-					cola = 255;
-					if (pixel_mode & (FIREMODE | PMODE_GLOW))
-						pixel_mode = (pixel_mode & ~(FIREMODE | PMODE_GLOW)) | PMODE_BLUR;
-					else if ((pixel_mode & (PMODE_BLEND | PMODE_ADD)) == (PMODE_BLEND | PMODE_ADD))
-						pixel_mode = (pixel_mode & ~(PMODE_BLEND | PMODE_ADD)) | PMODE_FLAT;
-					else if (!pixel_mode)
-						pixel_mode |= PMODE_FLAT;
-				}
-				else if (colour_mode & COLOUR_BASC)
-				{
-					colr = PIXR(elements[t].Colour);
-					colg = PIXG(elements[t].Colour);
-					colb = PIXB(elements[t].Colour);
-					pixel_mode = PMODE_FLAT;
-				}
-
-				//Apply decoration colour
-				if (!(colour_mode & ~COLOUR_GRAD) && decorations_enable && deca)
-				{
-					deca++;
-					if (!(pixel_mode & NO_DECO))
-					{
-						colr = (deca*decr + (256 - deca)*colr) >> 8;
-						colg = (deca*decg + (256 - deca)*colg) >> 8;
-						colb = (deca*decb + (256 - deca)*colb) >> 8;
-					}
-
-					if (pixel_mode & DECO_FIRE)
-					{
-						firer = (deca*decr + (256 - deca)*firer) >> 8;
-						fireg = (deca*decg + (256 - deca)*fireg) >> 8;
-						fireb = (deca*decb + (256 - deca)*fireb) >> 8;
-					}
-				}
-
-				if (findingElement)
-				{
-					if (findingElement == parts[i].type)
-					{
-						colr = firer = 255;
-						colg = fireg = colb = fireb = 0;
-						foundElements++;
-					}
-					else
-					{
-						colr /= 10;
-						colg /= 10;
-						colb /= 10;
-						firer /= 5;
-						fireg /= 5;
-						fireb /= 5;
-					}
-				}
-
-				if (colour_mode & COLOUR_GRAD)
-				{
-					float frequency = 0.05;
-					int q = sim->parts[i].temp - 40;
-					colr = sin(frequency*q) * 16 + colr;
-					colg = sin(frequency*q) * 16 + colg;
-					colb = sin(frequency*q) * 16 + colb;
-					if (pixel_mode & (FIREMODE | PMODE_GLOW)) pixel_mode = (pixel_mode & ~(FIREMODE | PMODE_GLOW)) | PMODE_BLUR;
-				}
-
-#ifndef OGLR
-				//All colours are now set, check ranges
-				if (colr > 255) colr = 255;
-				else if (colr < 0) colr = 0;
-				if (colg > 255) colg = 255;
-				else if (colg < 0) colg = 0;
-				if (colb > 255) colb = 255;
-				else if (colb < 0) colb = 0;
-				if (cola > 255) cola = 255;
-				else if (cola < 0) cola = 0;
-
-				if (firer > 255) firer = 255;
-				else if (firer < 0) firer = 0;
-				if (fireg > 255) fireg = 255;
-				else if (fireg < 0) fireg = 0;
-				if (fireb > 255) fireb = 255;
-				else if (fireb < 0) fireb = 0;
-				if (firea > 255) firea = 255;
-				else if (firea < 0) firea = 0;
-#endif
-
-				//Pixel rendering
-				if (pixel_mode & EFFECT_LINES)
-				{
-					if (t == PT_SOAP)
-					{
-						if ((parts[i].ctype & 3) == 3 && parts[i].tmp >= 0 && parts[i].tmp < NPART)
-							draw_line(nx, ny, (int)(parts[parts[i].tmp].x + 0.5f), (int)(parts[parts[i].tmp].y + 0.5f), colr, colg, colb, cola);
-					}
-				}
-				if (pixel_mode & PSPEC_STICKMAN)
-				{
-					int legr, legg, legb;
-					playerst *cplayer;
-					if (t == PT_STKM)
-						cplayer = &sim->player;
-					else if (t == PT_STKM2)
-						cplayer = &sim->player2;
-					else if (t == PT_FIGH && sim->parts[i].tmp >= 0 && sim->parts[i].tmp < MAX_FIGHTERS)
-						cplayer = &sim->fighters[(unsigned char)sim->parts[i].tmp];
-					else
-						continue;
-
-					if (mousePos.X > (nx - 3) && mousePos.X < (nx + 3) && mousePos.Y<(ny + 3) && mousePos.Y>(ny - 3)) //If mouse is in the head
-					{
-						String hp = String::Build(Format::Width(sim->parts[i].life, 3));
-						drawtext(mousePos.X - 8 - 2 * (sim->parts[i].life < 100) - 2 * (sim->parts[i].life < 10), mousePos.Y - 12, hp, 255, 255, 255, 255);
-					}
-
-					if (findingElement == t)
-					{
-						colr = 255;
-						colg = colb = 0;
-					}
-					else if (colour_mode != COLOUR_HEAT)
-					{
-						if (cplayer->fan)
-						{
-							colr = PIXR(0x8080FF);
-							colg = PIXG(0x8080FF);
-							colb = PIXB(0x8080FF);
-						}
-						else if (cplayer->elem < PT_NUM && cplayer->elem > 0)
-						{
-							colr = PIXR(elements[cplayer->elem].Colour);
-							colg = PIXG(elements[cplayer->elem].Colour);
-							colb = PIXB(elements[cplayer->elem].Colour);
-						}
-						else
-						{
-							colr = 0x80;
-							colg = 0x80;
-							colb = 0xFF;
-						}
-					}
-
-#ifdef OGLR
-					glColor4f(((float)colr) / 255.0f, ((float)colg) / 255.0f, ((float)colb) / 255.0f, 1.0f);
-					glBegin(GL_LINE_STRIP);
-					if (t == PT_FIGH)
-					{
-						glVertex2f(fnx, fny + 2);
-						glVertex2f(fnx + 2, fny);
-						glVertex2f(fnx, fny - 2);
-						glVertex2f(fnx - 2, fny);
-						glVertex2f(fnx, fny + 2);
-					}
-					else
-					{
-						glVertex2f(fnx - 2, fny - 2);
-						glVertex2f(fnx + 2, fny - 2);
-						glVertex2f(fnx + 2, fny + 2);
-						glVertex2f(fnx - 2, fny + 2);
-						glVertex2f(fnx - 2, fny - 2);
-					}
-					glEnd();
-					glBegin(GL_LINES);
-
-					if (colour_mode != COLOUR_HEAT)
-					{
-						if (t == PT_STKM2)
-							glColor4f(100.0f / 255.0f, 100.0f / 255.0f, 1.0f, 1.0f);
-						else
-							glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-					}
-
-					glVertex2f(nx, ny + 3);
-					glVertex2f(cplayer->legs[0], cplayer->legs[1]);
-
-					glVertex2f(cplayer->legs[0], cplayer->legs[1]);
-					glVertex2f(cplayer->legs[4], cplayer->legs[5]);
-
-					glVertex2f(nx, ny + 3);
-					glVertex2f(cplayer->legs[8], cplayer->legs[9]);
-
-					glVertex2f(cplayer->legs[8], cplayer->legs[9]);
-					glVertex2f(cplayer->legs[12], cplayer->legs[13]);
-					glEnd();
-#else
-					if (findingElement && findingElement == t)
-					{
-						legr = 255;
-						legg = legb = 0;
-					}
-					else if (colour_mode == COLOUR_HEAT)
-					{
-						legr = colr;
-						legg = colg;
-						legb = colb;
-					}
-					else if (t == PT_STKM2)
-					{
-						legr = 100;
-						legg = 100;
-						legb = 255;
-					}
-					else
-					{
-						legr = 255;
-						legg = 255;
-						legb = 255;
-					}
-
-					if (findingElement && findingElement != t)
-					{
-						colr /= 10;
-						colg /= 10;
-						colb /= 10;
-						legr /= 10;
-						legg /= 10;
-						legb /= 10;
-					}
-
-					//head
-					if (t == PT_FIGH)
-					{
-						draw_line(nx, ny + 2, nx + 2, ny, colr, colg, colb, 255);
-						draw_line(nx + 2, ny, nx, ny - 2, colr, colg, colb, 255);
-						draw_line(nx, ny - 2, nx - 2, ny, colr, colg, colb, 255);
-						draw_line(nx - 2, ny, nx, ny + 2, colr, colg, colb, 255);
-					}
-					else
-					{
-						draw_line(nx - 2, ny + 2, nx + 2, ny + 2, colr, colg, colb, 255);
-						draw_line(nx - 2, ny - 2, nx + 2, ny - 2, colr, colg, colb, 255);
-						draw_line(nx - 2, ny - 2, nx - 2, ny + 2, colr, colg, colb, 255);
-						draw_line(nx + 2, ny - 2, nx + 2, ny + 2, colr, colg, colb, 255);
-					}
-					//legs
-					draw_line(nx, ny + 3, cplayer->legs[0], cplayer->legs[1], legr, legg, legb, 255);
-					draw_line(cplayer->legs[0], cplayer->legs[1], cplayer->legs[4], cplayer->legs[5], legr, legg, legb, 255);
-					draw_line(nx, ny + 3, cplayer->legs[8], cplayer->legs[9], legr, legg, legb, 255);
-					draw_line(cplayer->legs[8], cplayer->legs[9], cplayer->legs[12], cplayer->legs[13], legr, legg, legb, 255);
-					if (cplayer->rocketBoots)
-					{
-						for (int leg = 0; leg < 2; leg++)
-						{
-							int nx = cplayer->legs[leg * 8 + 4], ny = cplayer->legs[leg * 8 + 5];
-							int colr = 255, colg = 0, colb = 255;
-							if (((int)(cplayer->comm) & 0x04) == 0x04 || (((int)(cplayer->comm) & 0x01) == 0x01 && leg == 0) || (((int)(cplayer->comm) & 0x02) == 0x02 && leg == 1))
-								blendpixel(nx, ny, 0, 255, 0, 255);
-							else
-								blendpixel(nx, ny, 255, 0, 0, 255);
-							blendpixel(nx + 1, ny, colr, colg, colb, 223);
-							blendpixel(nx - 1, ny, colr, colg, colb, 223);
-							blendpixel(nx, ny + 1, colr, colg, colb, 223);
-							blendpixel(nx, ny - 1, colr, colg, colb, 223);
-
-							blendpixel(nx + 1, ny - 1, colr, colg, colb, 112);
-							blendpixel(nx - 1, ny - 1, colr, colg, colb, 112);
-							blendpixel(nx + 1, ny + 1, colr, colg, colb, 112);
-							blendpixel(nx - 1, ny + 1, colr, colg, colb, 112);
-						}
-					}
-#endif
-				}
-				if (pixel_mode & PMODE_FLAT)
-				{
-#ifdef OGLR
-					flatV[cflatV++] = nx;
-					flatV[cflatV++] = ny;
-					flatC[cflatC++] = ((float)colr) / 255.0f;
-					flatC[cflatC++] = ((float)colg) / 255.0f;
-					flatC[cflatC++] = ((float)colb) / 255.0f;
-					flatC[cflatC++] = 1.0f;
-					cflat++;
-#else
-					vid[ny*(VIDXRES)+nx] = PIXRGB(colr, colg, colb);
-#endif
-				}
-				if (pixel_mode & PMODE_BLEND)
-				{
-#ifdef OGLR
-					flatV[cflatV++] = nx;
-					flatV[cflatV++] = ny;
-					flatC[cflatC++] = ((float)colr) / 255.0f;
-					flatC[cflatC++] = ((float)colg) / 255.0f;
-					flatC[cflatC++] = ((float)colb) / 255.0f;
-					flatC[cflatC++] = ((float)cola) / 255.0f;
-					cflat++;
-#else
-					blendpixel(nx, ny, colr, colg, colb, cola);
-#endif
-				}
-				if (pixel_mode & PMODE_ADD)
-				{
-#ifdef OGLR
-					addV[caddV++] = nx;
-					addV[caddV++] = ny;
-					addC[caddC++] = ((float)colr) / 255.0f;
-					addC[caddC++] = ((float)colg) / 255.0f;
-					addC[caddC++] = ((float)colb) / 255.0f;
-					addC[caddC++] = ((float)cola) / 255.0f;
-					cadd++;
-#else
-					addpixel(nx, ny, colr, colg, colb, cola);
-#endif
-				}
-				if (pixel_mode & PMODE_BLOB)
-				{
-#ifdef OGLR
-					blobV[cblobV++] = nx;
-					blobV[cblobV++] = ny;
-					blobC[cblobC++] = ((float)colr) / 255.0f;
-					blobC[cblobC++] = ((float)colg) / 255.0f;
-					blobC[cblobC++] = ((float)colb) / 255.0f;
-					blobC[cblobC++] = 1.0f;
-					cblob++;
-#else
-					vid[ny*(VIDXRES)+nx] = PIXRGB(colr, colg, colb);
-
-					blendpixel(nx + 1, ny, colr, colg, colb, 223);
-					blendpixel(nx - 1, ny, colr, colg, colb, 223);
-					blendpixel(nx, ny + 1, colr, colg, colb, 223);
-					blendpixel(nx, ny - 1, colr, colg, colb, 223);
-
-					blendpixel(nx + 1, ny - 1, colr, colg, colb, 112);
-					blendpixel(nx - 1, ny - 1, colr, colg, colb, 112);
-					blendpixel(nx + 1, ny + 1, colr, colg, colb, 112);
-					blendpixel(nx - 1, ny + 1, colr, colg, colb, 112);
-#endif
-				}
-				if (pixel_mode & PMODE_GLOW)
-				{
-					int cola1 = (12 * cola) / 255, cola96 = (96 * cola) / 255, x2;
-#ifdef OGLR
-					glowV[cglowV++] = nx;
-					glowV[cglowV++] = ny;
-					glowC[cglowC++] = ((float)colr) / 255.0f;
-					glowC[cglowC++] = ((float)colg) / 255.0f;
-					glowC[cglowC++] = ((float)colb) / 255.0f;
-					glowC[cglowC++] = 1.0f;
-					cglow++;
-#else
-					addpixel(nx, ny, colr, colg, colb, (192 * cola) / 255);
-					addpixel(nx + 1, ny, colr, colg, colb, cola96);
-					addpixel(nx - 1, ny, colr, colg, colb, cola96);
-					addpixel(nx, ny + 1, colr, colg, colb, cola96);
-					addpixel(nx, ny - 1, colr, colg, colb, cola96);
-
-					for (x = 1; x < 4; x++) {
-						addpixel(nx, ny - x, colr, colg, colb, cola1);
-						addpixel(nx, ny + x, colr, colg, colb, cola1);
-						addpixel(nx - x, ny, colr, colg, colb, cola1);
-						addpixel(nx + x, ny, colr, colg, colb, cola1);
-						x2 = x * x;
-						for (y = 1; y < 4; y++) {
-							if (x2 + y*y <= 9)
-								continue;
-							addpixel(nx + x, ny - y, colr, colg, colb, cola1);
-							addpixel(nx - x, ny + y, colr, colg, colb, cola1);
-							addpixel(nx + x, ny + y, colr, colg, colb, cola1);
-							addpixel(nx - x, ny - y, colr, colg, colb, cola1);
-						}
-					}
-#endif
-				}
-				if (pixel_mode & PMODE_BLUR)
-				{
-#ifdef OGLR
-					blurV[cblurV++] = nx;
-					blurV[cblurV++] = ny;
-					blurC[cblurC++] = ((float)colr) / 255.0f;
-					blurC[cblurC++] = ((float)colg) / 255.0f;
-					blurC[cblurC++] = ((float)colb) / 255.0f;
-					blurC[cblurC++] = 1.0f;
-					cblur++;
-#else
-					for (x = -3; x < 4; x++)
-					{
-						for (y = -3; y < 4; y++)
-						{
-							if (abs(x) + abs(y) < 2 && !(abs(x) == 2 || abs(y) == 2))
-								blendpixel(x + nx, y + ny, colr, colg, colb, 30);
-							if (abs(x) + abs(y) <= 3 && abs(x) + abs(y))
-								blendpixel(x + nx, y + ny, colr, colg, colb, 20);
-							if (abs(x) + abs(y) == 2)
-								blendpixel(x + nx, y + ny, colr, colg, colb, 10);
-						}
-					}
-#endif
-				}
-				if (pixel_mode & PMODE_SPARK)
-				{
-					flicker = random_gen() % 20;
-#ifdef OGLR
-					//Oh god, this is awful
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx - 5;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 30;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx + 5;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny - 5;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 30;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny + 5;
-					cline++;
-#else
-					gradv = 4 * sim->parts[i].life + flicker;
-					for (x = 0; gradv > 0.5; x++) {
-						addpixel(nx + x, ny, colr, colg, colb, gradv);
-						addpixel(nx - x, ny, colr, colg, colb, gradv);
-
-						addpixel(nx, ny + x, colr, colg, colb, gradv);
-						addpixel(nx, ny - x, colr, colg, colb, gradv);
-						gradv = gradv / 1.5f;
-					}
-#endif
-				}
-				if (pixel_mode & PMODE_FLARE)
-				{
-					flicker = random_gen() % 20;
-#ifdef OGLR
-					//Oh god, this is awful
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx - 10;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 40;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx + 10;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny - 10;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 30;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny + 10;
-					cline++;
-#else
-					gradv = flicker + fabs(parts[i].vx) * 17 + fabs(sim->parts[i].vy) * 17;
-					blendpixel(nx, ny, colr, colg, colb, (gradv * 4) > 255 ? 255 : (gradv * 4));
-					blendpixel(nx + 1, ny, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx - 1, ny, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx, ny + 1, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx, ny - 1, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					if (gradv > 255) gradv = 255;
-					blendpixel(nx + 1, ny - 1, colr, colg, colb, gradv);
-					blendpixel(nx - 1, ny - 1, colr, colg, colb, gradv);
-					blendpixel(nx + 1, ny + 1, colr, colg, colb, gradv);
-					blendpixel(nx - 1, ny + 1, colr, colg, colb, gradv);
-					for (x = 1; gradv > 0.5; x++) {
-						addpixel(nx + x, ny, colr, colg, colb, gradv);
-						addpixel(nx - x, ny, colr, colg, colb, gradv);
-						addpixel(nx, ny + x, colr, colg, colb, gradv);
-						addpixel(nx, ny - x, colr, colg, colb, gradv);
-						gradv = gradv / 1.2f;
-					}
-#endif
-				}
-				if (pixel_mode & PMODE_LFLARE)
-				{
-					flicker = random_gen() % 20;
-#ifdef OGLR
-					//Oh god, this is awful
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx - 70;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 30;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx + 70;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny - 70;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 1.0f - ((float)flicker) / 50;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny;
-					cline++;
-
-					lineC[clineC++] = ((float)colr) / 255.0f;
-					lineC[clineC++] = ((float)colg) / 255.0f;
-					lineC[clineC++] = ((float)colb) / 255.0f;
-					lineC[clineC++] = 0.0f;
-					lineV[clineV++] = fnx;
-					lineV[clineV++] = fny + 70;
-					cline++;
-#else
-					gradv = flicker + fabs(parts[i].vx) * 17 + fabs(parts[i].vy) * 17;
-					blendpixel(nx, ny, colr, colg, colb, (gradv * 4) > 255 ? 255 : (gradv * 4));
-					blendpixel(nx + 1, ny, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx - 1, ny, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx, ny + 1, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					blendpixel(nx, ny - 1, colr, colg, colb, (gradv * 2) > 255 ? 255 : (gradv * 2));
-					if (gradv > 255) gradv = 255;
-					blendpixel(nx + 1, ny - 1, colr, colg, colb, gradv);
-					blendpixel(nx - 1, ny - 1, colr, colg, colb, gradv);
-					blendpixel(nx + 1, ny + 1, colr, colg, colb, gradv);
-					blendpixel(nx - 1, ny + 1, colr, colg, colb, gradv);
-					for (x = 1; gradv > 0.5; x++) {
-						addpixel(nx + x, ny, colr, colg, colb, gradv);
-						addpixel(nx - x, ny, colr, colg, colb, gradv);
-						addpixel(nx, ny + x, colr, colg, colb, gradv);
-						addpixel(nx, ny - x, colr, colg, colb, gradv);
-						gradv = gradv / 1.01f;
-					}
-#endif
-				}
-				if (pixel_mode & EFFECT_GRAVIN)
-				{
-					int nxo = 0;
-					int nyo = 0;
-					int r;
-					float drad = 0.0f;
-					float ddist = 0.0f;
-					sim->orbitalparts_get(parts[i].life, parts[i].ctype, orbd, orbl);
-					for (r = 0; r < 4; r++) {
-						ddist = ((float)orbd[r]) / 16.0f;
-						drad = (M_PI * ((float)orbl[r]) / 180.0f)*1.41f;
-						nxo = (int)(ddist*cos(drad));
-						nyo = (int)(ddist*sin(drad));
-						if (ny + nyo > 0 && ny + nyo < YRES && nx + nxo>0 && nx + nxo < XRES && TYP(sim->pmap[ny + nyo][nx + nxo]) != PT_PRTI)
-							addpixel(nx + nxo, ny + nyo, colr, colg, colb, 255 - orbd[r]);
-					}
-				}
-				if (pixel_mode & EFFECT_GRAVOUT)
-				{
-					int nxo = 0;
-					int nyo = 0;
-					int r;
-					float drad = 0.0f;
-					float ddist = 0.0f;
-					sim->orbitalparts_get(parts[i].life, parts[i].ctype, orbd, orbl);
-					for (r = 0; r < 4; r++) {
-						ddist = ((float)orbd[r]) / 16.0f;
-						drad = (M_PI * ((float)orbl[r]) / 180.0f)*1.41f;
-						nxo = (int)(ddist*cos(drad));
-						nyo = (int)(ddist*sin(drad));
-						if (ny + nyo > 0 && ny + nyo < YRES && nx + nxo>0 && nx + nxo < XRES && TYP(sim->pmap[ny + nyo][nx + nxo]) != PT_PRTO)
-							addpixel(nx + nxo, ny + nyo, colr, colg, colb, 255 - orbd[r]);
-					}
-				}
-				if (pixel_mode & EFFECT_DBGLINES && !(display_mode&DISPLAY_PERS))
-				{
-					// draw lines connecting wifi/portal channels
-					if (mousePos.X == nx && mousePos.Y == ny && i == ID(sim->pmap[ny][nx]) && debugLines)
-					{
-						int type = parts[i].type, tmp = (int)((parts[i].temp - 73.15f) / 100 + 1), othertmp;
-						if (type == PT_PRTI)
-							type = PT_PRTO;
-						else if (type == PT_PRTO)
-							type = PT_PRTI;
-						for (int z = 0; z <= sim->parts_lastActiveIndex; z++)
-						{
-							if (parts[z].type == type && (!(sim->idpointer[z][2] > 3 && sim->truecurrentTick == sim->idpointer[z][0])))
-							{
-								othertmp = (int)((parts[z].temp - 73.15f) / 100 + 1);
-								if (tmp == othertmp)
-									xor_line(nx, ny, (int)(parts[z].x + 0.5f), (int)(parts[z].y + 0.5f));
-							}
-						}
-					}
-				}
-				//Fire effects
-				if (firea && (pixel_mode & FIRE_BLEND))
-				{
-#ifdef OGLR
-					smokeV[csmokeV++] = nx;
-					smokeV[csmokeV++] = ny;
-					smokeC[csmokeC++] = ((float)firer) / 255.0f;
-					smokeC[csmokeC++] = ((float)fireg) / 255.0f;
-					smokeC[csmokeC++] = ((float)fireb) / 255.0f;
-					smokeC[csmokeC++] = ((float)firea) / 255.0f;
-					csmoke++;
-#else
-					firea /= 2;
-					fire_r[ny / CELL][nx / CELL] = (firea*firer + (255 - firea)*fire_r[ny / CELL][nx / CELL]) >> 8;
-					fire_g[ny / CELL][nx / CELL] = (firea*fireg + (255 - firea)*fire_g[ny / CELL][nx / CELL]) >> 8;
-					fire_b[ny / CELL][nx / CELL] = (firea*fireb + (255 - firea)*fire_b[ny / CELL][nx / CELL]) >> 8;
-#endif
-				}
-				if (firea && (pixel_mode & FIRE_ADD))
-				{
-#ifdef OGLR
-					fireV[cfireV++] = nx;
-					fireV[cfireV++] = ny;
-					fireC[cfireC++] = ((float)firer) / 255.0f;
-					fireC[cfireC++] = ((float)fireg) / 255.0f;
-					fireC[cfireC++] = ((float)fireb) / 255.0f;
-					fireC[cfireC++] = ((float)firea) / 255.0f;
-					cfire++;
-#else
-					firea /= 8;
-					firer = ((firea*firer) >> 8) + fire_r[ny / CELL][nx / CELL];
-					fireg = ((firea*fireg) >> 8) + fire_g[ny / CELL][nx / CELL];
-					fireb = ((firea*fireb) >> 8) + fire_b[ny / CELL][nx / CELL];
-
-					if (firer > 255)
-						firer = 255;
-					if (fireg > 255)
-						fireg = 255;
-					if (fireb > 255)
-						fireb = 255;
-
-					fire_r[ny / CELL][nx / CELL] = firer;
-					fire_g[ny / CELL][nx / CELL] = fireg;
-					fire_b[ny / CELL][nx / CELL] = fireb;
-#endif
-				}
-				if (firea && (pixel_mode & FIRE_SPARK))
-				{
-#ifdef OGLR
-					smokeV[csmokeV++] = nx;
-					smokeV[csmokeV++] = ny;
-					smokeC[csmokeC++] = ((float)firer) / 255.0f;
-					smokeC[csmokeC++] = ((float)fireg) / 255.0f;
-					smokeC[csmokeC++] = ((float)fireb) / 255.0f;
-					smokeC[csmokeC++] = ((float)firea) / 255.0f;
-					csmoke++;
-#else
-					firea /= 4;
-					fire_r[ny / CELL][nx / CELL] = (firea*firer + (255 - firea)*fire_r[ny / CELL][nx / CELL]) >> 8;
-					fire_g[ny / CELL][nx / CELL] = (firea*fireg + (255 - firea)*fire_g[ny / CELL][nx / CELL]) >> 8;
-					fire_b[ny / CELL][nx / CELL] = (firea*fireb + (255 - firea)*fire_b[ny / CELL][nx / CELL]) >> 8;
-#endif
-				}
-			}
-		}
-		else if (pass2) {
-			vid[ny*(VIDXRES)+nx] = PIXRGB(128, 128, 128);
-		}
-	}
-#ifdef OGLR
-
-	//Go into array mode
-	glEnableClientState(GL_COLOR_ARRAY);
-	glEnableClientState(GL_VERTEX_ARRAY);
-
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	if (cflat)
-	{
-		// -- BEGIN FLAT -- //
-		//Set point size (size of fire texture)
-		glPointSize(1.0f);
-
-		glColorPointer(4, GL_FLOAT, 0, &flatC[0]);
-		glVertexPointer(2, GL_INT, 0, &flatV[0]);
-
-		glDrawArrays(GL_POINTS, 0, cflat);
-
-		//Clear some stuff we set
-		// -- END FLAT -- //
-	}
-
-	if (cblob)
-	{
-		// -- BEGIN BLOB -- //
-		glEnable(GL_POINT_SMOOTH); //Blobs!
-		glPointSize(2.5f);
-
-		glColorPointer(4, GL_FLOAT, 0, &blobC[0]);
-		glVertexPointer(2, GL_INT, 0, &blobV[0]);
-
-		glDrawArrays(GL_POINTS, 0, cblob);
-
-		//Clear some stuff we set
-		glDisable(GL_POINT_SMOOTH);
-		// -- END BLOB -- //
-	}
-
-	if (cglow || cblur)
-	{
-		// -- BEGIN GLOW -- //
-		//Start and prepare fire program
-		glEnable(GL_TEXTURE_2D);
-		glUseProgram(fireProg);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, glowAlpha);
-		glUniform1i(glGetUniformLocation(fireProg, "fireAlpha"), 0);
-
-		glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_LOWER_LEFT);
-
-		//Make sure we can use texture coords on points
-		glEnable(GL_POINT_SPRITE);
-		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-		glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-
-		//Set point size (size of fire texture)
-		glPointSize(11.0f);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-		if (cglow)
-		{
-			glColorPointer(4, GL_FLOAT, 0, &glowC[0]);
-			glVertexPointer(2, GL_INT, 0, &glowV[0]);
-
-			glDrawArrays(GL_POINTS, 0, cglow);
-		}
-
-		glPointSize(7.0f);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		if (cblur)
-		{
-			glBindTexture(GL_TEXTURE_2D, blurAlpha);
-
-			glColorPointer(4, GL_FLOAT, 0, &blurC[0]);
-			glVertexPointer(2, GL_INT, 0, &blurV[0]);
-
-			glDrawArrays(GL_POINTS, 0, cblur);
-		}
-
-		//Clear some stuff we set
-		glDisable(GL_POINT_SPRITE);
-		glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
-		glUseProgram(0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glDisable(GL_TEXTURE_2D);
-		// -- END GLOW -- //
-	}
-
-	if (cadd)
-	{
-		// -- BEGIN ADD -- //
-		//Set point size (size of fire texture)
-		glPointSize(1.0f);
-
-		glColorPointer(4, GL_FLOAT, 0, &addC[0]);
-		glVertexPointer(2, GL_INT, 0, &addV[0]);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glDrawArrays(GL_POINTS, 0, cadd);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		//Clear some stuff we set
-		// -- END ADD -- //
-	}
-
-	if (cline)
-	{
-		// -- BEGIN LINES -- //
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glEnable(GL_LINE_SMOOTH);
-		glColorPointer(4, GL_FLOAT, 0, &lineC[0]);
-		glVertexPointer(2, GL_FLOAT, 0, &lineV[0]);
-
-		glDrawArrays(GL_LINE_STRIP, 0, cline);
-
-		//Clear some stuff we set
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_LINE_SMOOTH);
-		// -- END LINES -- //
-	}
-
-	if (cfire || csmoke)
-	{
-		// -- BEGIN FIRE -- //
-		//Start and prepare fire program
-		glEnable(GL_TEXTURE_2D);
-		glUseProgram(fireProg);
-		//glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, fireAlpha);
-		glUniform1i(glGetUniformLocation(fireProg, "fireAlpha"), 0);
-
-		//Make sure we can use texture coords on points
-		glEnable(GL_POINT_SPRITE);
-		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-		glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-
-		//Set point size (size of fire texture)
-		glPointSize(CELL * 3);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-		if (cfire)
-		{
-			glColorPointer(4, GL_FLOAT, 0, &fireC[0]);
-			glVertexPointer(2, GL_INT, 0, &fireV[0]);
-
-			glDrawArrays(GL_POINTS, 0, cfire);
-		}
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		if (csmoke)
-		{
-			glColorPointer(4, GL_FLOAT, 0, &smokeC[0]);
-			glVertexPointer(2, GL_INT, 0, &smokeV[0]);
-
-			glDrawArrays(GL_POINTS, 0, csmoke);
-		}
-
-		//Clear some stuff we set
-		glDisable(GL_POINT_SPRITE);
-		glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
-		glUseProgram(0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glDisable(GL_TEXTURE_2D);
-		// -- END FIRE -- //
-	}
-
-	glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-
-	//Reset FBO
-	glTranslated(0, -MENUSIZE, 0);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevFbo);
-
-	glBlendFunc(origBlendSrc, origBlendDst);
-#endif
-}
-#endif
 
 void Renderer::draw_other() // EMP effect
 {
@@ -3575,13 +2413,13 @@ void Renderer::draw_air()
 	int red, green, blue;
 	float a = 1023, b = MAX_TEMP, invlnb = a*(1.f / log(b + 1.f));/// division and logarithm is expensive
 	pixel c = 0;
-	/*int heatcolor[1024][3];
+	int heatcolor[1024][3];
 	for (int i = 0, s = 0; s < 1024 && i < 3071; i+=3){
 		heatcolor[s][0] = color_data[i];
 		heatcolor[s][1] = color_data[i+1];
 		heatcolor[s][2] = color_data[i+2];
 		s++;
-	}*/
+	}
 
 	for (y=0; y<YRES/CELL; y++)
 		for (x=0; x<XRES/CELL; x++)
@@ -3602,7 +2440,7 @@ void Renderer::draw_air()
 					vv = 0;
 				} else {
 					norm = sqrt(vy[y][x] * vy[y][x] + vx[y][x] * vx[y][x]);
-					vv = 255.f - 255.f / (1.f + 0.075f * norm);//0.07238241f
+					vv = 255.f - 255.f / (1.f + 0.07238241f * norm);
 					ss = 255.f / (1.f + 0.004342944f * norm);
 
 					if (absvx < 0.001f && vy[y][x] > 0) {angle = 4.71238898f;}
@@ -3875,7 +2713,7 @@ Renderer::Renderer(Graphics * g, Simulation * sim):
 	renderModePresets[7].RenderModes.push_back(RENDER_BLUR);
 	renderModePresets[7].RenderModes.push_back(RENDER_EFFE);
 	renderModePresets[7].RenderModes.push_back(RENDER_BASC);
-	//renderModePresets[7].DisplayModes.push_back(DISPLAY_WARP); // So expensive
+	renderModePresets[7].DisplayModes.push_back(DISPLAY_WARP);
 
 	renderModePresets[8].Name = "Nothing Display";
 	renderModePresets[8].RenderModes.push_back(RENDER_BASC);
@@ -3905,13 +2743,6 @@ Renderer::Renderer(Graphics * g, Simulation * sim):
 
 	flm_data = Graphics::GenerateGradient(fireColours, fireColoursPoints, fireColoursCount, 200);
 	plasma_data = Graphics::GenerateGradient(plasmaColours, plasmaColoursPoints, plasmaColoursCount, 200);
-
-	for (int i = 0, s = 0; s < 1024 && i < 3071; i += 3) {
-		heatcolor[s][0] = color_data[i];
-		heatcolor[s][1] = color_data[i + 1];
-		heatcolor[s][2] = color_data[i + 2];
-		s++;
-	}
 
 #ifdef OGLR
 	//FBO Texture

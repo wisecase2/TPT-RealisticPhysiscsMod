@@ -62,6 +62,7 @@ int Element_FIRE::update(UPDATE_FUNC_ARGS)
 		{
 			if (parts[i].ctype == PT_NBLE)
 			{
+				sim->addpressure(-0.00256f*sim->elements[parts[i].ctype].PlsmTemperaturetransition, i, y / CELL, x / CELL);
 				sim->part_change_type(i,x,y,PT_NBLE);
 				parts[i].life = 0;
 			}
@@ -90,25 +91,26 @@ int Element_FIRE::update(UPDATE_FUNC_ARGS)
 	default:
 		break;
 	}
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
+	for (rx = -2; rx < 3; rx++)
+		for (ry = -2; ry < 3; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
 			{
-				r = pmap[y+ry][x+rx];
+				r = pmap[y + ry][x + rx];
 				if (!r)
 					continue;
 				rt = TYP(r);
 
 				//THRM burning
-				if (rt==PT_THRM && (t==PT_FIRE || t==PT_PLSM || t==PT_LAVA))
+				if (rt == PT_THRM && (t == PT_FIRE || t == PT_PLSM || t == PT_LAVA))
 				{
 					if (RNG::Ref().chance(1, 500)) {
-						sim->part_change_type(ID(r),x+rx,y+ry,PT_LAVA);
+						sim->part_change_type(ID(r), x + rx, y + ry, PT_LAVA);
 						parts[ID(r)].ctype = PT_BMTL;
 						parts[ID(r)].temp = 3500.0f;
-						sim->pv[(y+ry)/CELL][(x+rx)/CELL] += 50.0f;
-					} else {
-						sim->part_change_type(ID(r),x+rx,y+ry,PT_LAVA);
+						sim->pv[(y + ry) / CELL][(x + rx) / CELL] += 50.0f;
+					}
+					else {
+						sim->part_change_type(ID(r), x + rx, y + ry, PT_LAVA);
 						parts[ID(r)].life = 400;
 						parts[ID(r)].ctype = PT_THRM;
 						parts[ID(r)].temp = 3500.0f;
@@ -117,15 +119,15 @@ int Element_FIRE::update(UPDATE_FUNC_ARGS)
 					continue;
 				}
 
-				if ((rt==PT_COAL) || (rt==PT_BCOL))
+				if ((rt == PT_COAL) || (rt == PT_BCOL))
 				{
-					if ((t==PT_FIRE || t==PT_PLSM))
+					if ((t == PT_FIRE || t == PT_PLSM))
 					{
-						if (parts[ID(r)].life>100 && RNG::Ref().chance(1, 500)) {
+						if (parts[ID(r)].life > 100 && RNG::Ref().chance(1, 500)) {
 							parts[ID(r)].life = 99;
 						}
 					}
-					else if (t==PT_LAVA)
+					else if (t == PT_LAVA)
 					{
 						if (parts[i].ctype == PT_IRON && RNG::Ref().chance(1, 500)) {
 							parts[i].ctype = PT_METL;
@@ -139,8 +141,8 @@ int Element_FIRE::update(UPDATE_FUNC_ARGS)
 					// LAVA(CLST) + LAVA(PQRT) + high enough temp = LAVA(CRMC) + LAVA(CRMC)
 					if (parts[i].ctype == PT_QRTZ && rt == PT_LAVA && parts[ID(r)].ctype == PT_CLST)
 					{
-						float pres = std::max(sim->pv[y/CELL][x/CELL]*10.0f, 0.0f);
-						if (parts[i].temp >= pres+sim->elements[PT_CRMC].HighTemperature+50.0f)
+						float pres = std::max(sim->pv[y / CELL][x / CELL] * 10.0f, 0.0f);
+						if (parts[i].temp >= pres + sim->elements[PT_CRMC].HighTemperature + 50.0f)
 						{
 							parts[i].ctype = PT_CRMC;
 							parts[ID(r)].ctype = PT_CRMC;
@@ -150,25 +152,25 @@ int Element_FIRE::update(UPDATE_FUNC_ARGS)
 					{
 						if (parts[ID(r)].temp > sim->elements[PT_HEAC].HighTemperature)
 						{
-							sim->part_change_type(ID(r), x+rx, y+ry, PT_LAVA);
+							sim->part_change_type(ID(r), x + rx, y + ry, PT_LAVA);
 							parts[ID(r)].ctype = PT_HEAC;
 						}
 					}
 				}
 
 				if ((surround_space || sim->elements[rt].Explosive) &&
-				    sim->elements[rt].Flammable && RNG::Ref().chance(sim->elements[rt].Flammable + (sim->pv[(y+ry)/CELL][(x+rx)/CELL] * 10.0f), 1000) &&
-				    //exceptions, t is the thing causing the spark and rt is what's burning
-				    (t != PT_SPRK || (rt != PT_RBDM && rt != PT_LRBD && rt != PT_INSL)) &&
-				    (t != PT_PHOT || rt != PT_INSL) &&
-				    (rt != PT_SPNG || parts[ID(r)].life == 0))
+					sim->elements[rt].Flammable && RNG::Ref().chance(sim->elements[rt].Flammable + (sim->pv[(y + ry) / CELL][(x + rx) / CELL] * 10.0f), 1000) &&
+					//exceptions, t is the thing causing the spark and rt is what's burning
+					(t != PT_SPRK || (rt != PT_RBDM && rt != PT_LRBD && rt != PT_INSL)) &&
+					(t != PT_PHOT || rt != PT_INSL) &&
+					(rt != PT_SPNG || parts[ID(r)].life == 0) && sim->noupdate[i] == sim->currenttick2)
 				{
-					sim->part_change_type(ID(r), x+rx, y+ry, PT_FIRE);
-					parts[ID(r)].temp = 0.5f*(RNG::Ref().uniform01() + 1.f)*restrict_flt(sim->elements[PT_FIRE].Temperature + 2*(sim->elements[rt].Flammable), MIN_TEMP, MAX_TEMP);
+					sim->part_change_type(ID(r), x + rx, y + ry, PT_FIRE);
+					parts[ID(r)].temp = 0.5f*(RNG::Ref().uniform01() + 1.f)*restrict_flt(sim->elements[PT_FIRE].Temperature + 2 * (sim->elements[rt].Flammable), MIN_TEMP, MAX_TEMP);
 					parts[ID(r)].life = RNG::Ref().between(180, 259);
 					parts[ID(r)].tmp = parts[ID(r)].ctype = 0;
 					if (sim->elements[rt].Explosive)
-						sim->pv[y/CELL][x/CELL] += (RNG::Ref().uniform01() + 1.5f) * CFDS * 0.0005f * parts[ID(r)].temp;
+						sim->pv[y / CELL][x / CELL] += (RNG::Ref().uniform01() + 1.5f) * CFDS * 0.0005f * parts[ID(r)].temp;
 				}
 			}
 	if (sim->legacy_enable && t!=PT_SPRK) // SPRK has no legacy reactions

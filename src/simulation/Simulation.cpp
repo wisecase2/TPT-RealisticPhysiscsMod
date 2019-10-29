@@ -2161,6 +2161,7 @@ void Simulation::create_arc(int sx, int sy, int dx, int dy, int midpoints, int v
 
 void Simulation::clear_sim(void)
 {
+	currenttick2 = 1;
 	debug_currentParticle = 0;
 	emp_decor = 0;
 	emp_trigger_count = 0;
@@ -2180,7 +2181,8 @@ void Simulation::clear_sim(void)
 	memset(viewpmap, 0, sizeof(viewpmap)); 
 	memset(drawviewpmap, 0, sizeof(drawviewpmap));
 	memset(blackhole, 0, sizeof(blackhole));
-	memset(storepressure, 0, sizeof(storepressure));
+	memset(storepressure, 0, sizeof(storepressure));\
+	memset(noupdate, 0, sizeof(noupdate));
 	memset(dthv, 0, sizeof(dthv));
 	memset(fvx, 0, sizeof(fvx));
 	memset(fvy, 0, sizeof(fvy));
@@ -3055,6 +3057,7 @@ void Simulation::kill_part(int i)//kills particle number i
 // Returns true if the particle was killed
 bool Simulation::part_change_type(int i, int x, int y, int t)
 {
+	noupdate[i] = 0;
 	if (x<0 || y<0 || x>=XRES || y>=YRES || i>=NPART || t<0 || t>=PT_NUM || !parts[i].type)
 		return false;
 	if (!elements[t].Enabled || t == PT_NONE)
@@ -4070,6 +4073,8 @@ void Simulation::UpdateParticles(int start, int end)
 	float pGravX, pGravY, pGravD, beforelatent;
 	bool transitionOccurred, transitionchange;
 	
+	currenttick2++;
+
 	for(i = start; i <= end && i <= parts_lastActiveIndex; i++){
 		if(parts[i].type){
 
@@ -4085,6 +4090,7 @@ void Simulation::UpdateParticles(int start, int end)
 				}
 			}
 		}
+		noupdate[i] = currenttick2;
 	}
 
 	//the main particle loop function, goes over all particles.
@@ -4340,6 +4346,7 @@ void Simulation::UpdateParticles(int start, int end)
 					parts[i].temp = restrict_flt(pt, MIN_TEMP, MAX_TEMP);
 #else
 					 //removed
+
 					pt = (c_heat+parts[i].temp)/(h_count+1);
 					pt = parts[i].temp = restrict_flt(pt, MIN_TEMP, MAX_TEMP);
 					for (j=0; j<8; j++)
@@ -4620,10 +4627,10 @@ void Simulation::UpdateParticles(int start, int end)
 
 						if((elements[t].Properties&TYPE_GAS) && (elements[pt_beforetransition].Properties&TYPE_LIQUID)){
 							//pv[y / CELL][x / CELL] += 0.00512f*elements[pt_beforetransition].HighTemperature;
-							addpressure(0.00512f*elements[pt_beforetransition].HighTemperature, i, y/CELL, x/CELL);
+							addpressure(0.00256f*elements[pt_beforetransition].HighTemperature, i, y/CELL, x/CELL);
 						} else if((elements[t].Properties&TYPE_LIQUID) && (elements[pt_beforetransition].Properties&TYPE_GAS)){
 							//pv[y / CELL][x / CELL] -= 0.00512f*elements[pt_beforetransition].LowTemperature;
-							addpressure(-0.00512f*elements[pt_beforetransition].LowTemperature, i, y / CELL, x / CELL);
+							addpressure(-0.00256f*elements[pt_beforetransition].LowTemperature, i, y / CELL, x / CELL);
 						}
 						
 						if (t == PT_NONE)
@@ -4666,7 +4673,7 @@ void Simulation::UpdateParticles(int start, int end)
 					////COLD GAS -> LIQUID TRANSITION
 					if(ctempl < elements[t].Liquidtransition && elements[t].Liquidtransition > 0){
 						//pv[y / CELL][x / CELL] -= 0.00512f*elements[t].Liquidtransition;
-						addpressure(-0.00512f*elements[t].Liquidtransition, i, y / CELL, x / CELL);
+						addpressure(-0.00256f*elements[t].Liquidtransition, i, y / CELL, x / CELL);
 						parts[i].temp += elements[t].LiquidGaslatent;
 						parts[i].ctype = parts[i].type;
 						t = parts[i].type = PT_LIQUID;
@@ -4674,7 +4681,7 @@ void Simulation::UpdateParticles(int start, int end)
 						goto transited;
 					}else if(t == PT_LIQUID && ctemph >= elements[parts[i].ctype].Liquidtransition && elements[parts[i].ctype].Liquidtransition > 0){
 						//pv[y / CELL][x / CELL] += 0.00512f*elements[parts[i].ctype].Liquidtransition;
-						addpressure(0.00512f*elements[parts[i].ctype].Liquidtransition, i, y / CELL, x / CELL);
+						addpressure(0.00256f*elements[parts[i].ctype].Liquidtransition, i, y / CELL, x / CELL);
 						parts[i].temp -= elements[parts[i].ctype].LiquidGaslatent;
 						t = parts[i].type = parts[i].ctype;
 						parts[i].ctype = PT_NONE;
@@ -4684,7 +4691,7 @@ void Simulation::UpdateParticles(int start, int end)
 					////HOT GASEOUS transition
 					if (pt >= elements[t].GasTemperaturetransition && ((t != PT_LAVA && t != PT_BRMT) || parts[i].ctype == PT_NONE) && elements[t].GasTransition!=NT) {
 						//pv[y / CELL][x / CELL] += 0.00512f*elements[t].GasTemperaturetransition;
-						addpressure(0.00512f*elements[t].GasTemperaturetransition, i, y / CELL, x / CELL);
+						addpressure(0.00256f*elements[t].GasTemperaturetransition, i, y / CELL, x / CELL);
 						//if(t != PT_BRMT){
 							parts[i].temp -= elements[t].LiquidGaslatent;
 							parts[i].ctype = parts[i].type;
@@ -4694,7 +4701,7 @@ void Simulation::UpdateParticles(int start, int end)
 						goto transited;
 					}else if (t == PT_GASEOUS && ctempl < elements[parts[i].ctype].GasTemperaturetransition) {
 						//pv[y / CELL][x / CELL] -= 0.00512*elements[parts[i].ctype].GasTemperaturetransition;
-						addpressure(-0.00512*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
+						addpressure(-0.00256*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
 						parts[i].temp += elements[parts[i].ctype].LiquidGaslatent;
 						t = parts[i].type = parts[i].ctype;
 						parts[i].ctype = PT_NONE;
@@ -4702,14 +4709,14 @@ void Simulation::UpdateParticles(int start, int end)
 						goto transited;
 					} else if(t==PT_LAVA && ctemph >=elements[parts[i].ctype].GasTemperaturetransition && elements[parts[i].ctype].GasTransition!=NT){
 						//pv[y / CELL][x / CELL] += 0.00512f*elements[parts[i].ctype].GasTemperaturetransition;
-						addpressure(0.00512f*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
+						addpressure(0.00256f*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
 						parts[i].temp -= elements[parts[i].ctype].LiquidGaslatent;
 						t = parts[i].type = PT_GASEOUS;
 						parts[i].tmp = tmpp;
 						goto transited;
 					}else if(t == PT_BRMT && ctemph >= elements[parts[i].ctype].GasTemperaturetransition && elements[parts[i].ctype].GasTransition != NT){
 					   //pv[y / CELL][x / CELL] += 0.00512f*elements[parts[i].ctype].GasTemperaturetransition;
-						addpressure(0.00512f*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
+						addpressure(0.00256f*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
 						parts[i].temp -= elements[parts[i].ctype].LiquidGaslatent;
 						t = parts[i].type = PT_GASEOUS;
 						parts[i].tmp = tmpp;
@@ -4825,6 +4832,7 @@ void Simulation::UpdateParticles(int start, int end)
 			}
 
 			//the basic explosion, from the .explosive variable
+			
 			if ((elements[t].Explosive&2) && pv[y/CELL][x/CELL]>2.5f)
 			{
 				parts[i].life = RNG::Ref().between(180, 259);
@@ -4832,8 +4840,9 @@ void Simulation::UpdateParticles(int start, int end)
 				t = PT_FIRE;
 				part_change_type(i,x,y,t);
 				pv[y/CELL][x/CELL] += (RNG::Ref().uniform01() + 1.5f) * CFDS * 0.0005f * parts[i].temp;
+				noupdate[i] = 0;
 			}
-
+			
 
 			s = 1;
 			gravtot = fabs(gravy[(y/CELL)*(XRES/CELL)+(x/CELL)])+fabs(gravx[(y/CELL)*(XRES/CELL)+(x/CELL)]);
@@ -4903,7 +4912,7 @@ void Simulation::UpdateParticles(int start, int end)
 						}
 					}
 				}
-				parts[i].tmp2 *= 0.222222f;
+				parts[i].tmp2 *= 0.111111f;
 				
 				if(!bmap[y / CELL + 1][x / CELL]){
 					air1 = pv[y / CELL + 1][x / CELL];
@@ -6066,10 +6075,15 @@ void Simulation::BeforeSim()
 
 void Simulation::AfterSim()
 {
+	//float delta, sqrdt;
 	if(aheat_enable){
-		for(int y = 0; y < YRES / CELL; y++){
-			for(int x = 0; x < XRES / CELL; x++){
-				pv[y][x] += 0.00256f*(hv[y][x] - dthv[y][x]);
+		for(int y = 3; y < YRESC-3; y++){
+			for(int x = 3; x < XRESC-3; x++){
+				//delta = 0.01f*(hv[y][x] - dthv[y][x]);
+				//sqrdt = sqrt(abs(delta));
+				//pv[y][x] += sqrdt * sqrt(sqrdt)*((delta >= 0) ? 1: -1);
+				
+				pv[y][x] += 0.00064f*(hv[y][x] - dthv[y][x]);
 			}
 		}
 	}

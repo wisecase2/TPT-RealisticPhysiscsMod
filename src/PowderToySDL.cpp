@@ -439,7 +439,7 @@ void DoubleScreenDialog()
 
 void EngineProcess()
 {
-	double frameTimeAvg = 0.0f, correctedFrameTimeAvg = 0.0f;
+	double frameTimeAvg = 0.0f, correctedFrameTimeAvg = 0.0f, fpsr, fps;
 	SDL_Event event;
 	while(engine->Running())
 	{
@@ -477,8 +477,25 @@ void EngineProcess()
 			if(offset > 0)
 				SDL_Delay(offset + 0.5);
 		}
+		//int correctedFrameTime = SDL_GetTicks() - frameStart;
+		//correctedFrameTimeAvg = correctedFrameTimeAvg * 0.95 + correctedFrameTime * 0.05;
+		
 		int correctedFrameTime = SDL_GetTicks() - frameStart;
-		correctedFrameTimeAvg = correctedFrameTimeAvg * 0.95 + correctedFrameTime * 0.05;
+		fpsr = 0.05; fps = 0;
+		if(correctedFrameTimeAvg){ fps = 1000.0 / correctedFrameTimeAvg; }
+		if (fps) { fpsr = 3.0 / fps; }
+		if (fpsr > 0.5) { fpsr = 0.5; }
+		if (correctedFrameTime != 0 && correctedFrameTime && fpsr) {
+			correctedFrameTimeAvg = correctedFrameTimeAvg * (1.0 - fpsr) + fpsr * correctedFrameTime;
+		}
+
+	//	int correctedFrameTime = SDL_GetTicks() - frameStart;
+	//	fpsr = 0.05;
+	//	if (fps) { fpsr = 3.f / fps; }
+	//	if (correctedFrameTime != 0 && correctedFrameTime && fpsr) {
+	//		fps = fps * (1.f - fpsr) + fpsr * (1000.f / correctedFrameTime);
+	//	}
+
 		if (frameStart - lastFpsUpdate > 50)
 		{
 			engine->SetFps(1000.0 / correctedFrameTimeAvg);
@@ -627,8 +644,8 @@ int main(int argc, char * argv[])
 	// TODO: mabe make a nice loop that automagically finds the optimal scale
 	if (Client::Ref().IsFirstRun() && desktopWidth > WINDOWW*2+30 && desktopHeight > WINDOWH*2+30)
 	{
-		scale = 2;
-		Client::Ref().SetPref("Scale", 2);
+		scale = 1;
+		Client::Ref().SetPref("Scale", 1);
 		SDL_SetWindowSize(sdl_window, WINDOWW * 2, WINDOWH * 2);
 		showDoubleScreenDialog = true;
 	}

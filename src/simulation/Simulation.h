@@ -110,10 +110,12 @@ public:
 	int viewpmap[YRES][XRES][2];
 	int drawviewpmap[YRES][XRES][2];
 	int blackhole[YRES][XRES][2];
+	int noupdate[NPART];
 	int pmap[YRES][XRES]; // ~ 1 megabytes 
 	int pmap2[YRES][XRES][4]; // ~ 4 megabytes 
 	int photons[YRES][XRES]; // ~ 1 megabytes 
 	float storepressure[NPART]; // ~ 1 megabytes
+	int currenttick2 = 1;
 
 	unsigned int pmap_count[YRES][XRES]; // ~ 1 megabytes , total  ~ 12 megabytes
 	//Simulation Settings

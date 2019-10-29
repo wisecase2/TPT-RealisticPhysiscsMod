@@ -9,7 +9,6 @@
 #include "Config.h"
 #include "Graphics.h"
 #include "gui/interface/Point.h"
-#include <thread>
 
 class RenderPreset;
 class Simulation;
@@ -66,7 +65,6 @@ public:
 	pixel sampleColor;
 	int findingElement;
 	int foundElements;
-	int heatcolor[1024][3];
 
 	//Mouse position for debug information
 	ui::Point mousePos;
@@ -90,10 +88,6 @@ public:
 	void render_fire();
 	void prepare_alpha(int size, float intensity);
 	void render_parts();
-#ifdef RPMT
-    void render_parts_thread(int start, int end);
-	std::thread render_partsThread(int arg1, int arg2);
-#endif
 	void draw_grav_zones();
 	void draw_air();
 	void draw_grav();
@@ -169,9 +163,8 @@ public:
 	Renderer(Graphics * g, Simulation * sim);
 	~Renderer();
 
-	int gridSize;
 private:
-	//int gridSize;
+	int gridSize;
 #ifdef OGLR
 	GLuint zoomTex, airBuf, fireAlpha, glowAlpha, blurAlpha, partsFboTex, partsFbo, partsTFX, partsTFY, airPV, airVY, airVX;
 	GLuint fireProg, airProg_Pressure, airProg_Velocity, airProg_Cracker, lensProg;

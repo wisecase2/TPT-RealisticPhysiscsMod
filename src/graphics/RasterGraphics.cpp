@@ -24,6 +24,7 @@ Graphics::~Graphics()
 	free(vid);
 }
 
+
 void Graphics::Clear()
 {
 	memset(vid, 0, PIXELSIZE * (WINDOWW * WINDOWH));

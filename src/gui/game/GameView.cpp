@@ -19,7 +19,6 @@
 #include "gui/interface/Mouse.h"
 #include "gui/interface/Slider.h"
 #include "gui/interface/Window.h"
-#include "gui/search/Thumbnail.h"
 #include "simulation/SaveRenderer.h"
 
 
@@ -2463,6 +2462,8 @@ void GameView::OnDraw()
 
 			if (type)
 				sampleInfo << "#" << sample.ParticleID << ", ";
+
+			//sampleInfo << "vx:" << sample.AirVelocityX << " vy:" << sample.AirVelocityY << ", "; 
 
 			sampleInfo << "X:" << sample.PositionX << " Y:" << sample.PositionY;
 

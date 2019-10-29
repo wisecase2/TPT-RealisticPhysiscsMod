@@ -64,12 +64,25 @@ int Element_AMTR::update(UPDATE_FUNC_ARGS)
 				rt = TYP(r);
 				if (rt!=PT_AMTR && rt!=PT_WALL && rt!=PT_CLNE && rt!=PT_PCLN && rt!=PT_VOID && rt!=PT_BHOL && rt!=PT_NBHL && rt!=PT_PRTI && rt!=PT_PRTO && rt!= PT_GAMMA && rt!=PT_PHOT)
 				{
-					for(int i = 0; i < 64; i++){
+					for(int i = 0; i < 32; i++){
 						identy = sim->create_part(-3, x + rx, y + ry, PT_GAMMA);
+						parts[identy].temp = MAX_TEMP;
+
+						identy = sim->create_part(-3, x + rx + 1, y + ry, PT_GAMMA);
+						parts[identy].temp = MAX_TEMP;
+
+						identy = sim->create_part(-3, x + rx, y + ry + 1, PT_GAMMA);
+						parts[identy].temp = MAX_TEMP;
+
+						identy = sim->create_part(-3, x + rx - 1, y + ry, PT_GAMMA);
+						parts[identy].temp = MAX_TEMP;
+
+						identy = sim->create_part(-3, x + rx, y + ry - 1, PT_GAMMA);
 						parts[identy].temp = MAX_TEMP;
 					}
 					sim->kill_part(ID(r));
 					sim->kill_part(i);
+					return 0;
 				}
 			}
 	return 0;
