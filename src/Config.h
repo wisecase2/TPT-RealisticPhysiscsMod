@@ -101,9 +101,6 @@
 #define M_GRAV 6.67300e-1
 #endif
 
-//Number of asynchronous connections used to retrieve thumbnails
-#define IMGCONNS 5
-
 #ifdef RENDERER
 #define MENUSIZE 0
 #define BARSIZE 0
@@ -129,6 +126,8 @@
 
 //CELL, the size of the pressure, gravity, and wall maps. Larger than 1 to prevent extreme lag
 #define CELL	4
+#define XRESC XRES/CELL
+#define YRESC YRES/CELL
 #define ISTP	(CELL/2)
 #define CFDS	(4.0f/CELL)
 #define SIM_MAXVELOCITY 1e4f
