@@ -75,25 +75,6 @@ void Air::update_airh(void)
 				hv[i][XRESC - k - 1] = (hv[i][XRESC - k - 1] - ambientAirTemp) * boundary_coeffs[k+1] + ambientAirTemp;
 			}
 		}
-		/*
-		hv[i][0] = (hv[i][0] - ambientAirTemp) * 0.8f + ambientAirTemp;
-		hv[i][XRESC - 1] = (hv[i][XRESC - 1] - ambientAirTemp) * 0.8f + ambientAirTemp;
-
-		if (i >= 1 && i < YRESC - 1) {
-			hv[i][1] = (hv[i][1] - ambientAirTemp) * 0.9f + ambientAirTemp;
-			hv[i][XRESC - 2] = (hv[i][XRESC - 2] - ambientAirTemp) * 0.9f + ambientAirTemp;
-		}
-
-		if (i >= 2 && i < YRESC - 2) {
-			hv[i][2] = (hv[i][2] - ambientAirTemp) * 0.95f + ambientAirTemp;
-			hv[i][XRESC - 3] = (hv[i][XRESC - 3] - ambientAirTemp) * 0.95f + ambientAirTemp;
-		}
-
-		if (i >= 3 && i < YRESC - 3) {
-			hv[i][3] = (hv[i][3] - ambientAirTemp) * 0.975f + ambientAirTemp;
-			hv[i][XRESC - 4] = (hv[i][XRESC - 4] - ambientAirTemp) * 0.975f + ambientAirTemp;
-		}
-		*/
 	}
 	for (i=0; i<XRESC; i++) //reduces pressure/velocity on the edges every frame
 	{
@@ -103,25 +84,6 @@ void Air::update_airh(void)
 				hv[YRESC - k - 1][i] = (hv[YRESC - k - 1][i] - ambientAirTemp) * boundary_coeffs[k + 1] + ambientAirTemp;
 			}
 		}
-		/*
-		hv[0][i] = (hv[0][i] - ambientAirTemp) * 0.8f + ambientAirTemp;
-		hv[YRESC - 1][i] = (hv[YRESC - 1][i] - ambientAirTemp) * 0.8f + ambientAirTemp;
-
-		if (i >= 1 && i < XRESC - 1) {
-			hv[1][i] = (hv[1][i] - ambientAirTemp) * 0.9f + ambientAirTemp;
-			hv[YRESC - 2][i] = (hv[YRESC - 2][i] - ambientAirTemp) * 0.9f + ambientAirTemp;
-		}
-
-		if (i >= 2 && i < XRESC - 2) {
-			hv[2][i] = (hv[2][i] - ambientAirTemp) * 0.95f + ambientAirTemp;
-			hv[YRESC - 3][i] = (hv[YRESC - 3][i] - ambientAirTemp) * 0.95f + ambientAirTemp;
-		}
-
-		if (i >= 3 && i < XRESC - 3) {
-			hv[3][i] = (hv[3][i] - ambientAirTemp) * 0.975f + ambientAirTemp;
-			hv[YRESC - 4][i] = (hv[YRESC - 4][i] - ambientAirTemp) * 0.975f + ambientAirTemp;
-		}
-		*/
 	}
 	
 	for (y=0; y<YRESC; y++) //update velocity and pressure
@@ -177,16 +139,6 @@ void Air::update_airh(void)
 				dh *= 1.0f - AIR_VADV;
 				dh += AIR_VADV*(1.0f-tx)*(1.0f-ty)*((bmap_blockairh[j][i]&0x8) ? odh : hv[j][i]);
 				
-				//kx = (tx >= 0) ? 1 : -1;
-				//ky = (ty >= 0) ? 1 : -1;
-				//tx = abs(tx);
-				//ty = abs(ty);
-				/*
-				dh += AIR_VADV * tx*(1.0f - ty)*((bmap_blockairh[j][i + kx] & 0x8) ? odh : hv[j][i + kx]);
-				dh += AIR_VADV * (1.0f - tx)*ty*((bmap_blockairh[j + ky][i] & 0x8) ? odh : hv[j + ky][i]);
-				dh += AIR_VADV * tx*ty*((bmap_blockairh[j + ky][i + kx] & 0x8) ? odh : hv[j + ky][i + kx]);
-				*/
-				
 				dh += AIR_VADV*tx*(1.0f-ty)*((bmap_blockairh[j][i+1]&0x8) ? odh : hv[j][i+1]);
 				dh += AIR_VADV*(1.0f-tx)*ty*((bmap_blockairh[j+1][i]&0x8) ? odh : hv[j+1][i]);
 				dh += AIR_VADV*tx*ty*((bmap_blockairh[j+1][i+1]&0x8) ? odh : hv[j+1][i+1]);
@@ -226,49 +178,6 @@ void Air::update_air(void)
 					vy[i][XRESC - k - 1] *= boundary_coeffs[k+1];
 				}
 			}
-			/*
-			//part 1 
-			pv[i][0] *= 0.6f;
-			pv[i][XRESC-1] *= 0.6f;
-
-			vx[i][0] *= 0.8f;
-			vx[i][XRESC - 1] *= 0.8f;
-			vy[i][0] *= 0.8f;
-			vy[i][XRESC - 1] *= 0.8f;
-			
-			//part 2
-			if (i >= 1 && i < YRESC - 1) {
-				pv[i][1] *= 0.8f;
-				pv[i][XRESC- 2] *= 0.8f;
-
-				vx[i][1] *= 0.9f;
-				vx[i][XRESC - 2] *= 0.9f;
-				vy[i][1] *= 0.9f;
-				vy[i][XRESC - 2] *= 0.9f;
-			}
-
-			//part 3
-			if (i >= 2 && i < YRESC - 2) {
-				pv[i][2] *= 0.9f;
-				pv[i][XRESC - 3] *= 0.9f;
-
-				vx[i][2] *= 0.95f;
-				vx[i][XRESC - 3] *= 0.95f;
-				vy[i][2] *= 0.95f;
-				vy[i][XRESC - 3] *= 0.95f;
-			}
-
-			//part 3
-			if (i >= 3 && i < YRESC - 3) {
-				pv[i][3] *= 0.95f;
-				pv[i][XRESC - 4] *= 0.95f;
-
-				vx[i][3] *= 0.975f;
-				vx[i][XRESC - 4] *= 0.975f;
-				vy[i][3] *= 0.975f;
-				vy[i][XRESC - 4] *= 0.975f;
-			}
-			*/
 		}
 		for (i=0; i<XRESC; i++) //reduces pressure/velocity on the edges every frame
 		{
@@ -283,49 +192,6 @@ void Air::update_air(void)
 					vy[YRESC - k - 1][i] *= boundary_coeffs[k + 1];
 				}
 			}
-			/*
-			//part 1
-			pv[0][i] *= 0.6f;
-			pv[YRESC - 1][i] *= 0.6f;
-
-			vx[0][i] *= 0.8f;
-			vx[YRESC - 1][i] *= 0.8f;
-			vy[0][i] *= 0.8f;
-			vy[YRESC - 1][i] *= 0.8f;
-			
-			//part 2
-			if (i >= 1 && i < XRESC - 1) {
-				pv[1][i] *= 0.8f;
-				pv[YRESC - 2][i] *= 0.8f;
-
-				vx[1][i] *= 0.9f;
-				vx[YRESC - 2][i] *= 0.9f;
-				vy[1][i] *= 0.9f;
-				vy[YRESC - 2][i] *= 0.9f;
-			}
-
-			//part 3
-			if (i >= 2 && i < XRESC - 2) {
-				pv[2][i] *= 0.9f;
-				pv[YRESC - 3][i] *= 0.9f;
-
-				vx[2][i] *= 0.95f;
-				vx[YRESC - 3][i] *= 0.95f;
-				vy[2][i] *= 0.95f;
-				vy[YRESC - 3][i] *= 0.95f;
-			}
-
-			//part 4
-			if (i >= 3 && i < XRESC - 3) {
-				pv[3][i] *= 0.95f;
-				pv[YRESC - 4][i] *= 0.95f;
-
-				vx[3][i] *= 0.975f;
-				vx[YRESC - 4][i] *= 0.975f;
-				vy[3][i] *= 0.975f;
-				vy[YRESC - 4][i] *= 0.975f;
-			}
-			*/
 		}
 		
 		for (j=0; j<YRESC; j++) //clear some velocities near walls
@@ -354,19 +220,6 @@ void Air::update_air(void)
 		} 
 		for(y = 1; y < YRESC-1; y++){ //pressure adjustments from velocity
 			for(x = 1; x < XRESC-1; x++){
-				/*dp = 0.0f;
-				if(x > 0){
-					dp += vx[y][x - 1] - vx[y][x];
-				}
-				if((x + 1) < (XRESC)){
-					dp += vx[y][x] - vx[y][x + 1];
-				}
-				if(y > 0){
-					dp += vy[y - 1][x] - vy[y][x];
-				}
-				if((y + 1) < (YRESC)){
-					dp += vy[y][x] - vy[y + 1][x];
-				}*/
 
 				dp = vx[y][x - 1] - vx[y][x + 1];
 				dp += vy[y - 1][x] - vy[y + 1][x];
@@ -384,19 +237,6 @@ void Air::update_air(void)
 		for (y=1; y<YRESC-1; y++) //velocity adjustments from pressure
 			for (x=1; x<XRESC-1; x++)
 			{
-				//dx = dy = 0.0f;
-				/*if(x + 1 != (XRESC)){
-					dx += pv[y][x] - pv[y][x+1];
-				}
-				if(x - 1 != -1){
-					dx += pv[y][x-1] - pv[y][x];
-				}
-				if(y + 1 != (YRESC)){
-					dy += pv[y][x] - pv[y+1][x];
-				}
-				if(y - 1 != -1){
-					dy += pv[y-1][x] - pv[y][x];
-				}*/
 
 				dx = pv[y][x - 1] - pv[y][x + 1];
 				dy = pv[y - 1][x] - pv[y + 1][x];
@@ -511,17 +351,6 @@ void Air::update_air(void)
 
 					dx += AIR_VADV * tx*ty*vx[j + ky][i + kx];
 					dy += AIR_VADV * tx*ty*vy[j + ky][i + kx];
-
-					/*
-					dx += AIR_VADV*tx*(1.0f-ty)*vx[j][i+1];
-					dy += AIR_VADV*tx*(1.0f-ty)*vy[j][i+1];
-
-					dx += AIR_VADV*(1.0f-tx)*ty*vx[j+1][i];
-					dy += AIR_VADV*(1.0f-tx)*ty*vy[j+1][i];
-
-					dx += AIR_VADV*tx*ty*vx[j+1][i+1];
-					dy += AIR_VADV*tx*ty*vy[j+1][i+1];
-					*/
 				}
 				
 
